@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectDescriptiveText, login, readSessionRecord, setupSyntheticSession } from "./helpers";
+import { expectDescriptiveText, login, setupSyntheticSession } from "./helpers";
 
 // build-plan P5.6: a mock-transcriber session runs 30 s; the index slot stays
 // hidden until a score tap, then shows a value; Stop writes the markers and
@@ -56,7 +56,16 @@ test("live display: hidden index until a score, then Stop closes the session", a
     timeout: 15_000,
   });
 
-  const rec = (await readSessionRecord(page, id)) as {
+  // After Stop the session archives itself and then clears the local copy, so
+  // read the record from the archive once the upload confirms.
+  await expect(page.getByRole("link", { name: "Archived. Review session" })).toBeVisible({
+    timeout: 30_000,
+  });
+  const res = await page.request.get(
+    `/api/file?pathname=${encodeURIComponent(`sessions/${id}.json`)}`,
+  );
+  expect(res.ok()).toBe(true);
+  const rec = (await res.json()) as {
     state: string;
     markers: { startMs: number; stopMs: number };
     instructorLiveScore: { value: number; atMs: number };
