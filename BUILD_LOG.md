@@ -319,3 +319,5 @@ Joe's instruction, done:
 - I copied features.json, FEATURE_INVENTORY.md, and schemas/features.schema.json into ~/Library/Mobile Documents/com~apple~CloudDocs/Viva Voice Dev/. Before overwriting, I confirmed that the three iCloud copies still matched what I had copied from there at the start of work order 01, so no edit of Joe's was lost. After copying, each file compares byte for byte with the repository.
 
 Acceptance on this Mac, all passing before the push: lint; vitest without VIVA_MOCK_ASR and with it (908 passed, 1 skipped, both ways); coverage; build; contrast; feature-coverage (48 tier 1 features); check-fixtures; pytest (14 passed); Playwright (7 passed, 1 skipped on macOS).
+
+GitHub Actions passed on 779dd8e: 908 unit tests, 14 Python tests, and 8 browser tests.
