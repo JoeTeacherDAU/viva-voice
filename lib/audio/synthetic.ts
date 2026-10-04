@@ -6,6 +6,7 @@ export type SynthMode = "silent" | "A" | "B" | "both";
 
 export interface SyntheticSource {
   stream: MediaStream;
+  channelCount: 1 | 2;
   setMode(mode: SynthMode): void;
   stop(): Promise<void>;
 }
@@ -13,13 +14,17 @@ export interface SyntheticSource {
 const OWN = 0.3;
 const BLEED = 0.03;
 
-export function createSyntheticStereo(initial: SynthMode = "both"): SyntheticSource {
+export function createSyntheticStereo(
+  initial: SynthMode = "both",
+  channelCount: 1 | 2 = 2,
+): SyntheticSource {
   const ctx = new AudioContext({ sampleRate: 48000 });
   const merger = ctx.createChannelMerger(2);
   const dest = ctx.createMediaStreamDestination();
-  dest.channelCount = 2;
+  // A mono build mixes both speakers into one channel, as a mono receiver would.
+  dest.channelCount = channelCount;
   dest.channelCountMode = "explicit";
-  dest.channelInterpretation = "discrete";
+  dest.channelInterpretation = channelCount === 2 ? "discrete" : "speakers";
 
   // gains[speaker][channel]
   const gains = [0, 1].map((speaker) => {
@@ -50,6 +55,7 @@ export function createSyntheticStereo(initial: SynthMode = "both"): SyntheticSou
 
   return {
     stream: dest.stream,
+    channelCount,
     setMode,
     stop: async () => {
       dest.stream.getTracks().forEach((t) => t.stop());
@@ -59,3 +65,4 @@ export function createSyntheticStereo(initial: SynthMode = "both"): SyntheticSou
 }
 
 export const SYNTHETIC_DEVICE_ID = "synthetic-stereo";
+export const SYNTHETIC_MONO_ID = "synthetic-mono";

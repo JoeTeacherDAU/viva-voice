@@ -19,6 +19,7 @@ import {
 import {
   createSyntheticStereo,
   SYNTHETIC_DEVICE_ID,
+  SYNTHETIC_MONO_ID,
   type SyntheticSource,
 } from "@/lib/audio/synthetic";
 import {
@@ -93,7 +94,10 @@ export function SetupClient() {
   async function findDevices() {
     setOpenError(null);
     const synthetic: AudioInputInfo[] = syntheticAllowed()
-      ? [{ deviceId: SYNTHETIC_DEVICE_ID, label: "Synthetic stereo (test)", channelCount: 2 }]
+      ? [
+          { deviceId: SYNTHETIC_DEVICE_ID, label: "Synthetic stereo (test)", channelCount: 2 },
+          { deviceId: SYNTHETIC_MONO_ID, label: "Synthetic mono (test)", channelCount: 1 },
+        ]
       : [];
     try {
       await primePermission();
@@ -112,12 +116,12 @@ export function SetupClient() {
     try {
       let stream: MediaStream;
       let rep: DeviceReport;
-      if (deviceId === SYNTHETIC_DEVICE_ID) {
-        const synth = createSyntheticStereo("both");
+      if (deviceId === SYNTHETIC_DEVICE_ID || deviceId === SYNTHETIC_MONO_ID) {
+        const synth = createSyntheticStereo("both", deviceId === SYNTHETIC_MONO_ID ? 1 : 2);
         synthRef.current = synth;
         stream = synth.stream;
         const settings = {
-          channelCount: 2,
+          channelCount: synth.channelCount,
           echoCancellation: false,
           noiseSuppression: false,
           autoGainControl: false,
@@ -125,7 +129,8 @@ export function SetupClient() {
         };
         rep = {
           deviceId,
-          label: "Synthetic stereo (test)",
+          label:
+            deviceId === SYNTHETIC_MONO_ID ? "Synthetic mono (test)" : "Synthetic stereo (test)",
           settings,
           synthetic: true,
           blocking: blockingReasons(settings),
