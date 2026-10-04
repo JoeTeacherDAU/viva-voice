@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { login, readSessionRecord, setupSyntheticSession } from "./helpers";
+import { expectDescriptiveText, login, readSessionRecord, setupSyntheticSession } from "./helpers";
 
 // build-plan P5.6: a mock-transcriber session runs 30 s; the index slot stays
 // hidden until a score tap, then shows a value; Stop writes the markers and
@@ -48,6 +48,7 @@ test("live display: hidden index until a score, then Stop closes the session", a
   // The mock replays the balanced fixture; A says "would like to" about 7 s in.
   await expect(page.getByTestId("targets-A")).toHaveText("1");
   await page.screenshot({ path: "test-results/live-display.png" });
+  await expectDescriptiveText(page);
 
   await page.waitForTimeout(Math.max(0, 30_000 - (Date.now() - t0)));
   await page.getByRole("button", { name: "Stop" }).click();

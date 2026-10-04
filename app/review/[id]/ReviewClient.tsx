@@ -10,7 +10,8 @@ import type {
   Word,
 } from "@/lib/analysis/types";
 import { diffFeatures, replicate, type FeatureDiff } from "@/lib/output/replicate";
-import { featureLabel, formatValue } from "@/lib/output/format";
+import { formatValue } from "@/lib/output/format";
+import { displayLabel } from "@/lib/output/labels";
 import { byTier, thresholdsFor } from "@/lib/registry";
 import { Button, Card, Icon } from "@/lib/ui";
 
@@ -212,7 +213,7 @@ export function ReviewClient({ id }: { id: string }) {
                   key={`${d.featureId}-${d.participant}-${d.window}-${d.thresholdMs}`}
                   className="text-sm text-warn"
                 >
-                  {featureLabel(d.featureId)} {d.participant} {d.window}
+                  {displayLabel(d.featureId)} {d.participant} {d.window}
                   {d.thresholdMs !== null ? ` at ${d.thresholdMs} ms` : ""}: stored{" "}
                   {formatValue(d.stored)}, now {formatValue(d.fresh)}
                 </p>
@@ -256,7 +257,7 @@ export function ReviewClient({ id }: { id: string }) {
                   return (
                     <tr key={`${fid}-${t}`} className="border-t border-outline-variant">
                       <td className="py-1 pr-4">
-                        {featureLabel(fid)}
+                        {displayLabel(fid)}
                         {t !== null ? ` at ${t} ms` : ""}{" "}
                         <span className="text-on-surface-variant">({unit})</span>
                       </td>

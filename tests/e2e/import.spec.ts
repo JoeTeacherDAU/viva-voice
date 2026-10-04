@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { login } from "./helpers";
+import { expectDescriptiveText, login } from "./helpers";
 
 const FX = join(__dirname, "../../fixtures/golden/balanced");
 const ID = "fixture-balanced";
@@ -92,6 +92,7 @@ test("onboard import aligns two mono WAVs within 20 ms and runs pass two on them
   const b = Number(await page.getByTestId("offset-B").innerText());
   expect(Math.abs(a - -3217)).toBeLessThanOrEqual(20);
   expect(Math.abs(b - 1500)).toBeLessThanOrEqual(20);
+  await expectDescriptiveText(page);
 
   await page.getByRole("button", { name: "Upload aligned audio" }).click();
   await expect(page.getByTestId("import-uploaded")).toBeVisible({ timeout: 30_000 });

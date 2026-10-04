@@ -1,5 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 import { E2E_PASSWORD } from "../../playwright.config";
+import { bannedWordsIn } from "../../lib/output/labels";
 
 export async function login(page: Page): Promise<void> {
   const res = await page.request.post("/api/login", { data: { password: E2E_PASSWORD } });
@@ -35,4 +36,9 @@ export async function readSessionRecord(page: Page, id: string) {
       }),
     id,
   );
+}
+
+/** RESEARCH_PRINCIPLES.md principle 4: no visible text uses a banned word. */
+export async function expectDescriptiveText(page: Page): Promise<void> {
+  expect(bannedWordsIn(await page.locator("body").innerText())).toEqual([]);
 }

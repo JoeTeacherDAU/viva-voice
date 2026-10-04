@@ -7,7 +7,8 @@ import type {
   SessionRecord,
   Word,
 } from "@/lib/analysis/types";
-import { featureLabel, findValue, formatValue, mmss } from "./format";
+import { findValue, formatValue, mmss } from "./format";
+import { displayLabel, SECTIONS } from "./labels";
 
 export const DOC_FONT = process.env.VIVA_DOCX_FONT || "Sukhumvit Set";
 
@@ -77,7 +78,7 @@ export async function buildStudentDoc(input: StudentDocInput): Promise<Uint8Arra
   for (const e of events) {
     if (e.kind === "removed") {
       const marker = run(
-        ` [cross-talk removed from ${label(e.r.channel)}'s microphone: "${e.r.words.join(" ")}"] `,
+        ` [partner speech set aside from ${label(e.r.channel)}'s microphone: "${e.r.words.join(" ")}"] `,
         {
           italics: true,
         },
@@ -103,21 +104,28 @@ export async function buildStudentDoc(input: StudentDocInput): Promise<Uint8Arra
   }
   flush();
 
-  // Measurements: one paragraph per tier 1 feature, so each label appears once.
+  // Measurements, grouped into plain-language sections; one paragraph per
+  // tier 1 feature, so each label appears once (work order 01, section 5).
   out.push(
     para([run(`Measurements for student ${student}`, { bold: true })], HeadingLevel.HEADING_1),
   );
   const all = [...(input.pass1 ?? []), ...(input.pass2 ?? [])];
-  for (const f of byTier(1)) {
-    const parts = thresholdsOf(f.id, all).map((t) => {
-      const v1 = findValue(input.pass1, f.id, student, t)?.value;
-      const v2 = findValue(input.pass2, f.id, student, t)?.value;
-      const at = t === null ? "" : `at ${t} ms: `;
-      return `${at}pass 1 ${formatValue(v1)}, pass 2 ${formatValue(v2)}`;
-    });
-    out.push(
-      para([run(`${featureLabel(f.id)} (${f.unit}): `, { bold: true }), run(parts.join("; "))]),
-    );
+  for (const section of SECTIONS) {
+    const feats = byTier(1).filter((f) => section.constructs.includes(f.construct));
+    if (!feats.length) continue;
+    out.push(para([run(section.title, { bold: true })], HeadingLevel.HEADING_2));
+    out.push(line(section.intro));
+    for (const f of feats) {
+      const parts = thresholdsOf(f.id, all).map((t) => {
+        const v1 = findValue(input.pass1, f.id, student, t)?.value;
+        const v2 = findValue(input.pass2, f.id, student, t)?.value;
+        const at = t === null ? "" : `at ${t} ms: `;
+        return `${at}pass 1 ${formatValue(v1)}, pass 2 ${formatValue(v2)}`;
+      });
+      out.push(
+        para([run(`${displayLabel(f.id)} (${f.unit}): `, { bold: true }), run(parts.join("; "))]),
+      );
+    }
   }
 
   out.push(para([run("Session log", { bold: true })], HeadingLevel.HEADING_1));
@@ -149,7 +157,34 @@ export async function buildStudentDoc(input: StudentDocInput): Promise<Uint8Arra
     ),
   );
   out.push(line(`Unattributed frame ratio: ${formatValue(input.unattributedRatio)}`));
-  out.push(line(`Removed cross-talk spans: ${input.removedSpans.length}`));
+  out.push(
+    line(`Partner speech set aside from this recording: ${input.removedSpans.length} span(s)`),
+  );
+  const longPauses = rec.events.filter(
+    (e) =>
+      e.type === "long_pause" && (e.detail as { participant?: string })?.participant === student,
+  );
+  const latestPass = Math.max(
+    0,
+    ...longPauses.map((e) => (e.detail as { pass?: number }).pass ?? 1),
+  );
+  const shown = longPauses.filter(
+    (e) => ((e.detail as { pass?: number }).pass ?? 1) === latestPass,
+  );
+  out.push(
+    line(
+      `Long pauses within your turns: ${
+        shown.length
+          ? shown
+              .map((e) => {
+                const d = e.detail as { startMs: number; durationMs: number };
+                return `${mmss(d.startMs - start)} (${(d.durationMs / 1000).toFixed(1)} s)`;
+              })
+              .join("; ")
+          : "none"
+      }`,
+    ),
+  );
 
   out.push(para([run("Configuration", { bold: true })], HeadingLevel.HEADING_1));
   const c = rec.config;

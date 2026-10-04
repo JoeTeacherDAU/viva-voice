@@ -67,9 +67,6 @@ export async function archiveSession(
   const words = (await getArtifact<unknown[]>(id, "transcript-pass1")) ?? [];
   const features = (await getArtifact<unknown[]>(id, "measurements-pass1")) ?? [];
   const energy = await getArtifact(id, "energy");
-  const meta = (await getArtifact<{ rawStartMs: number | null }>(id, "capture-meta")) ?? {
-    rawStartMs: 0,
-  };
 
   // The WAV keeps every captured sample, before Start and after Stop
   // (RESEARCH_PRINCIPLES.md principle 1). Capture time already counts from

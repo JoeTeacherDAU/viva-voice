@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
-import { login, setupSyntheticSession } from "./helpers";
+import { expectDescriptiveText, login, setupSyntheticSession } from "./helpers";
 
 // build-plan P6 acceptance: a full mock session produces two DOCX files, a
 // long.csv row set, a zip, and a session record in state "done", using the
@@ -24,6 +24,7 @@ test("a mock session archives, runs pass two, and produces every output", async 
   await page.getByRole("button", { name: "Run pass two" }).click();
   await expect(page.getByTestId("review-state")).toHaveText("State: done", { timeout: 30_000 });
   await expect(page.getByRole("link", { name: "A.docx" })).toBeVisible();
+  await expectDescriptiveText(page);
 
   // build-plan P7 acceptance: an unchanged pipeline replicates with zero differences.
   await page.getByRole("button", { name: "Recompute from stored transcript" }).click();
@@ -43,7 +44,8 @@ test("a mock session archives, runs pass two, and produces every output", async 
     );
     const xml = strFromU8(unzipSync(docx)["word/document.xml"]);
     expect(xml).toContain(`Viva Voice report: student ${student}`);
-    expect(xml).toContain("Speech rate WPM");
+    expect(xml).toContain("Words per minute, without fillers or repeated words");
+    expect(xml).toContain("Speed and pausing index, relative to this class");
   }
 
   const long = strFromU8(await get("/api/export?examId=demo-exam&format=long"))

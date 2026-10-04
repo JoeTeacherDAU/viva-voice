@@ -12,7 +12,7 @@ import { paths } from "@/lib/storage/paths";
 import { Button, Card, Icon } from "@/lib/ui";
 
 /** Below this correlation the alignment needs a human check. */
-const WEAK_MATCH = 0.3;
+const LOW_MATCH = 0.3;
 
 interface Aligned {
   offsetMs: number;
@@ -163,10 +163,10 @@ export function ImportClient() {
               Student {P}: onboard file starts at{" "}
               <span data-testid={`offset-${P}`}>{Math.round(aligned[P]!.offsetMs)}</span> ms of
               capture time ({aligned[P]!.audio.encoding}, match {aligned[P]!.score.toFixed(2)})
-              {aligned[P]!.score < WEAK_MATCH ? (
+              {aligned[P]!.score < LOW_MATCH ? (
                 <span className="text-warn flex items-center gap-1">
                   <Icon name="warning" />
-                  weak match; check by ear
+                  low match; check by ear
                 </span>
               ) : null}
             </p>

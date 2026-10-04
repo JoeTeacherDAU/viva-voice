@@ -27,6 +27,7 @@ import {
   WIDE_META,
 } from "./csv";
 import { featureLabel, formatValue } from "./format";
+import { bannedWordsIn, displayLabel, SECTIONS } from "./labels";
 import { deleteAfter, runRetention } from "./retention";
 import { buildStudentDoc } from "./studentDoc";
 
@@ -86,7 +87,7 @@ describe("student document", () => {
     });
     const text = docText(doc);
     for (const f of byTier(1)) {
-      const needle = `${featureLabel(f.id)} (${f.unit}):`;
+      const needle = `${displayLabel(f.id)} (${f.unit}):`;
       expect(text.split(needle).length - 1, needle).toBe(1);
     }
     // A's own speech rate appears; B's distinctive values do not.
@@ -113,7 +114,14 @@ describe("student document", () => {
     expect(text.toLowerCase()).not.toMatch(/instructor|live score/);
     // Transcript: speaker labels with timestamps and the removed cross-talk marker.
     expect(text).toMatch(/A 00:00 {2}So,/);
-    expect(text).toContain("cross-talk removed from B's microphone");
+    expect(text).toContain("partner speech set aside from B's microphone");
+    // Section 5: plain section titles, each opening sentence, and no banned word anywhere.
+    for (const s of SECTIONS) {
+      expect(text).toContain(s.title);
+      expect(text).toContain(s.intro);
+    }
+    expect(text).toContain("Speed and pausing index, relative to this class");
+    expect(bannedWordsIn(text)).toEqual([]);
     expect(text).toContain("Pipeline version: 1.0.0");
   });
 

@@ -25,7 +25,7 @@ export default function DevUiPage() {
         <FaultStrip level="fault" />
       </Card>
       <Card className="flex items-center gap-2 text-fault">
-        <Icon name="error" />
+        <Icon name="block" />
         <span>Blocking warning text on surface</span>
       </Card>
     </main>
