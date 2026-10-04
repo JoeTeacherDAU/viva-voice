@@ -125,4 +125,30 @@ Request for Joe, when the key exists: run `DEEPGRAM_API_KEY=<key> npx vitest run
 
 Deferred: nothing.
 
+Commit: 629c7ed.
+
+## 2026-10-04, P5: Live display
+
+Tasks done: P5.1, P5.2, P5.3, P5.4, P5.5, P5.6, P5.7.
+
+Acceptance: `npm run test && npm run test:e2e` passed on the third attempt, together with lint, build, and the contrast check. Vitest ran 593 tests with 1 skipped (the live Deepgram test). Playwright ran 5 tests with 1 skipped on this Mac (the fake-microphone test, which runs on Linux CI). The first attempt failed because the new contrast script needed formatting. The second failed because the P3 setup test still expected the text of the placeholder session page, which P5 replaced; that test now reads the session record from IndexedDB instead, which checks more than the text did.
+
+What I built:
+
+- lib/session/state.ts, a reducer for setup, live, closing, and done. Every change appends an event. A score tap outside the live state, or outside the 1 to 5 scale, changes nothing. The first tap sets the timestamp and later taps change only the value, per ruling R4.
+- lib/session/controller.ts, a LiveSession class that forwards audio to the transcriber only while live, keeps final words in capture time, recomputes pass one every 10 seconds and once at Stop, counts target structures on final words, estimates talk time from interims, stops by itself when the configured duration runs out, and raises faults. A fake-timer unit test confirms that the recompute fires at exactly 10 and 20 seconds after Start, once more at Stop, and never after.
+- The fault strip turns amber while the transcriber reconnects and red on a fatal transcriber failure, a dropped device track, or a channel that stays below -90 dBFS for 10 seconds. Each red fault also goes into the session record as an event.
+- app/session, the live display: timer, Start and Stop, the talk-time bar, two index slots that stay as grey blocks until the first score tap, two target counters, and five score buttons. At Stop the screen saves the pass-one transcript, the pass-one measurements, and the energy frames to a new IndexedDB store for P6 to upload. I viewed a screenshot at 1280 by 800 and checked it against DESIGN.md, and the e2e test asserts that nothing on the page scrolls.
+- scripts/contrast-check.mjs, which checks 11 foreground and background pairings from app/globals.css. The lowest ratio is 4.72 to 1 (fault red on the card surface), against the 3.0 the plan requires. CI runs it.
+
+Places where I departed from the plan, and why:
+
+- Stored times use capture time, meaning milliseconds since the WAV began, rather than a clock that starts at the Start marker. The transcriber still counts from zero at Start, as PLAN.md 6.1 says, and the controller adds the Start offset when words arrive. With one time base, pass one and pass two line up with each other and with the WAV, and the markers say where the window sits inside the WAV.
+- The index slot recomputes over everything from Start to now, not over the last 10 seconds, because a growing window gives Joe a steadier number. The rolling windows from P2 stay available in the stored measurements.
+- No course baseline exists until P6 writes one, so the composite stays null for now, and after the score tap each slot shows the three raw components (words per minute, pauses per minute at 350 ms, and words per run at 350 ms), as PLAN.md section 9 allows.
+- The noise-floor watchdog uses -90 dBFS, close to digital silence, so a quiet student never trips it but a dead transmitter does.
+- The mock transcriber now emits times that start at zero on connect, like Deepgram, instead of raw fixture times.
+
+Deferred: nothing.
+
 Commit: recorded in the next entry.

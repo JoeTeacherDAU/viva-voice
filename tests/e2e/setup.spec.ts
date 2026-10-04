@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { login } from "./helpers";
+import { login, readSessionRecord } from "./helpers";
 
 test.beforeEach(async ({ page }) => {
   await login(page);
@@ -31,7 +31,11 @@ test("setup reaches a passing state on the synthetic stereo device", async ({ pa
 
   await page.getByRole("button", { name: "Continue to session" }).click();
   await expect(page).toHaveURL(/\/session\?id=demo-exam-/);
-  await expect(page.getByTestId("session-state")).toHaveText("State: setup");
+  await expect(page.getByTestId("session-state")).toHaveText("Ready");
+  const id = new URL(page.url()).searchParams.get("id")!;
+  const rec = (await readSessionRecord(page, id)) as { state: string; participantIds: object };
+  expect(rec.state).toBe("setup");
+  expect(rec.participantIds).toEqual({ A: "DEMO-001", B: "DEMO-002" });
 });
 
 test("a declined student blocks the session", async ({ page }) => {

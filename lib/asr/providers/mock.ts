@@ -46,7 +46,14 @@ export class MockTranscriber implements Transcriber {
   async connect(cfg: TranscriberConfig): Promise<void> {
     const label = (ch: 0 | 1): Participant => cfg.channelMap[String(ch) as "0" | "1"];
     const segments = this.segment(
-      this.words.map((w) => ({ ...w, speakerLabel: label(w.channel), pass: 1 as const })),
+      // Emit on the session clock, like Deepgram: originMs maps to zero.
+      this.words.map((w) => ({
+        ...w,
+        startMs: w.startMs - this.opts.originMs,
+        endMs: w.endMs - this.opts.originMs,
+        speakerLabel: label(w.channel),
+        pass: 1 as const,
+      })),
     );
     this.emitEvent({ type: "open", atMs: 0 });
     for (const seg of segments) {
@@ -78,8 +85,8 @@ export class MockTranscriber implements Transcriber {
     this.emitEvent({ type: "close", atMs: 0 });
   }
 
-  private at(fixtureMs: number, fn: () => void) {
-    const delay = Math.max(0, (fixtureMs - this.opts.originMs) / this.opts.speed);
+  private at(sessionMs: number, fn: () => void) {
+    const delay = Math.max(0, sessionMs / this.opts.speed);
     this.timers.push(setTimeout(fn, delay));
   }
 

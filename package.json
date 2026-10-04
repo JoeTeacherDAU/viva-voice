@@ -16,7 +16,8 @@
     "prebuild": "node scripts/build-worklets.mjs && node scripts/feature-coverage.mjs",
     "feature-coverage": "node scripts/feature-coverage.mjs",
     "predev": "node scripts/build-worklets.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "contrast": "node scripts/contrast-check.mjs"
   },
   "dependencies": {
     "ajv": "^8.20.0",

@@ -5,9 +5,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   appendPcm,
   deleteSession,
+  getArtifact,
   getSession,
   listSessions,
   PcmWriter,
+  putArtifact,
   putSession,
   readPcm,
   resetDbForTests,
@@ -189,8 +191,11 @@ describe("IndexedDB buffer", () => {
       [1, 2],
       [3, 4],
     ]);
+    await putArtifact("s1", "energy", { frameMs: 20 });
+    expect(await getArtifact("s1", "energy")).toEqual({ frameMs: 20 });
     await deleteSession("s1");
     expect(await getSession("s1")).toBeUndefined();
+    expect(await getArtifact("s1", "energy")).toBeUndefined();
     expect(await readPcm("s1")).toEqual([]);
     expect(await readPcm("s2")).toHaveLength(1);
   });

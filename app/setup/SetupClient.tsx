@@ -249,7 +249,12 @@ export function SetupClient() {
           type: "setup",
           atMs: 0,
           detail: {
-            device: { label: report.label, settings: report.settings, synthetic: report.synthetic },
+            device: {
+              deviceId: report.deviceId,
+              label: report.label,
+              settings: report.settings,
+              synthetic: report.synthetic,
+            },
             separationDb: sep,
           },
         },

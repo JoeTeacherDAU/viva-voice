@@ -5,7 +5,7 @@
 import type { SessionRecord } from "@/lib/analysis/types";
 
 export const DB_NAME = "viva";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -17,6 +17,8 @@ export function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains("sessions"))
         db.createObjectStore("sessions", { keyPath: "id" });
       if (!db.objectStoreNames.contains("pcm")) db.createObjectStore("pcm");
+      // Version 2: pass-one transcript, energy, and measurements per session.
+      if (!db.objectStoreNames.contains("artifacts")) db.createObjectStore("artifacts");
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => {
@@ -35,7 +37,7 @@ export async function resetDbForTests(): Promise<void> {
 }
 
 function tx<T>(
-  store: "sessions" | "pcm",
+  store: "sessions" | "pcm" | "artifacts",
   mode: IDBTransactionMode,
   fn: (s: IDBObjectStore) => IDBRequest<T> | void,
 ): Promise<T | undefined> {
@@ -67,6 +69,24 @@ export async function listSessions(): Promise<SessionRecord[]> {
 export async function deleteSession(id: string): Promise<void> {
   await tx("sessions", "readwrite", (s) => s.delete(id));
   await tx("pcm", "readwrite", (s) => s.delete(IDBKeyRange.bound([id, 0], [id, Infinity])));
+  await tx("artifacts", "readwrite", (s) => s.delete(IDBKeyRange.bound([id, ""], [id, "\uffff"])));
+}
+
+export type ArtifactName = "transcript-pass1" | "energy" | "measurements-pass1";
+
+export async function putArtifact(
+  sessionId: string,
+  name: ArtifactName,
+  value: unknown,
+): Promise<void> {
+  await tx("artifacts", "readwrite", (s) => s.put(value, [sessionId, name]));
+}
+
+export async function getArtifact<T>(
+  sessionId: string,
+  name: ArtifactName,
+): Promise<T | undefined> {
+  return tx<T>("artifacts", "readonly", (s) => s.get([sessionId, name]));
 }
 
 export async function appendPcm(sessionId: string, seq: number, buf: ArrayBuffer): Promise<void> {
