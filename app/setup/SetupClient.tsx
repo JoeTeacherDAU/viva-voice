@@ -176,6 +176,47 @@ export function SetupClient() {
     });
   }
 
+  const [configMsg, setConfigMsg] = useState<string | null>(null);
+
+  async function importJson(kind: "exam" | "roster", file: File | undefined) {
+    if (!file) return;
+    setConfigMsg(null);
+    let body: unknown;
+    try {
+      body = JSON.parse(await file.text());
+    } catch {
+      setConfigMsg(`${file.name} is not valid JSON.`);
+      return;
+    }
+    const url = kind === "exam" ? "/api/exam" : `/api/roster?examId=${encodeURIComponent(examId)}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const out = (await res.json()) as { error?: string; examId?: string };
+    if (!res.ok) {
+      setConfigMsg(`Import failed: ${out.error ?? res.status}`);
+      return;
+    }
+    if (kind === "exam" && out.examId) setExamId(out.examId);
+    setConfigMsg(
+      kind === "exam" ? `Imported exam ${out.examId}. Load it to use it.` : "Imported the roster.",
+    );
+  }
+
+  function exportExam() {
+    if (!exam) return;
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(exam, null, 2)], { type: "application/json" }),
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${exam.id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function chooseExam() {
     setExamError(null);
     setExam(null);
@@ -366,6 +407,33 @@ export function SetupClient() {
           </Button>
         </div>
         {examError ? <p className="text-fault">{examError}</p> : null}
+        <div className="flex gap-3 flex-wrap items-center text-sm" aria-label="Exam configuration">
+          <label className="rounded-control border border-outline-variant px-3 py-2 cursor-pointer">
+            Import exam JSON
+            <input
+              type="file"
+              accept="application/json,.json"
+              className="sr-only"
+              onChange={(e) => void importJson("exam", e.target.files?.[0])}
+            />
+          </label>
+          <label
+            className={`rounded-control border border-outline-variant px-3 py-2 ${examId ? "cursor-pointer" : "opacity-40"}`}
+          >
+            Import roster JSON
+            <input
+              type="file"
+              accept="application/json,.json"
+              className="sr-only"
+              disabled={!examId}
+              onChange={(e) => void importJson("roster", e.target.files?.[0])}
+            />
+          </label>
+          <Button onClick={exportExam} disabled={!exam}>
+            Export exam JSON
+          </Button>
+          {configMsg ? <span data-testid="config-message">{configMsg}</span> : null}
+        </div>
         {exam ? (
           <div className="flex flex-col gap-3">
             <p className="text-sm text-on-surface-variant">

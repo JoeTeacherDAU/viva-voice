@@ -24,6 +24,16 @@ Route handlers under `app/api/` run as Vercel Functions: `login`, `asr/grant`, `
 
 `scripts/make-fixtures.mjs` writes three synthetic sessions to `fixtures/golden/`: balanced, asymmetric, and gappy. Each holds a stereo WAV of sine bursts, the word list, energy frames, a session record, a baseline, and `expected.json` with every tier 1 value. The script computes those values from the authored conversation and never calls the pipeline. docs/OPERATIONAL_DEFINITIONS.md states the rules both sides follow. `scripts/check-fixtures.mjs` confirms each fixture is complete.
 
+## Capture and the live session
+
+lib/audio holds the capture graph (capture.ts), the two AudioWorklets under lib/audio/worklets, the DSP they share (dsp.ts), device rules (devices.ts), the WAV builder (wav.ts), the onboard decoder and aligner (decode.ts, align.ts), and a synthetic stereo source for tests (synthetic.ts). scripts/build-worklets.mjs bundles the worklets into public/worklets before every dev and build run. lib/storage/local.ts is the IndexedDB crash buffer.
+
+lib/session/controller.ts drives a live session: it forwards audio to the transcriber, recomputes pass one every 10 seconds, counts target structures, estimates talk time, and raises faults. lib/session/state.ts is the state machine. lib/asr/providers/deepgram.ts is the live adapter, lib/asr/clock.ts the session clock, and lib/asr/batch.ts the pass-two transcriber.
+
+## Archive and outputs
+
+lib/storage/store.ts wraps the private Blob store and the in-memory fake that CI uses. lib/storage/archive.ts uploads a session from the browser after Stop. lib/output/pass2.ts runs pass two and writes everything downstream of it: transcript, measurements, documents (studentDoc.ts), cohort CSVs (csv.ts), the baseline, and the instructor file. lib/output/replicate.ts compares a fresh run with stored measurements, and lib/output/retention.ts carries out ruling R2. docs/REPLICATION.md explains how to reproduce a measurement.
+
 ## Research
 
-`research/` holds the Python layer for tier 2 and tier 3 features. It reads the archive and never deploys.
+`research/` holds the Python layer for tier 2 and tier 3 features. Each module under research/viva declares the registry ids it computes and the ids it owns but skips, with the reason. `uv run viva-research export` reads a local copy of the archive and writes long.csv and manifest.json. It never reads the roster and never deploys.

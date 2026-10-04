@@ -22,6 +22,10 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip Next internals and static files; everything else goes through the guard.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:woff2?|png|svg|ico)$).*)"],
+  // Skip Next internals, static files, and /api/upload. The proxy buffers request
+  // bodies (10 MB by default), which would truncate a WAV upload; /api/upload
+  // checks auth itself.
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|api/upload|.*\\.(?:woff2?|png|svg|ico)$).*)",
+  ],
 };

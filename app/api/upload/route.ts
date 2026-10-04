@@ -57,6 +57,13 @@ export async function PUT(request: Request) {
   const bytes = new Uint8Array(await request.arrayBuffer());
   if (bytes.length > UPLOAD_MAX_BYTES)
     return Response.json({ error: "too large" }, { status: 413 });
+  const declared = Number(request.headers.get("content-length") ?? bytes.length);
+  if (declared !== bytes.length) {
+    return Response.json(
+      { error: `received ${bytes.length} of ${declared} bytes` },
+      { status: 400 },
+    );
+  }
   await store.put(pathname, bytes, type);
   return Response.json({ pathname, size: bytes.length });
 }

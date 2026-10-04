@@ -10,6 +10,7 @@ import type {
 import type { BatchTranscriber } from "@/lib/asr/batch";
 import { paths } from "@/lib/storage/paths";
 import { getBytes, getJson, putJson, type ArchiveStore } from "@/lib/storage/store";
+import { wavOffsetMs } from "@/lib/session/wavOffset";
 import { LONG_HEADER, longRows, mergeCsv, toCsv, wideHeader, wideRows } from "./csv";
 import { findValue } from "./format";
 import { buildStudentDoc } from "./studentDoc";
@@ -24,6 +25,10 @@ export interface MeasurementsFile {
     speechFrames?: number;
     unattributedFrames?: number;
   };
+  /** The course baseline this run used, so a replication run can reuse it. */
+  baseline?: Baseline | null;
+  label?: string;
+  model?: string;
   createdAt?: string;
 }
 
@@ -40,11 +45,7 @@ export interface ExamFile {
   unit?: string;
 }
 
-/** Capture-time ms of the first WAV sample, from the archive event (0 when absent). */
-export function wavOffsetMs(rec: SessionRecord): number {
-  const e = [...rec.events].reverse().find((x) => x.type === "archive");
-  return (e?.detail as { wavOffsetMs?: number } | undefined)?.wavOffsetMs ?? 0;
-}
+export { wavOffsetMs } from "@/lib/session/wavOffset";
 
 export class Pass2Error extends Error {
   constructor(
@@ -57,8 +58,11 @@ export class Pass2Error extends Error {
 
 export interface Pass2Options {
   source?: "usb" | "onboard";
-  /** Set by the replication screen's re-transcribe; labels the run. */
-  label?: string;
+  /**
+   * A robustness check (build-plan P7.2) re-transcribes and re-measures into
+   * separate robustness files and leaves the record of account alone.
+   */
+  robustness?: boolean;
 }
 
 /**
@@ -72,7 +76,7 @@ export async function runPass2(
   sessionId: string,
   batch: BatchTranscriber,
   opts: Pass2Options = {},
-): Promise<{ record: SessionRecord; features: FeatureValue[] }> {
+): Promise<{ record: SessionRecord; features: FeatureValue[]; measurementsPath: string }> {
   const rec = await getJson<SessionRecord>(store, paths.session(sessionId));
   if (!rec) throw new Pass2Error(`No archived session ${sessionId}`, 404);
   if (rec.markers.startMs === null || rec.markers.stopMs === null) {
@@ -105,6 +109,43 @@ export async function runPass2(
   });
   const now = new Date().toISOString();
 
+  if (opts.robustness) {
+    const stamp = now.replace(/[:.]/g, "-");
+    const tPath = `transcripts/${sessionId}/robustness-${stamp}.json`;
+    const mPath = `measurements/${sessionId}/robustness-${stamp}.json`;
+    await putJson(store, tPath, {
+      words: result.words,
+      model,
+      source,
+      raw,
+      createdAt: now,
+    } satisfies TranscriptFile);
+    await putJson(store, mPath, {
+      pipelineVersion: PIPELINE_VERSION,
+      pass: 2,
+      features: result.features,
+      removedSpans: result.removedSpans,
+      quality: result.quality,
+      baseline,
+      label: "robustness check",
+      model,
+      createdAt: now,
+    } satisfies MeasurementsFile);
+    const record: SessionRecord = {
+      ...rec,
+      events: [
+        ...rec.events,
+        {
+          type: "robustness_check",
+          atMs: markers.stopMs,
+          detail: { model, source, at: now, measurements: mPath },
+        },
+      ],
+    };
+    await putJson(store, paths.session(sessionId), record);
+    return { record, features: result.features, measurementsPath: mPath };
+  }
+
   await putJson(store, paths.transcript(sessionId, 2), {
     words: result.words,
     model,
@@ -118,6 +159,8 @@ export async function runPass2(
     features: result.features,
     removedSpans: result.removedSpans,
     quality: result.quality,
+    baseline,
+    model,
     createdAt: now,
   } satisfies MeasurementsFile);
 
@@ -140,7 +183,7 @@ export async function runPass2(
       {
         type: "pass2",
         atMs: markers.stopMs,
-        detail: { model, source, label: opts.label ?? "pass two", at: now },
+        detail: { model, source, at: now },
       },
     ],
   };
@@ -182,7 +225,7 @@ export async function runPass2(
   }
 
   await appendExports(store, record, pass1?.features ?? [], result.features);
-  return { record, features: result.features };
+  return { record, features: result.features, measurementsPath: paths.measurements(sessionId, 2) };
 }
 
 async function readText(store: ArchiveStore, pathname: string): Promise<string | null> {

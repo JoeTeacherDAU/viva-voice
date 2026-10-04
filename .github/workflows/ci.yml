@@ -24,6 +24,8 @@ jobs:
       - run: npm run build
       - run: node scripts/check-fixtures.mjs
       - run: node scripts/contrast-check.mjs
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run --directory research pytest -q
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4

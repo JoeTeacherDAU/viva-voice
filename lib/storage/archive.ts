@@ -19,9 +19,10 @@ export interface ArchiveProgress {
   label: string;
 }
 
-type Uploader = (pathname: string, body: Blob, contentType: string) => Promise<void>;
+export type Uploader = (pathname: string, body: Blob, contentType: string) => Promise<void>;
 
-async function chooseUploader(): Promise<Uploader> {
+/** Picks Blob client uploads or the in-memory PUT, as /api/upload reports. */
+export async function chooseUploader(): Promise<Uploader> {
   const res = await fetch("/api/upload");
   if (!res.ok) throw new Error(`upload route returned HTTP ${res.status}`);
   const { mode } = (await res.json()) as { mode: "blob" | "memory" };

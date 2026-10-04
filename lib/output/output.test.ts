@@ -354,6 +354,12 @@ describe("routes with the in-memory store", () => {
     expect(await getJson(store, "sessions/s9.json")).toEqual({});
     expect((await PUT(await put("roster/e1.json", "application/json"))).status).toBe(400);
     expect((await PUT(await put("sessions/s9.json", "text/plain"))).status).toBe(415);
+    const short = await authed("http://x/api/upload?pathname=sessions/s9.json", {
+      method: "PUT",
+      body: "{}",
+      headers: { "content-type": "application/json", "content-length": "99" },
+    });
+    expect((await PUT(short)).status).toBe(400);
     expect(
       (
         await PUT(

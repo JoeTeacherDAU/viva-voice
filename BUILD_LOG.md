@@ -190,4 +190,33 @@ Requests for Joe:
 
 Deferred: nothing.
 
+Commit: d8feb4a.
+
+## 2026-10-04, P7: Onboard import, replication, research export
+
+Tasks done: P7.1, P7.2, P7.3, P7.4, P7.5, P7.6.
+
+Acceptance: `npm run test && npm run test:e2e && (cd research && uv run pytest)` passed on the first attempt. Afterwards I found a bug that the tests had missed (below), fixed it, strengthened the test that should have caught it, and reran the full acceptance, which passed again. Vitest ran 617 tests with 1 skipped, Playwright ran 7 with 1 skipped on this Mac, and pytest ran 7.
+
+What I built:
+
+- The import screen at /import?id=. It decodes each onboard WAV (16-, 24-, or 32-bit PCM, or 32-bit float), computes a 20 ms energy envelope, and finds its offset by FFT cross-correlation against the archived energy frames, refined below one frame by fitting a parabola to the peak. It flags a weak match for a check by ear, builds the aligned stereo WAV on the archive's timeline, uploads it as audio/{id}/onboard-stereo.wav, and offers a pass-two run with source "onboard". A unit test and an end-to-end test shift the two fixture channels by 3,217 ms early (saved as float) and 1,500 ms late (saved as 16-bit PCM), and the screen recovers both offsets within 20 ms.
+- Replication on the review screen. "Recompute from stored transcript" runs the current pipeline over the stored pass-two transcript and lists every value that differs; the end-to-end test confirms it reports "Replication run (pipeline 1.0.0): 0 differences". "Re-transcribe" runs a fresh pass two into separate robustness files labelled with the model string and date, and leaves the record of account, the baseline, the documents, and the CSVs alone.
+- Exam configuration: schemas/exam.schema.json and schemas/roster.schema.json, POST and GET /api/exam, POST /api/roster, and import and export buttons on the setup screen.
+- The Python research layer under research/: a uv project with the viva-research command, an archive reader that refuses roster paths, and the modules PLAN.md names. Twelve tier 2 features compute today. These are the mean length of AS-unit and the AS-unit pause classes at both thresholds; content-word ratio, discourse-marker rate, hedge rate, and agreement-token rate; self-repair count; and follow-up questions, new-topic questions, partner answer length after a question, and topic initiations. The export also writes the live score as rater_perceived_fluency when asked for tier 4, reading it from instructor/{examId}.json per ruling R1. Every other tier 2 and tier 3 id belongs to a module that records it in manifest.json as skipped, with the reason. A test checks that no tier 2 or tier 3 id lacks a module.
+- docs/REPLICATION.md, and CI now runs the Python tests.
+
+The bug: in local and CI runs, browser uploads go to the in-memory store through /api/upload, and Next.js's proxy layer buffers request bodies only up to 10 MB, so any upload larger than that arrived truncated without an error. Production was never affected, because there the browser uploads straight to Vercel Blob. The P7 import test passed anyway, because it checked only the WAV header. I removed /api/upload from the proxy matcher (the route checks auth itself), made the route reject a body shorter than its declared length, and made the import test compare the stored file's length with the original.
+
+Places where I departed from the plan, and why:
+
+- The import screen aligns against the archived energy frames rather than the archived WAV. The frames come from the same audio, and using them spares the browser a 58 MB download.
+- The research layer's AS-unit segmenter follows a written rule over the ASR punctuation (research/viva/asunit.py states it) instead of a spaCy parse, because no spaCy model is installed yet. The P7.5 test checks it against my hand segmentation of the balanced fixture: 16 units for each student, with the derivation written in the test. The test also checks the research layer's MATTR and MTLD against the values the fixture script computed on its own.
+- Features that need a dependency parse (the L2SCA indices, clauses, morphology), a reference list (bigrams, word frequency, the Academic Word List), forced alignment, or Praat and openSMILE appear in the manifest as skipped, never as estimates. The tier 3 modules raise a clear "not installed" message, as P7.4 allows.
+- The research layer treats a lone "okay" that answers a partner as a backchannel, where the app counts it as a turn. The comment in research/viva/archive.py explains the choice.
+- I added POST /api/roster, which the plan does not list, because without it a real exam has no way to get its roster into the store. The route only writes; nothing in export or research code reads the roster.
+- Onboard files must be 48 kHz. The import screen refuses any other rate with a message instead of resampling.
+
+Deferred: nothing within P7. Phase P8 is the rehearsal, which needs Joe, the hardware, and the live services, so the agent build stops here.
+
 Commit: recorded in the next entry.

@@ -25,6 +25,12 @@ test("a mock session archives, runs pass two, and produces every output", async 
   await expect(page.getByTestId("review-state")).toHaveText("State: done", { timeout: 30_000 });
   await expect(page.getByRole("link", { name: "A.docx" })).toBeVisible();
 
+  // build-plan P7 acceptance: an unchanged pipeline replicates with zero differences.
+  await page.getByRole("button", { name: "Recompute from stored transcript" }).click();
+  await expect(page.getByTestId("comparison-result")).toContainText(
+    "Replication run (pipeline 1.0.0): 0 differences",
+  );
+
   const get = async (url: string) => {
     const r = await page.request.get(url);
     expect(r.ok(), `${url} returned ${r.status()}`).toBe(true);

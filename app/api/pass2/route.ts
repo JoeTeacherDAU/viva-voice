@@ -22,7 +22,7 @@ function mockBatch(sessionId: string): BatchTranscriber {
 export async function POST(request: Request) {
   const denied = await requireAuth(request);
   if (denied) return denied;
-  let body: { sessionId?: string; source?: "usb" | "onboard"; label?: string };
+  let body: { sessionId?: string; source?: "usb" | "onboard"; robustness?: boolean };
   try {
     body = await request.json();
     assertId(body.sessionId ?? "", "session id");
@@ -36,11 +36,16 @@ export async function POST(request: Request) {
   else return Response.json({ error: "DEEPGRAM_API_KEY is not configured" }, { status: 500 });
 
   try {
-    const { record } = await runPass2(getStore(), sessionId, batch, {
+    const { record, measurementsPath } = await runPass2(getStore(), sessionId, batch, {
       source: body.source,
-      label: body.label,
+      robustness: body.robustness === true,
     });
-    return Response.json({ ok: true, state: record.state, passes: record.passes });
+    return Response.json({
+      ok: true,
+      state: record.state,
+      passes: record.passes,
+      measurements: measurementsPath,
+    });
   } catch (e) {
     const status = e instanceof Pass2Error ? e.status : 502;
     return Response.json({ error: (e as Error).message }, { status });

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://viva.weevillabs.dev/schemas/exam.schema.json",
+  "title": "Viva Voice exam record (exams/{examId}.json)",
+  "type": "object",
+  "required": ["id", "course", "unit", "prompt", "targetPatterns", "keyterms", "durationMs"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$" },
+    "course": { "type": "string" },
+    "unit": { "type": "string" },
+    "prompt": { "type": "string" },
+    "targetPatterns": { "type": "array", "items": { "type": "string" } },
+    "keyterms": { "type": "array", "items": { "type": "string" } },
+    "durationMs": { "type": "integer", "minimum": 60000, "maximum": 900000 },
+    "termEnd": { "type": "string", "format": "date" }
+  }
+}
