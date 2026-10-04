@@ -43,7 +43,8 @@ next-env.d.ts
 # viva-voice: audio lives only in fixtures/golden; roster data never enters git
 *.wav
 !fixtures/golden/**/*.wav
-roster/
+/roster/
+**/roster/*.json
 research-export/
 research/.venv/
 __pycache__/
