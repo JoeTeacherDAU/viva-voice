@@ -1,0 +1,433 @@
+{
+  "project": "viva-voice",
+  "planVersion": "6.0.0",
+  "generated": "2026-10-04",
+  "authority": "This file is the build authority. PLAN.md explains it. features.json defines every measurement. When a phase and PLAN.md disagree, follow this file and append a note to BUILD_LOG.md.",
+  "repository": {
+    "localPath": "~/CC Projects/viva-voice",
+    "remote": "github.com/<joe>/viva-voice (private)",
+    "defaultBranch": "main",
+    "neverInside": [
+      "~/My Drive",
+      "~/Library/Mobile Documents"
+    ],
+    "docsMirror": "~/Library/Mobile Documents/com~apple~CloudDocs/Viva Voice Dev"
+  },
+  "stack": {
+    "framework": "Next.js (App Router), TypeScript strict, Tailwind",
+    "runtime": "Node 22 LTS",
+    "packageManager": "npm",
+    "test": "vitest",
+    "lint": "eslint + prettier",
+    "deploy": "Vercel Pro, Fluid compute, region icn1",
+    "storage": "Vercel Blob, one private store",
+    "asr": "Deepgram nova-3, multichannel",
+    "docx": "docx npm package",
+    "research": "Python 3.12 via uv, under research/"
+  },
+  "agentRules": [
+    "Read CLAUDE.md, PLAN.md, MEASUREMENT_FRAMEWORK.md, and features.json before writing code.",
+    "Work one phase at a time in order. Do not start a phase until the previous phase's acceptance command exits 0.",
+    "Every phase ends with: npm run lint, npm run test, npm run build (where a build exists), one commit with the phase id in the message, one entry in BUILD_LOG.md.",
+    "If an acceptance test fails after three attempts, stop. Write what failed and what you tried in BUILD_LOG.md under 'BLOCKED'. Do not patch the test to pass.",
+    "A task with requiresHuman true is a stop. Write the exact request for Joe in BUILD_LOG.md and end the run.",
+    "Never create or modify Vercel, GitHub, Deepgram, or Porkbun account resources. Never run vercel deploy to production. Preview deploys through git push are fine.",
+    "Never commit a .env file, an API key, a WAV file outside fixtures/golden, or any file under roster/.",
+    "No tables in Markdown files written for Joe. Lists only where organization needs them. No em dashes anywhere. Active voice.",
+    "Pure analysis code under lib/analysis imports nothing from the browser or Node. The same code runs in the browser and in a Vercel Function.",
+    "Add a feature by adding one entry to features.json and one pure function registered under its id. The DOCX, CSV, and export code read the registry; never hard-code a feature list elsewhere.",
+    "Follow DESIGN.md for every screen: Weevil Labs tokens in app/globals.css and tailwind.config.ts, Space Grotesk via next/font/google, dark theme only, student A in --primary and student B in --tertiary everywhere."
+  ],
+  "environmentVariables": {
+    "DEEPGRAM_API_KEY": "server only; Phase 0; never shipped to the browser",
+    "BLOB_READ_WRITE_TOKEN": "set by Vercel when the store connects; needed by handleUpload",
+    "BLOB_STORE_ID": "set by Vercel",
+    "VIVA_PASSWORD": "single shared secret for Joe's login",
+    "VIVA_SESSION_SECRET": "random 32 bytes for cookie signing",
+    "VIVA_MOCK_ASR": "1 enables the mock transcriber in dev and CI"
+  },
+  "phases": [
+    {
+      "id": "P0",
+      "title": "Accounts, hardware gates, and repository creation",
+      "owner": "human",
+      "requiresHuman": true,
+      "tasks": [
+        {
+          "id": "P0.1",
+          "task": "Create the private GitHub repository viva-voice with no README, no .gitignore, no license."
+        },
+        {
+          "id": "P0.2",
+          "task": "Clone it to ~/CC Projects/viva-voice. Confirm the path is outside Google Drive and iCloud."
+        },
+        {
+          "id": "P0.3",
+          "task": "In Vercel: new project from the repository, Next.js preset, production branch main, region icn1 (Seoul). Note the default *.vercel.app URL."
+        },
+        {
+          "id": "P0.4",
+          "task": "In Vercel: create a Blob store with access Private, name viva-voice-archive, connect it to the project for Production, Preview, and Development."
+        },
+        {
+          "id": "P0.5",
+          "task": "In Vercel: set DEEPGRAM_API_KEY, VIVA_PASSWORD, VIVA_SESSION_SECRET for all environments. Set a monthly spend limit."
+        },
+        {
+          "id": "P0.6",
+          "task": "Deepgram console: create a project and an API key with usage::write only. Read deepgram.com/pricing and write the current Nova-3 streaming and pre-recorded rates into docs/verification/V7-pricing.md."
+        },
+        {
+          "id": "P0.7",
+          "task": "Run VERIFICATION_CHECKLIST.md tasks V1, V2, V2b, V6. Write results into docs/verification/. V1 and V6 must pass before Phase 4."
+        },
+        {
+          "id": "P0.8",
+          "task": "Porkbun: when the Neo Mail account recovers, add CNAME viva -> cname.vercel-dns.com and add viva.weevillabs.dev as a project domain. Until then the app runs at the *.vercel.app URL."
+        },
+        {
+          "id": "P0.9",
+          "task": "Done 2026-10-04: docs/rulings.md records the five rulings. Copy it into the repository with the other plan files."
+        }
+      ],
+      "acceptance": "Repository cloned at the stated path, Vercel project exists with the private Blob store connected, environment variables set, docs/verification/V1 and V6 report pass."
+    },
+    {
+      "id": "P1",
+      "title": "Skeleton, CI, auth, schemas, registry, mock transcriber, fixtures",
+      "owner": "agent",
+      "requiresHuman": false,
+      "tasks": [
+        {
+          "id": "P1.1",
+          "task": "npx create-next-app@latest . --typescript --tailwind --app --eslint --no-src-dir --import-alias '@/*'. Add vitest, @vitest/coverage-v8, prettier, husky pre-commit running lint and test."
+        },
+        {
+          "id": "P1.2",
+          "task": "Create the directory tree: app/(auth)/login, app/setup, app/session, app/review/[id], app/import, app/api/{login,asr/grant,upload,file,pass2,export}, lib/{audio,asr,analysis,storage,output,registry,auth}, schemas/, fixtures/golden, research/, docs/, scripts/."
+        },
+        {
+          "id": "P1.2b",
+          "task": "Design system from DESIGN.md: app/globals.css with every CSS variable listed there, tailwind.config.ts theme.extend.colors mapping the same names, next/font/google for Space Grotesk (300-700) and Material Symbols Outlined, <html class=\"dark\">, and lib/ui/ with Button (filled and outlined), Card, Meter, and FaultStrip components. Storybook is not required; a /dev/ui page renders every component once."
+        },
+        {
+          "id": "P1.3",
+          "task": "Copy features.json to lib/registry/features.json. Write lib/registry/index.ts that loads it, validates it against schemas/features.schema.json at build time, and exports typed accessors: byTier(n), byConstruct(name), get(id)."
+        },
+        {
+          "id": "P1.4",
+          "task": "Write schemas/session.schema.json (JSON Schema 2020-12) for the session record: id, examId, participantIds {A,B}, config (gainDb, pauseThresholdsMs, turnThresholdMs, gatingMarginDb, compositeWeights, weightsVersion, baselineMinSessions, fillerTokens, backchannelTokens, targetPatterns, keyterms, durationMs), markers {startMs, stopMs}, events[] {type, atMs, detail}, instructorLiveScore {value, atMs} | null, passes {1: ref, 2: ref}, pipelineVersion, deepgramModel, firmware {tx, rx}, createdAt. Write schemas/words.schema.json for the word record: word, punctuatedWord, startMs, endMs, confidence, channel (0|1), isFinal, pass, removedAsCrosstalk (bool), speakerLabel (A|B)."
+        },
+        {
+          "id": "P1.5",
+          "task": "Write lib/auth: cookie session signed with VIVA_SESSION_SECRET, POST /api/login compares against VIVA_PASSWORD with constant-time compare, middleware.ts protects every route except /login and /api/login."
+        },
+        {
+          "id": "P1.6",
+          "task": "Write lib/asr/types.ts: interface Transcriber { connect(cfg): Promise<void>; sendFrames(buf: ArrayBuffer): void; onWords(cb: (w: Word[]) => void): void; onEvent(cb): void; close(): Promise<void> }. Write lib/asr/providers/mock.ts that replays a fixture word list on a timer with interims then finals, driven by VIVA_MOCK_ASR=1."
+        },
+        {
+          "id": "P1.7",
+          "task": "Write scripts/make-fixtures.ts that synthesises three golden fixtures without any real voice: fixtures/golden/{balanced,asymmetric,gappy}/ each with stereo.wav (two sine-burst 'speakers' with known timings at 48 kHz), words.json (hand-authored word timings matching the bursts), energy.json, and expected.json listing every tier 1 feature value computed by hand in the script with the formula from features.json. The script writes expected.json from explicit arithmetic, never from the pipeline."
+        },
+        {
+          "id": "P1.8",
+          "task": "GitHub Actions ci.yml: node 22, npm ci, lint, test with coverage, build. Required check on main."
+        },
+        {
+          "id": "P1.9",
+          "task": "Write docs/ARCHITECTURE.md (short) and BUILD_LOG.md with the P1 entry."
+        }
+      ],
+      "acceptance": "npm run lint && npm run test && npm run build exit 0; three fixture folders exist with expected.json; /login works against VIVA_PASSWORD in dev; registry loader rejects a malformed features.json in a unit test.",
+      "acceptanceCommand": "npm run lint && npm run test && npm run build && node scripts/check-fixtures.mjs"
+    },
+    {
+      "id": "P2",
+      "title": "Analysis pipeline, all tier 1 features, golden tests",
+      "owner": "agent",
+      "requiresHuman": false,
+      "tasks": [
+        {
+          "id": "P2.1",
+          "task": "lib/analysis/types.ts: EnergyFrame {atMs, channel, dbfs}, Word (from schema), Config (from schema), Turn, Pause, Run, FeatureValue {featureId, participant, pass, window, thresholdMs|null, value|null, unit}."
+        },
+        {
+          "id": "P2.2",
+          "task": "lib/analysis/crosstalk.ts: align word sequences across channels (>=2 tokens, <=300 ms offset); keep earlier onset and higher mean confidence; single-token ties resolved by energy; mark removedAsCrosstalk; return removed spans."
+        },
+        {
+          "id": "P2.3",
+          "task": "lib/analysis/gating.ts: per-frame attribution with gatingMarginDb; unattributed count and ratio."
+        },
+        {
+          "id": "P2.4",
+          "task": "lib/analysis/window.ts: trim words and frames to [startMs, stopMs]; exclude gap events from pass-one phonation and pause computations."
+        },
+        {
+          "id": "P2.5",
+          "task": "lib/analysis/prune.ts: pruned word list removes fillerTokens, immediate repetitions, and backchannel tokens; keeps a map back to raw indices."
+        },
+        {
+          "id": "P2.6",
+          "task": "lib/analysis/turns.ts: turns per channel using turnThresholdMs and other-channel onset; transitions with latency (negative = overlap); overlaps."
+        },
+        {
+          "id": "P2.7",
+          "task": "lib/analysis/pauses.ts: within-turn gaps at each threshold; mid vs end clause by punctuation; runs; mean length of run."
+        },
+        {
+          "id": "P2.8",
+          "task": "lib/analysis/features/*.ts: one file per construct (speed, breakdown, repair, interaction, lexical, composite, quality). Each exports functions keyed by feature id from the registry. lib/analysis/syllables.ts bundles a compact CMU-dict-derived syllable count table (generate via scripts/build-syllable-table.mjs from the public cmudict; commit the generated JSON, about 130k entries) with an orthographic fallback."
+        },
+        {
+          "id": "P2.9",
+          "task": "lib/analysis/composite.ts: z-scores against a Baseline {n, mean, sd per component}; invert pause rate; weights from config; null when n < baselineMinSessions."
+        },
+        {
+          "id": "P2.10",
+          "task": "lib/analysis/pipeline.ts: run(words, frames, config, baseline, {pass}) -> {features: FeatureValue[], turns, removedSpans, quality}. Export PIPELINE_VERSION = '1.0.0'. Rolling 10-second windows for speech_rate_wpm, silent_pause_rate, mean_length_of_run, talk_time_share."
+        },
+        {
+          "id": "P2.11",
+          "task": "Tests: unit tests per module; golden tests run pipeline on each fixture and assert every expected.json value within tolerance (rates ±0.5 %, counts exact, ms ±1). Coverage threshold 90 % on lib/analysis."
+        },
+        {
+          "id": "P2.12",
+          "task": "scripts/feature-coverage.mjs: fails if any tier 1 id in features.json has no registered function or no expected value in at least one fixture."
+        }
+      ],
+      "acceptance": "All tier 1 features computed and tested; golden tests green; feature-coverage script exits 0; PIPELINE_VERSION exported.",
+      "acceptanceCommand": "npm run test && node scripts/feature-coverage.mjs"
+    },
+    {
+      "id": "P3",
+      "title": "Device setup, capture, worklets, buffer, WAV",
+      "owner": "agent",
+      "requiresHuman": false,
+      "tasks": [
+        {
+          "id": "P3.1",
+          "task": "lib/audio/devices.ts: enumerate audioinput devices with labels and channel counts; open with the exact constraint set from PLAN.md section 5; read back getSettings(); return a DeviceReport."
+        },
+        {
+          "id": "P3.2",
+          "task": "lib/audio/worklets/energy.worklet.ts: 20 ms RMS -> dBFS frames per channel. lib/audio/worklets/downsample.worklet.ts: 48 kHz -> 16 kHz with a windowed-sinc low-pass, interleave to 16-bit stereo, post ArrayBuffers of 100 ms."
+        },
+        {
+          "id": "P3.3",
+          "task": "lib/audio/capture.ts: AudioContext 48 kHz, splitter, both worklets, raw PCM tee into lib/storage/local.ts (IndexedDB 'viva', stores 'sessions' and 'pcm'), two-second flush, navigator.storage.persist()."
+        },
+        {
+          "id": "P3.4",
+          "task": "lib/audio/wav.ts: build a 48 kHz 16-bit stereo WAV Blob from the PCM store for a session; also two mono WAVs on demand."
+        },
+        {
+          "id": "P3.5",
+          "task": "app/setup/page.tsx: device list, open button, settings readback, two level meters, A/B assignment buttons, calibration (10 s A, 10 s B) producing separation per direction and a proposed gatingMarginDb, exam selection (loads exams/{examId}.json), participant selection from roster, blocking warnings. Writes the session record (state 'setup') to IndexedDB and navigates to /session."
+        },
+        {
+          "id": "P3.6",
+          "task": "Dev harness: app/dev/capture-test renders meters from a synthetic stereo MediaStream built from an AudioBuffer so CI and headless Chrome can exercise the graph without hardware."
+        },
+        {
+          "id": "P3.7",
+          "task": "Playwright test in headless Chromium with --use-fake-device-for-media-stream: setup page reaches a passing state on the synthetic device; a mono fake device shows the channel-count block."
+        }
+      ],
+      "acceptance": "Playwright setup tests pass; a 60-second synthetic capture produces a WAV that a Node WAV parser reads as 48 kHz stereo 16-bit with the expected sample count.",
+      "acceptanceCommand": "npm run test && npm run test:e2e"
+    },
+    {
+      "id": "P4",
+      "title": "Deepgram live adapter, grant route, session clock, reconnection",
+      "owner": "agent",
+      "requiresHuman": false,
+      "humanGate": "Live-key tests need DEEPGRAM_API_KEY and V6 passed. Build and unit-test against a recorded Deepgram message fixture; mark the live test skipped when the key is absent.",
+      "tasks": [
+        {
+          "id": "P4.1",
+          "task": "app/api/asr/grant/route.ts: POST, requires auth cookie, calls https://api.deepgram.com/v1/auth/grant with Authorization: Token <DEEPGRAM_API_KEY> and body {ttl_seconds: 60}, returns {token, expiresIn}. Never logs the key."
+        },
+        {
+          "id": "P4.2",
+          "task": "lib/asr/providers/deepgram.ts implementing Transcriber: builds the URL with the exact query from PLAN.md section 6.1; opens new WebSocket(url, ['bearer', jwt]); parses Results messages with channel_index; emits Word[] with channel, isFinal (is_final && speech_final semantics documented in code), confidence, punctuated_word; KeepAlive every 5 s; CloseStream on close()."
+        },
+        {
+          "id": "P4.3",
+          "task": "lib/asr/clock.ts: session clock; per-connection offset = audio ms already sent on that connection; rebase start/end; gap events on reconnect with session-clock bounds."
+        },
+        {
+          "id": "P4.4",
+          "task": "Reconnect: exponential backoff 0.5 s, 1 s, 2 s, 4 s, max 5 tries; a fresh grant per reconnect; fault state exposed to the display."
+        },
+        {
+          "id": "P4.5",
+          "task": "fixtures/deepgram/: recorded JSON messages for a multichannel stream (hand-authored to match the balanced fixture); unit tests drive the adapter with a fake WebSocket."
+        },
+        {
+          "id": "P4.6",
+          "task": "tests/live/deepgram.live.test.ts: skipped unless DEEPGRAM_API_KEY is set; streams fixtures/golden/balanced/stereo.wav at real time through the adapter and asserts words arrive on both channels with monotonic rebased timestamps."
+        }
+      ],
+      "acceptance": "Adapter unit tests green against the fake socket; grant route unit test green with a mocked fetch; live test either passes or reports skipped with reason.",
+      "acceptanceCommand": "npm run test"
+    },
+    {
+      "id": "P5",
+      "title": "Live display",
+      "owner": "agent",
+      "requiresHuman": false,
+      "tasks": [
+        {
+          "id": "P5.1",
+          "task": "app/session/page.tsx: full-viewport layout, large type (minimum 48 px for numbers), four elements from PLAN.md section 9 plus timer, Start/Stop, and five score buttons. No scrolling at 1280x800."
+        },
+        {
+          "id": "P5.2",
+          "task": "lib/session/state.ts: reducer with states setup, live, closing, done; events appended to the record; instructorLiveScore set once per session (later taps update the value and keep the first timestamp). Scale 1 to 5 per docs/rulings.md R4."
+        },
+        {
+          "id": "P5.3",
+          "task": "Index slot hidden until instructorLiveScore is non-null; then show composite or three raw components; recompute every 10 s from final words via pipeline.run with pass 1; recompute once at Stop."
+        },
+        {
+          "id": "P5.4",
+          "task": "Talk-time bar from interim words' channel phonation estimate; fault strip from adapter state, device state, and a 10 s noise-floor watchdog on energy frames."
+        },
+        {
+          "id": "P5.5",
+          "task": "Target-structure counter from final words only, word-boundary anchored regex, spans stored."
+        },
+        {
+          "id": "P5.6",
+          "task": "Playwright: mock transcriber session runs 30 s; assert the index slot stays hidden until a score click, then shows a value; assert Stop writes markers and state 'closing'."
+        },
+        {
+          "id": "P5.7",
+          "task": "scripts/contrast-check.mjs: compute WCAG contrast for every foreground/background pairing DESIGN.md names for the live display and fail under 3.0 for large text. Run it in CI."
+        }
+      ],
+      "acceptance": "Playwright display tests green; no element scrolls at 1280x800; recompute timer verified by a fake-timer unit test.",
+      "acceptanceCommand": "npm run test && npm run test:e2e"
+    },
+    {
+      "id": "P6",
+      "title": "Archive, pass two, documents, exports, bundle",
+      "owner": "agent",
+      "requiresHuman": false,
+      "humanGate": "Blob and Deepgram calls run only in preview and production. In CI, lib/storage uses an in-memory fake and pass2 uses the mock transcriber.",
+      "tasks": [
+        {
+          "id": "P6.1",
+          "task": "app/api/upload/route.ts: handleUpload with onBeforeGenerateToken requiring the auth cookie, pathname must start with audio/{sessionId}/ or energy/{sessionId} or transcripts/{sessionId}/ or sessions/, allowedContentTypes audio/wav and application/json, maximumSizeInBytes 120000000, access 'private'."
+        },
+        {
+          "id": "P6.2",
+          "task": "lib/storage/archive.ts (browser): at Stop, build stereo.wav, upload it, upload energy.json, transcripts/pass1.json, measurements/pass1.json, sessions/{id}.json. Retry with backoff; show progress; keep IndexedDB copy until every upload confirms."
+        },
+        {
+          "id": "P6.3",
+          "task": "app/api/file/route.ts: auth, get(pathname, {access:'private'}), stream with Cache-Control private, no-store."
+        },
+        {
+          "id": "P6.4",
+          "task": "app/api/pass2/route.ts: maxDuration 300; auth; presigned GET URL for audio/{id}/stereo.wav (SDK presignUrl, 10 min); POST to Deepgram /v1/listen with the batch query from PLAN.md 6.2 and body {url}; map channels to A/B from the session record; run pipeline with pass 2 and the course baseline; write transcripts/pass2.json and measurements/pass2.json; update sessions/{id}.json with pass refs and state 'done'; update the course baseline file baselines/{examId}.json (n, mean, sd per component) with the new session."
+        },
+        {
+          "id": "P6.5",
+          "task": "lib/output/studentDoc.ts: DOCX per PLAN.md 11.1 using the registry for labels and units; transcript paragraphs with speaker label and mm:ss; bold recipient turns; removed-span markers; no partner values; no instructor score. Fonts: Sukhumvit Set if available, else Calibri."
+        },
+        {
+          "id": "P6.6",
+          "task": "lib/output/csv.ts: wide.csv and long.csv per PLAN.md 11.2, appended per session, regenerated on demand by /api/export?examId=."
+        },
+        {
+          "id": "P6.7",
+          "task": "lib/output/bundle.ts: zip via fflate with both DOCX, stereo.wav, both transcripts, energy.json, session record."
+        },
+        {
+          "id": "P6.8",
+          "task": "app/review/[id]/page.tsx: shows both passes side by side, pass agreement flags, download buttons for A.docx, B.docx, bundle.zip, and a 'Run pass two' button when pass 2 is absent."
+        },
+        {
+          "id": "P6.9",
+          "task": "Tests: DOCX built from the balanced fixture opens with the docx parser and contains every tier 1 label once and no partner value; CSV columns equal registry tier 1 ids plus metadata; pass2 route tested with a mocked Deepgram response and the in-memory storage fake."
+        },
+        {
+          "id": "P6.10",
+          "task": "app/api/retention/route.ts: Vercel cron (monthly) that deletes audio/, transcripts/, and roster/ objects for exams whose term ended more than 24 months ago, per docs/rulings.md R2, and appends a log line to retention/log.json. Unit test with the in-memory store fake."
+        }
+      ],
+      "acceptance": "A full mock session in Playwright produces two DOCX files, a long.csv row set, a zip, and a session record in state 'done' using the in-memory store; unit tests green.",
+      "acceptanceCommand": "npm run test && npm run test:e2e"
+    },
+    {
+      "id": "P7",
+      "title": "Onboard import, replication, research export",
+      "owner": "agent",
+      "requiresHuman": false,
+      "tasks": [
+        {
+          "id": "P7.1",
+          "task": "app/import/page.tsx: accept two mono WAVs (onboard A and B), estimate the offset to the archived stereo.wav by cross-correlation on energy envelopes, build an aligned stereo WAV, upload as audio/{id}/onboard-stereo.wav, offer a pass-two run with source 'onboard'."
+        },
+        {
+          "id": "P7.2",
+          "task": "Replication: /review/[id] gains 'Recompute from stored transcript' which runs the current PIPELINE_VERSION over transcripts/pass2.json and shows a diff against stored measurements; label the result 'replication run'. 'Re-transcribe' re-runs pass two and labels it 'robustness check' with model string and date."
+        },
+        {
+          "id": "P7.3",
+          "task": "Config export and import as JSON for the exam record."
+        },
+        {
+          "id": "P7.4",
+          "task": "research/: pyproject with uv; research/viva/{archive.py, asunit.py, lexis.py, syntax.py, disfluency.py, interaction.py, align.py, acoustics.py, export.py}; each module declares which feature ids it computes and reads lib/registry/features.json; a CLI `viva-research export --exam <id> --tiers 2,3` writes research-export/{examId}/long.csv and manifest.json. Tier 3 modules may stub with NotImplemented and a clear message when MFA or openSMILE is absent."
+        },
+        {
+          "id": "P7.5",
+          "task": "research/tests: run tier 2 on the balanced fixture words.json and assert the AS-unit count and MATTR match hand values."
+        },
+        {
+          "id": "P7.6",
+          "task": "docs/REPLICATION.md: how to reproduce any measurement from the archive, which files, which version, which command."
+        }
+      ],
+      "acceptance": "Import page aligns two synthetic mono WAVs to the fixture stereo within 20 ms; replication diff shows zero differences for an unchanged pipeline; `uv run viva-research export` produces a long.csv for the fixture.",
+      "acceptanceCommand": "npm run test && npm run test:e2e && (cd research && uv run pytest)"
+    },
+    {
+      "id": "P8",
+      "title": "Rehearsal",
+      "owner": "human",
+      "requiresHuman": true,
+      "tasks": [
+        {
+          "id": "P8.1",
+          "task": "Run V3, V4, V5, V7, V8, V9 from VERIFICATION_CHECKLIST.md on the real hardware in the office."
+        },
+        {
+          "id": "P8.2",
+          "task": "Run three volunteer pairs end to end on the preview URL. After each: check channel separation in the WAV, unattributed ratio, pass agreement, every file opens."
+        },
+        {
+          "id": "P8.3",
+          "task": "Fix what breaks (agent phases may reopen). Repeat until one run needs no manual step."
+        }
+      ],
+      "acceptance": "One complete rehearsal with no manual step and no error; both DOCX open in Word; Markomatic accepts a document."
+    }
+  ],
+  "verificationGates": {
+    "V1": "Receiver enumerates as a 2-channel USB audio input in Chrome on macOS in Stereo mode.",
+    "V2": "Known two-level signal through each transmitter; record the level ratio with NC off; quantify AGC.",
+    "V2b": "Same test on the 32-bit float onboard recording; does it bypass the AGC?",
+    "V3": "track.getSettings() reports all three processing flags false and channelCount 2.",
+    "V4": "Room bleed test at exam seating distance; separation in dB per direction.",
+    "V5": "Cross-talk rejection validated against one hand-annotated 2-minute session; false acceptance and rejection rates.",
+    "V6": "Browser WebSocket to Deepgram with ['bearer', jwt] subprotocol succeeds; also test ['token', key] as the documented fallback.",
+    "V7": "Deepgram pricing read from deepgram.com/pricing; pass-two latency on a 5-minute file measured.",
+    "V8": "Private Blob store: unauthenticated GET on a blob URL returns 403; /api/file with cookie returns the file.",
+    "V9": "Office Wi-Fi: streaming round-trip latency and one forced disconnect produce a correct gap event."
+  }
+}
