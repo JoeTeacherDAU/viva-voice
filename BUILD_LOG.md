@@ -219,4 +219,4 @@ Places where I departed from the plan, and why:
 
 Deferred: nothing within P7. Phase P8 is the rehearsal, which needs Joe, the hardware, and the live services, so the agent build stops here.
 
-Commit: recorded in the next entry.
+Commit: e8bad93. A follow-up commit records this hash, updates one stale line in docs/ARCHITECTURE.md, and clears one lint warning in lib/audio/align.ts.

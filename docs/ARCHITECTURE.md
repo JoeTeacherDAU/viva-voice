@@ -16,7 +16,7 @@ Route handlers under `app/api/` run as Vercel Functions: `login`, `asr/grant`, `
 
 `lib/registry/` loads `lib/registry/features.json`, checks it against `schemas/features.schema.json` when the module loads, and exports `get`, `byTier`, and `byConstruct`. From phase P1 on, `lib/registry/features.json` is the registry of record. The copy of features.json at the repository root stays as the plan document.
 
-`lib/asr/` defines the `Transcriber` interface. `createTranscriber()` returns the mock provider when `VIVA_MOCK_ASR=1`; the Deepgram provider arrives in phase P4.
+`lib/asr/` defines the `Transcriber` interface. `createTranscriber()` returns the mock provider when `VIVA_MOCK_ASR=1` and the Deepgram adapter otherwise.
 
 `lib/validation.ts` checks session records and word lists against their schemas.
 
