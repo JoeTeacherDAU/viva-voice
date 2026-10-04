@@ -1006,5 +1006,65 @@
   "pass": 2,
   "removedAsCrosstalk": false,
   "speakerLabel": "A"
+ },
+ {
+  "word": "okay",
+  "punctuatedWord": "Okay.",
+  "startMs": 43420,
+  "endMs": 43680,
+  "confidence": 0.83,
+  "channel": 1,
+  "isFinal": true,
+  "pass": 2,
+  "removedAsCrosstalk": false,
+  "speakerLabel": "B"
+ },
+ {
+  "word": "we",
+  "punctuatedWord": "We",
+  "startMs": 44560,
+  "endMs": 44740,
+  "confidence": 0.9,
+  "channel": 0,
+  "isFinal": true,
+  "pass": 2,
+  "removedAsCrosstalk": false,
+  "speakerLabel": "A"
+ },
+ {
+  "word": "can",
+  "punctuatedWord": "can",
+  "startMs": 44780,
+  "endMs": 44960,
+  "confidence": 0.92,
+  "channel": 0,
+  "isFinal": true,
+  "pass": 2,
+  "removedAsCrosstalk": false,
+  "speakerLabel": "A"
+ },
+ {
+  "word": "stop",
+  "punctuatedWord": "stop",
+  "startMs": 45000,
+  "endMs": 45180,
+  "confidence": 0.94,
+  "channel": 0,
+  "isFinal": true,
+  "pass": 2,
+  "removedAsCrosstalk": false,
+  "speakerLabel": "A"
+ },
+ {
+  "word": "here",
+  "punctuatedWord": "here.",
+  "startMs": 45220,
+  "endMs": 45400,
+  "confidence": 0.84,
+  "channel": 0,
+  "isFinal": true,
+  "pass": 2,
+  "removedAsCrosstalk": false,
+  "speakerLabel": "A"
  }
 ]

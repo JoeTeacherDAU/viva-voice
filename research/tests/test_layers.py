@@ -73,3 +73,11 @@ def test_manifest_records_missing_models_and_keeps_construct_names_out_of_rows(t
     assert "construct" not in rows[0]
     constructs = {f["construct"] for f in __import__("viva.registry", fromlist=["features"]).features().values()}
     assert not any(cell in constructs for row in rows for cell in row)
+
+
+def test_contexts_read_floor_lapse_ms_not_turn_threshold():
+    words = [w("are", 0, 200, 0), w("you", 240, 400, 0), w("ready", 440, 680, 0, "ready?"), w("okay", 1580, 1840, 1, "Okay."), w("good", 2680, 2880, 0)]
+    base = {"id": "s", "participantIds": {"A": "a", "B": "b"}, "markers": {}}
+    turns = lambda cfg: [c for c in contexts({**base, "config": cfg}, words)][0].turns
+    assert [t.channel for t in turns({"turnThresholdMs": 9000})] == [0, 1, 0]
+    assert [t.channel for t in turns({"floorLapseMs": 2500})] == [0]

@@ -17,6 +17,7 @@
       350
     ],
     "turnThresholdMs": 1500,
+    "floorLapseMs": 1500,
     "gatingMarginDb": 6,
     "speechFloorDbfs": -60,
     "compositeWeights": {

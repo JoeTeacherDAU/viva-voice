@@ -125,7 +125,7 @@ def build_turns(words: list[dict], backchannels: set[str], floor_lapse_ms: float
     word starting inside it. It is a backchannel only while the partner holds
     the floor: inside a partner turn (computed without candidates), and either
     overlapping a partner word or inside a partner silence shorter than
-    floor_lapse_ms (turnThresholdMs). Every other candidate is a floor word, so a
+    floor_lapse_ms (config floorLapseMs). Every other candidate is a floor word, so a
     lone "okay" that answers after the partner falls silent is a one-word turn,
     and "yeah" or "really" inside a speaker's own turn is an ordinary word."""
     candidates: list[list[dict]] = []
@@ -178,7 +178,8 @@ def contexts(session: dict, words: list[dict], archive: "Archive | None" = None)
         and (hi is None or w["endMs"] <= hi)
     ]
     kept.sort(key=lambda w: (w["startMs"], w["channel"]))
-    turns = build_turns(kept, bc, cfg.get("turnThresholdMs", 1500))
+    # floorLapseMs decides whether a partner silence leaves the floor open (default 1500).
+    turns = build_turns(kept, bc, cfg.get("floorLapseMs", 1500))
     cmap = session.get("channelMap") or {"0": "A", "1": "B"}
     out = []
     for ch in (0, 1):

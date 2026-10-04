@@ -3,7 +3,9 @@ import { DEFAULT_SPEECH_FLOOR_DBFS, gateFrames } from "./gating";
 import { pausesInTurns, phonationMs } from "./pauses";
 import { pruneTurn } from "./prune";
 import { tokenOf } from "./tokens";
-import { analyseTurns, overlapIntervals, type ChannelMap } from "./turns";
+import { analyseTurns, overlapIntervals, type Candidate, type ChannelMap } from "./turns";
+
+export const DEFAULT_FLOOR_LAPSE_MS = 1500;
 import { effectiveWindowMs } from "./window";
 import type {
   Baseline,
@@ -48,6 +50,9 @@ export interface AnalysisContext {
   backchannelTokens: Set<string>;
   turns: Turn[];
   transitions: Transition[];
+  /** Every backchannel candidate with its classifying facts. */
+  candidates: Candidate[];
+  floorLapseMs: number;
   overlaps: [number, number][];
   gating: GatingResult;
   removed: RemovedSpan[];
@@ -79,12 +84,12 @@ export function buildContext(input: ContextInput): AnalysisContext {
   const { config, channelMap, attributed, gaps, markers } = input;
   const fillerTokens = new Set(config.fillerTokens.map(tokenOf));
   const backchannelTokens = new Set(config.backchannelTokens.map(tokenOf));
-  const { turns, backchannels, transitions } = analyseTurns(
+  const { turns, backchannels, transitions, candidates } = analyseTurns(
     attributed,
     backchannelTokens,
     channelMap,
     gaps,
-    config.turnThresholdMs,
+    config.floorLapseMs ?? DEFAULT_FLOOR_LAPSE_MS,
   );
 
   const channelOf = (P: Participant): Channel => (channelMap["0"] === P ? 0 : 1);
@@ -128,6 +133,8 @@ export function buildContext(input: ContextInput): AnalysisContext {
     backchannelTokens,
     turns,
     transitions,
+    candidates,
+    floorLapseMs: config.floorLapseMs ?? DEFAULT_FLOOR_LAPSE_MS,
     overlaps: overlapIntervals(attributed),
     gating: gateFrames(
       input.energy,

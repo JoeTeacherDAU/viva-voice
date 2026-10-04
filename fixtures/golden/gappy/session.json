@@ -17,6 +17,7 @@
       350
     ],
     "turnThresholdMs": 1500,
+    "floorLapseMs": 1500,
     "gatingMarginDb": 6,
     "speechFloorDbfs": -60,
     "compositeWeights": {
@@ -45,11 +46,11 @@
       "you should"
     ],
     "keyterms": [],
-    "durationMs": 43000
+    "durationMs": 46000
   },
   "markers": {
     "startMs": 1000,
-    "stopMs": 44000
+    "stopMs": 47000
   },
   "events": [
     {

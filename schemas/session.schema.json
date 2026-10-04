@@ -136,6 +136,11 @@
           "minItems": 1
         },
         "turnThresholdMs": { "type": "integer", "minimum": 1 },
+        "floorLapseMs": {
+          "description": "A partner silence at or above this leaves the floor open, so a backchannel-token run there counts as a one-word turn. Default 1500.",
+          "type": "integer",
+          "minimum": 1
+        },
         "gatingMarginDb": { "type": "number", "minimum": 0 },
         "speechFloorDbfs": {
           "description": "A frame counts as speech when either channel reaches this level. Default -60.",

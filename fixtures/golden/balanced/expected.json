@@ -778,6 +778,15 @@
    "unit": "ratio"
   },
   {
+   "featureId": "open_floor_response_count",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
    "featureId": "asr_acoustic_pause_agreement",
    "participant": "A",
    "pass": 1,
@@ -1335,6 +1344,15 @@
    "unit": "ratio"
   },
   {
+   "featureId": "open_floor_response_count",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
    "featureId": "asr_acoustic_pause_agreement",
    "participant": "B",
    "pass": 1,
@@ -1880,6 +1898,15 @@
    "thresholdMs": null,
    "value": 0.803018867924528,
    "unit": "ratio"
+  },
+  {
+   "featureId": "open_floor_response_count",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
   },
   {
    "featureId": "asr_acoustic_pause_agreement",
@@ -2437,6 +2464,15 @@
    "thresholdMs": null,
    "value": 0.8092857142857143,
    "unit": "ratio"
+  },
+  {
+   "featureId": "open_floor_response_count",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
   },
   {
    "featureId": "asr_acoustic_pause_agreement",

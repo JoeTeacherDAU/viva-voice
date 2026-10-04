@@ -130,6 +130,16 @@ export function run(
     for (const w of ctx.p[P].backchannels) out[attributedSrc[w.index]].isBackchannel = true;
     for (const i of ctx.p[P].repeatedIndex) out[attributedSrc[i]].isRepetition = true;
   }
+  for (const c of ctx.candidates) {
+    for (const w of c.words) {
+      Object.assign(out[attributedSrc[w.index]], {
+        overlapsPartner: c.overlapsPartner,
+        partnerSilenceMs: c.partnerSilenceMs,
+        partnerResumesNext: c.partnerResumesNext,
+        floorClass: c.floorClass,
+      });
+    }
+  }
   const longPauses: LongPause[] = (["A", "B"] as Participant[]).flatMap((P) =>
     ctx.pauses(P, config.turnThresholdMs).map((p) => ({
       participant: P,

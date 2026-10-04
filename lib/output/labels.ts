@@ -65,6 +65,8 @@ export const DISPLAY_LABELS: Record<string, string> = {
   overlap_duration_ms: "Total time both of you spoke at once",
   backchannel_count: "Short listening responses (such as mhmm) during your partner's turns",
   question_count: "Turns that ended in a question",
+  open_floor_response_count:
+    "Short responses (such as okay) given after your partner had stopped talking",
   mattr: "Variety of words (MATTR), without fillers or repeated words",
   mattr_raw: "Variety of words (MATTR), every word counted",
   mtld: "Variety of words (MTLD)",

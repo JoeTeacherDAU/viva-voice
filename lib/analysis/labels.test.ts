@@ -132,3 +132,63 @@ describe("acoustic silences", () => {
     expect(pauseAgreement([p(100, 300)], runs, false)).toBeNull();
   });
 });
+
+describe("floor labels on backchannel candidates", () => {
+  // A asks, B answers "okay" in a 2,000 ms silence, A resumes; then B says
+  // "mhmm" inside a 500 ms pause of A's, and "yeah" while A is talking.
+  const words = [
+    ...say("are you ready?", 0, 0),
+    w("okay.", 1580, 1840, 1),
+    ...say("good we start now", 2680, 0),
+    w("mhmm", 3800, 3960, 1),
+    ...say("and then", 4200, 0),
+    w("yeah", 4300, 4400, 1),
+    ...say("more words here", 5000, 0),
+  ];
+  const runWith = (cfg: Partial<typeof DEFAULT_CONFIG>) =>
+    run(words, null, { ...DEFAULT_CONFIG, ...cfg }, null, {
+      pass: 2,
+      markers: { startMs: 0, stopMs: 10000 },
+      rolling: false,
+    });
+
+  it("labels each candidate word, and only candidate words", () => {
+    const r = runWith({});
+    const by = (t: string) => r.words.find((x) => x.word === t)!;
+    expect(by("okay")).toMatchObject({
+      overlapsPartner: false,
+      partnerSilenceMs: 2680 - 680,
+      partnerResumesNext: true,
+      floorClass: "turn",
+    });
+    expect(by("mhmm")).toMatchObject({
+      overlapsPartner: false,
+      floorClass: "backchannel",
+      partnerResumesNext: true,
+    });
+    expect(by("mhmm").partnerSilenceMs).toBeLessThan(1500);
+    expect(by("yeah")).toMatchObject({
+      overlapsPartner: true,
+      partnerSilenceMs: null,
+      floorClass: "backchannel",
+    });
+    expect(by("good").floorClass).toBeUndefined();
+    const count = (P: string) =>
+      r.features.find((f) => f.featureId === "open_floor_response_count" && f.participant === P)!
+        .value;
+    expect(count("B")).toBe(1);
+    expect(count("A")).toBe(0);
+  });
+
+  it("classifies by floorLapseMs, not by turnThresholdMs", () => {
+    const cls = (cfg: Partial<typeof DEFAULT_CONFIG>) =>
+      runWith(cfg).words.find((x) => x.word === "okay")!.floorClass;
+    expect(cls({ turnThresholdMs: 5000 })).toBe("turn");
+    expect(cls({ floorLapseMs: 2500 })).toBe("backchannel");
+    const r = runWith({ floorLapseMs: 2500 });
+    expect(
+      r.features.find((f) => f.featureId === "open_floor_response_count" && f.participant === "B")!
+        .value,
+    ).toBe(0);
+  });
+});

@@ -64,10 +64,28 @@ function candidateGroups(words: IndexedWord[], bc: Set<string>): IndexedWord[][]
   return groups;
 }
 
+/** One backchannel candidate and the facts that classify it. */
+export interface Candidate {
+  words: IndexedWord[];
+  channel: Channel;
+  /** The candidate overlaps a partner floor word. */
+  overlapsPartner: boolean;
+  /**
+   * Partner silence around the candidate: the partner's next floor word start
+   * minus the partner's previous floor word end. Null when the candidate
+   * overlaps partner speech or the partner has no floor word on one side.
+   */
+  partnerSilenceMs: number | null;
+  /** The partner's next floor word comes before this student's next floor word. */
+  partnerResumesNext: boolean;
+  floorClass: "backchannel" | "turn";
+}
+
 export interface TurnAnalysis {
   turns: Turn[];
   backchannels: IndexedWord[];
   transitions: Transition[];
+  candidates: Candidate[];
 }
 
 /**
@@ -88,23 +106,40 @@ export function analyseTurns(
 
   // A candidate is a backchannel while the partner holds the floor: it sits
   // inside a partner turn and either overlaps the partner's speech or falls in
-  // a partner silence shorter than floorLapseMs (turnThresholdMs). A partner
-  // silence that long leaves the floor open, so a token there answers: it
-  // becomes a one-word floor turn (docs/OPERATIONAL_DEFINITIONS.md).
-  const holdsFloor = (g: IndexedWord[]) => {
+  // a partner silence shorter than floorLapseMs. A partner silence that long
+  // leaves the floor open, so a token there answers: it becomes a one-word
+  // floor turn (docs/OPERATIONAL_DEFINITIONS.md). Floor words here are the
+  // first-pass floor words, which leave every candidate out.
+  const candidates: Candidate[] = groups.map((g) => {
+    const ch = g[0].channel;
     const start = g[0].startMs;
     const end = g[g.length - 1].endMs;
-    const turn = firstTurns.find(
-      (t) => t.channel !== g[0].channel && t.startMs <= start && end <= t.endMs,
+    const partner = firstFloor.filter((w) => w.channel !== ch);
+    const own = firstFloor.filter((w) => w.channel === ch);
+    const overlapsPartner = partner.some((w) => w.startMs < end && start < w.endMs);
+    const before = partner.filter((w) => w.startMs <= start);
+    const prevP = before[before.length - 1];
+    const nextP = partner.find((w) => w.startMs >= end);
+    const ownNext = own.find((w) => w.startMs >= end);
+    const partnerSilenceMs =
+      overlapsPartner || !prevP || !nextP ? null : nextP.startMs - prevP.endMs;
+    const inPartnerTurn = firstTurns.some(
+      (t) => t.channel !== ch && t.startMs <= start && end <= t.endMs,
     );
-    if (!turn) return false;
-    const before = turn.words.filter((w) => w.startMs <= start);
-    const prev = before[before.length - 1];
-    const next = turn.words.find((w) => w.startMs >= end);
-    if (!prev || prev.endMs > start || !next) return true;
-    return next.startMs - prev.endMs < floorLapseMs;
-  };
-  const backchannels = groups.filter(holdsFloor).flat();
+    const holdsFloor =
+      overlapsPartner || (partnerSilenceMs !== null && partnerSilenceMs < floorLapseMs);
+    return {
+      words: g,
+      channel: ch,
+      overlapsPartner,
+      partnerSilenceMs,
+      partnerResumesNext: !!nextP && (!ownNext || nextP.startMs < ownNext.startMs),
+      floorClass: inPartnerTurn && holdsFloor ? "backchannel" : "turn",
+    };
+  });
+  const backchannels = candidates
+    .filter((c) => c.floorClass === "backchannel")
+    .flatMap((c) => c.words);
   const bcIdx = new Set(backchannels.map((w) => w.index));
 
   const turns =
@@ -132,7 +167,7 @@ export function analyseTurns(
       latencyMs: next.startMs - prev.endMs,
     });
   }
-  return { turns, backchannels: backchannels.sort(byStart), transitions };
+  return { turns, backchannels: backchannels.sort(byStart), transitions, candidates };
 }
 
 function mergeIntervals(iv: [number, number][]): [number, number][] {

@@ -421,6 +421,24 @@
       ]
     },
     {
+      "id": "open_floor_response_count",
+      "tier": 1,
+      "construct": "interaction",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(backchannel candidates whose partnerSilenceMs >= floorLapseMs)",
+      "params": {
+        "floorLapseMs": 1500
+      },
+      "reference": "Joe's ruling on the floor-holding rule, 2026-10-05; docs/OPERATIONAL_DEFINITIONS.md",
+      "caveats": [
+        "a candidate is any run of backchannel tokens, so a token that opens or sits inside the student's own turn counts when the partner is silent that long",
+        "each candidate word carries overlapsPartner, partnerSilenceMs, partnerResumesNext, and floorClass labels"
+      ]
+    },
+    {
       "id": "question_count",
       "tier": 1,
       "construct": "interaction",

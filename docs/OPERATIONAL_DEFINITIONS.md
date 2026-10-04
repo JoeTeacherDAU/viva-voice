@@ -30,7 +30,16 @@ A filler is a word whose token appears in config.fillerTokens.
 
 Repetitions run inside one turn over the non-filler words. A word repetition is a token equal to the token before it. A bigram repetition is a pair of tokens equal to the pair just before it, counted only when the position is not already a word repetition. Each counts once.
 
-A backchannel candidate is a run of words on one channel, with no partner word starting inside it, made only of tokens in config.backchannelTokens. A candidate is a backchannel only while the partner holds the floor: it falls inside a partner turn (computed without candidates), and it either overlaps a partner word or sits in a partner silence shorter than turnThresholdMs, measured from the partner's word before it to the partner's word after it. A partner silence of turnThresholdMs or more leaves the floor open, so a token there answers the partner and counts as a one-word floor turn. Every other candidate is an ordinary floor word. A backchannel-token word that opens or sits inside a speaker's own turn, such as "yeah" in "Yeah, I think that's right" or "really" in "really good", is an ordinary word.
+A backchannel candidate is a run of words on one channel, with no partner word starting inside it, made only of tokens in config.backchannelTokens. Floor words for this step are the first-pass floor words, meaning attributed words with every candidate left out. Each candidate word carries four labels in the stored transcript:
+
+- overlapsPartner: the candidate's span intersects a partner floor word.
+- partnerSilenceMs: the partner's next floor word start minus the partner's previous floor word end, around the candidate; null when the candidate overlaps partner speech or the partner has no floor word before or after it.
+- partnerResumesNext: the partner's next floor word starts before this student's next floor word.
+- floorClass: "backchannel" or "turn".
+
+A candidate's floorClass is "backchannel" only while the partner holds the floor: it falls inside a partner turn (computed from first-pass floor words) and either overlaps a partner word or sits in a partner silence shorter than config.floorLapseMs (default 1500 ms). A partner silence of floorLapseMs or more leaves the floor open, so a token there answers the partner and counts as a one-word floor turn. Every other candidate is "turn" and counts as an ordinary floor word. floorLapseMs is separate from turnThresholdMs, which only defines a long pause. A backchannel-token word that opens or sits inside a speaker's own turn, such as "yeah" in "Yeah, I think that's right" or "really" in "really good", is an ordinary word.
+
+open_floor_response_count counts, per student, the candidates whose partnerSilenceMs is at or above floorLapseMs. Because a candidate is any run of backchannel tokens, this includes a token that opens or sits inside the student's own turn while the partner is silent that long; the labels let an analysis separate those from standalone answers.
 
 The pruned word list removes fillers, the repeated word of each word repetition, and both words of the second pair of each bigram repetition. Backchannels never enter a turn, so they never reach the pruned list; a backchannel-token word inside a turn stays in it.
 

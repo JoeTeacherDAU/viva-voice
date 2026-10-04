@@ -35,6 +35,10 @@
         "isRepetition": { "type": "boolean" },
         "isBackchannel": { "type": "boolean" },
         "inGap": { "type": "boolean" },
+        "overlapsPartner": { "type": "boolean" },
+        "partnerSilenceMs": { "type": ["number", "null"] },
+        "partnerResumesNext": { "type": "boolean" },
+        "floorClass": { "enum": ["backchannel", "turn"] },
         "speakerLabel": { "enum": ["A", "B"] }
       }
     }

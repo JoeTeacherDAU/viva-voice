@@ -55,7 +55,7 @@ const SYL = {
   visit: 2, was: 1, water: 2, way: 1, we: 1, week: 1, weekend: 2, welcome: 2, well: 1,
   went: 1, were: 1, what: 1, when: 1, which: 1, who: 1, will: 1, windows: 2, with: 1,
   would: 1, yes: 1, you: 1, your: 1, mhmm: 1, yeah: 1, okay: 2, uh: 1, um: 1, want: 1,
-  "that's": 1, really: 2, right: 1, much: 1, noodles: 2,
+  "that's": 1, really: 2, right: 1, much: 1, noodles: 2, stop: 1,
 };
 
 const tok = (s) => s.toLowerCase().replace(/[^a-z0-9'-]/g, "");
@@ -71,6 +71,7 @@ const BASE_CONFIG = {
   gainDb: 0,
   pauseThresholdsMs: [200, 350],
   turnThresholdMs: 1500,
+  floorLapseMs: 1500,
   gatingMarginDb: 6,
   speechFloorDbfs: -60,
   compositeWeights: { silent_pause_rate: 0.5, speech_rate_wpm: 0.25, mean_length_of_run: 0.25 },
@@ -219,7 +220,7 @@ const FIXTURES = [
   },
   {
     name: "gappy",
-    durationMs: 43000,
+    durationMs: 46000,
     config: { targetPatterns: ["you should"] },
     baseline: {
       n: 8,
@@ -252,6 +253,9 @@ const FIXTURES = [
         text: "You are welcome. I like the food there uh {p600} very much. um {p1200} The noodles are good.",
       },
       { ch: 0, after: 600, text: "uh {p300} I think {p320} the time is up." },
+      // A lone "okay" in a 2,000 ms partner silence (860 + 260 + 880), then the partner resumes.
+      { ch: 1, after: 860, text: "Okay." },
+      { ch: 0, after: 880, text: "We can stop here." },
     ],
     // The backchannel sits in a 600 ms pause; a partner silence of 1,500 ms or
     // more (like the 2,500 ms one) leaves the floor open and a token there answers.
@@ -685,6 +689,45 @@ function compute(fx, turns, bcs, crossCopies, config, markers, gaps) {
         mean(fillerEvents.map((f) => f.after).filter((x) => x !== null)),
       );
       push("mattr_raw", P, pass, null, mattr(raw.map((w) => w.token)));
+      // Backchannel candidates: runs of backchannel tokens on one channel with no
+      // partner word starting inside. Count those in a partner silence of
+      // floorLapseMs or more, using floor words that leave every candidate out.
+      const everyWord = [...turns.flatMap((t) => t.words), ...bcs].sort(
+        (a, b) => a.startMs - b.startMs,
+      );
+      const isBc = (w) => config.backchannelTokens.includes(w.token);
+      const candidates = [];
+      for (const c of [0, 1]) {
+        let run = [];
+        for (const w of everyWord) {
+          if (w.channel !== c) {
+            if (run.length && w.startMs > run[run.length - 1].startMs) {
+              candidates.push(run);
+              run = [];
+            }
+            continue;
+          }
+          if (isBc(w)) run.push(w);
+          else if (run.length) {
+            candidates.push(run);
+            run = [];
+          }
+        }
+        if (run.length) candidates.push(run);
+      }
+      const inCandidate = new Set(candidates.flat());
+      const floorWords = everyWord.filter((w) => !inCandidate.has(w));
+      let openFloor = 0;
+      for (const run of candidates.filter((r) => r[0].channel === ch)) {
+        const start = run[0].startMs;
+        const end = run[run.length - 1].endMs;
+        const partner = floorWords.filter((w) => w.channel !== ch);
+        if (partner.some((w) => w.startMs < end && start < w.endMs)) continue;
+        const prev = partner.filter((w) => w.startMs <= start).pop();
+        const next = partner.find((w) => w.startMs >= end);
+        if (prev && next && next.startMs - prev.endMs >= config.floorLapseMs) openFloor++;
+      }
+      push("open_floor_response_count", P, pass, null, openFloor);
       const lowest = Math.min(...config.pauseThresholdsMs);
       push(
         "asr_acoustic_pause_agreement",
@@ -891,7 +934,7 @@ function build(fx) {
       `${fx.name}: backchannel does not fit its pause`,
     );
     assert(
-      p.ms < BASE_CONFIG.turnThresholdMs,
+      p.ms < BASE_CONFIG.floorLapseMs,
       `${fx.name}: a backchannel in a ${p.ms} ms pause would answer rather than backchannel`,
     );
     return {
