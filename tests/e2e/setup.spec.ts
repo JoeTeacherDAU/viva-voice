@@ -53,6 +53,8 @@ test("a mono fake device shows the channel-count block", async ({ page }) => {
   await page.goto("/setup");
   await page.getByRole("button", { name: "Find devices" }).click();
   const select = page.getByLabel("Input device");
+  // The synthetic entry appears when the device lookup finishes.
+  await expect(select.locator("option", { hasText: "Synthetic stereo (test)" })).toHaveCount(1);
   const options = await select.locator("option").allTextContents();
   const fake = options.find((o) => o && o !== "Choose a device" && !o.startsWith("Synthetic"));
   expect(fake, `fake devices: ${options.join(", ")}`).toBeTruthy();
