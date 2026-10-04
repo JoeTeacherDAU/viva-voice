@@ -98,4 +98,31 @@ Note for Joe: the branch p3 still exists on GitHub. It holds the three CI check 
 
 Deferred: nothing.
 
+Commit: 584e23a.
+
+## 2026-10-04, P4: Deepgram live adapter, grant route, session clock, reconnection
+
+Tasks done: P4.1, P4.2, P4.3, P4.4, P4.5, P4.6.
+
+Acceptance: `npm run test` exited 0 on the first attempt with 584 tests passing and 1 skipped. The skipped test is the live Deepgram test, which reports "skipped: DEEPGRAM_API_KEY is not set", as the phase's human gate expects.
+
+What I built:
+
+- POST /api/asr/grant, which checks the session cookie, trades DEEPGRAM_API_KEY for a 60-second JWT at Deepgram's grant endpoint, and returns {token, expiresIn}. Unit tests with a mocked fetch confirm the request shape, the 401 without a cookie, the error paths, and that the key appears in no response and no log line.
+- lib/asr/providers/deepgram.ts, which builds the exact PLAN.md 6.1 query, opens the socket with ['bearer', jwt], parses Results messages by channel_index, maps channels to students, sends KeepAlive every 5 seconds, and sends CloseStream on close. A comment in the code explains why an is_final result counts as final whatever speech_final says.
+- lib/asr/clock.ts. The clock counts every audio chunk, including chunks dropped while the socket is down, and records the session time at which each connection sent its first chunk. A word's session time is that offset plus Deepgram's timestamp, and the dropped stretch becomes a gap event with exact bounds.
+- Reconnection with delays of 0.5, 1, 2, 4, and 4 seconds, five tries, and a fresh grant per try, after which the adapter reports a fatal fault. The adapter exposes its state for the P5 fault strip.
+- fixtures/deepgram/balanced-stream.json, 105 messages built by scripts/make-deepgram-fixture.mjs from the balanced fixture's words. One unit test replays the whole stream through the adapter, runs the pipeline on the resulting final words, and reproduces every pass-one value in the balanced expected.json.
+- createTranscriber() now returns the Deepgram adapter unless VIVA_MOCK_ASR=1.
+
+Places where I departed from the plan, and why:
+
+- P4.4 lists four backoff delays (0.5, 1, 2, 4 seconds) and five tries. The fifth try reuses the 4-second delay.
+- P4.6 asks the live test to stream fixtures/golden/balanced/stereo.wav and assert words on both channels. That WAV holds sine bursts, as CLAUDE.md requires, and Deepgram transcribes speech, so it would likely return no words and the assertion would fail for a reason unrelated to the code. With the fixture, the live test checks the grant, the bearer subprotocol, real-time streaming, a clean close, and the channel and ordering of any words that do arrive. When VIVA_LIVE_WAV points to a stereo speech recording on your Mac, the test also requires final words on both channels. That recording never goes into the repository.
+- While the socket is down, the adapter drops audio rather than buffering it, so pass one shows a gap event, as PLAN.md 6.1 describes. Pass two transcribes the full WAV, so the gap never reaches the record of account.
+
+Request for Joe, when the key exists: run `DEEPGRAM_API_KEY=<key> npx vitest run tests/live` once, ideally also with VIVA_LIVE_WAV set to a short stereo recording of you speaking on one channel and someone else on the other. A pass there also settles the bearer half of verification task V6.
+
+Deferred: nothing.
+
 Commit: recorded in the next entry.

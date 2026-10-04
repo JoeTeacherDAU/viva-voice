@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createTranscriber, MockTranscriber } from ".";
+import { createTranscriber, DeepgramTranscriber, MockTranscriber } from ".";
 
 describe("createTranscriber", () => {
   afterEach(() => {
@@ -9,7 +9,7 @@ describe("createTranscriber", () => {
     process.env.VIVA_MOCK_ASR = "1";
     expect(createTranscriber()).toBeInstanceOf(MockTranscriber);
   });
-  it("refuses to run without the mock until P4 lands", () => {
-    expect(() => createTranscriber()).toThrow(/P4/);
+  it("returns the Deepgram adapter otherwise", () => {
+    expect(createTranscriber()).toBeInstanceOf(DeepgramTranscriber);
   });
 });

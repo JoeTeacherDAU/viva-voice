@@ -1,0 +1,3860 @@
+[
+ {
+  "_atMs": 0,
+  "type": "Metadata",
+  "request_id": "fixture-balanced",
+  "channels": 2
+ },
+ {
+  "_atMs": 1600,
+  "type": "SpeechStarted",
+  "channel": [
+   0,
+   2
+  ],
+  "timestamp": 1.6
+ },
+ {
+  "_atMs": 2660,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 1.06,
+  "start": 1.6,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "So, what did you",
+     "confidence": 0.87,
+     "words": [
+      {
+       "word": "so",
+       "start": 1.6,
+       "end": 1.78,
+       "confidence": 0.84,
+       "punctuated_word": "So,"
+      },
+      {
+       "word": "what",
+       "start": 2.04,
+       "end": 2.22,
+       "confidence": 0.86,
+       "punctuated_word": "what"
+      },
+      {
+       "word": "did",
+       "start": 2.26,
+       "end": 2.44,
+       "confidence": 0.88,
+       "punctuated_word": "did"
+      },
+      {
+       "word": "you",
+       "start": 2.48,
+       "end": 2.66,
+       "confidence": 0.9,
+       "punctuated_word": "you"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 3700,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 1.8,
+  "start": 1.6,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "So, what did you do last weekend?",
+     "confidence": 0.8828571428571428,
+     "words": [
+      {
+       "word": "so",
+       "start": 1.6,
+       "end": 1.78,
+       "confidence": 0.84,
+       "punctuated_word": "So,"
+      },
+      {
+       "word": "what",
+       "start": 2.04,
+       "end": 2.22,
+       "confidence": 0.86,
+       "punctuated_word": "what"
+      },
+      {
+       "word": "did",
+       "start": 2.26,
+       "end": 2.44,
+       "confidence": 0.88,
+       "punctuated_word": "did"
+      },
+      {
+       "word": "you",
+       "start": 2.48,
+       "end": 2.66,
+       "confidence": 0.9,
+       "punctuated_word": "you"
+      },
+      {
+       "word": "do",
+       "start": 2.7,
+       "end": 2.88,
+       "confidence": 0.92,
+       "punctuated_word": "do"
+      },
+      {
+       "word": "last",
+       "start": 2.92,
+       "end": 3.1,
+       "confidence": 0.94,
+       "punctuated_word": "last"
+      },
+      {
+       "word": "weekend",
+       "start": 3.14,
+       "end": 3.4,
+       "confidence": 0.84,
+       "punctuated_word": "weekend?"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 3820,
+  "type": "SpeechStarted",
+  "channel": [
+   1,
+   2
+  ],
+  "timestamp": 3.82
+ },
+ {
+  "_atMs": 4400,
+  "type": "UtteranceEnd",
+  "channel": [
+   0,
+   2
+  ],
+  "last_word_end": 3.4
+ },
+ {
+  "_atMs": 4740,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 0.92,
+  "start": 3.82,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "I went to Busan",
+     "confidence": 0.845,
+     "words": [
+      {
+       "word": "i",
+       "start": 3.82,
+       "end": 4,
+       "confidence": 0.8,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "went",
+       "start": 4.04,
+       "end": 4.22,
+       "confidence": 0.83,
+       "punctuated_word": "went"
+      },
+      {
+       "word": "to",
+       "start": 4.26,
+       "end": 4.44,
+       "confidence": 0.86,
+       "punctuated_word": "to"
+      },
+      {
+       "word": "busan",
+       "start": 4.48,
+       "end": 4.74,
+       "confidence": 0.89,
+       "punctuated_word": "Busan"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 5780,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 1.66,
+  "start": 3.82,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "I went to Busan with my sister.",
+     "confidence": 0.8471428571428571,
+     "words": [
+      {
+       "word": "i",
+       "start": 3.82,
+       "end": 4,
+       "confidence": 0.8,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "went",
+       "start": 4.04,
+       "end": 4.22,
+       "confidence": 0.83,
+       "punctuated_word": "went"
+      },
+      {
+       "word": "to",
+       "start": 4.26,
+       "end": 4.44,
+       "confidence": 0.86,
+       "punctuated_word": "to"
+      },
+      {
+       "word": "busan",
+       "start": 4.48,
+       "end": 4.74,
+       "confidence": 0.89,
+       "punctuated_word": "Busan"
+      },
+      {
+       "word": "with",
+       "start": 4.78,
+       "end": 4.96,
+       "confidence": 0.92,
+       "punctuated_word": "with"
+      },
+      {
+       "word": "my",
+       "start": 5,
+       "end": 5.18,
+       "confidence": 0.8,
+       "punctuated_word": "my"
+      },
+      {
+       "word": "sister",
+       "start": 5.22,
+       "end": 5.48,
+       "confidence": 0.83,
+       "punctuated_word": "sister."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 5880,
+  "type": "SpeechStarted",
+  "channel": [
+   1,
+   2
+  ],
+  "timestamp": 5.88
+ },
+ {
+  "_atMs": 6480,
+  "type": "UtteranceEnd",
+  "channel": [
+   1,
+   2
+  ],
+  "last_word_end": 5.48
+ },
+ {
+  "_atMs": 8560,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 2.68,
+  "start": 5.88,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "We used to go there in the summer when we were kids.",
+     "confidence": 0.8624999999999999,
+     "words": [
+      {
+       "word": "we",
+       "start": 5.88,
+       "end": 6.06,
+       "confidence": 0.86,
+       "punctuated_word": "We"
+      },
+      {
+       "word": "used",
+       "start": 6.1,
+       "end": 6.28,
+       "confidence": 0.89,
+       "punctuated_word": "used"
+      },
+      {
+       "word": "to",
+       "start": 6.32,
+       "end": 6.5,
+       "confidence": 0.92,
+       "punctuated_word": "to"
+      },
+      {
+       "word": "go",
+       "start": 6.54,
+       "end": 6.72,
+       "confidence": 0.8,
+       "punctuated_word": "go"
+      },
+      {
+       "word": "there",
+       "start": 6.76,
+       "end": 6.94,
+       "confidence": 0.83,
+       "punctuated_word": "there"
+      },
+      {
+       "word": "in",
+       "start": 6.98,
+       "end": 7.16,
+       "confidence": 0.86,
+       "punctuated_word": "in"
+      },
+      {
+       "word": "the",
+       "start": 7.2,
+       "end": 7.38,
+       "confidence": 0.89,
+       "punctuated_word": "the"
+      },
+      {
+       "word": "summer",
+       "start": 7.42,
+       "end": 7.68,
+       "confidence": 0.92,
+       "punctuated_word": "summer"
+      },
+      {
+       "word": "when",
+       "start": 7.72,
+       "end": 7.9,
+       "confidence": 0.8,
+       "punctuated_word": "when"
+      },
+      {
+       "word": "we",
+       "start": 7.94,
+       "end": 8.12,
+       "confidence": 0.83,
+       "punctuated_word": "we"
+      },
+      {
+       "word": "were",
+       "start": 8.16,
+       "end": 8.34,
+       "confidence": 0.86,
+       "punctuated_word": "were"
+      },
+      {
+       "word": "kids",
+       "start": 8.38,
+       "end": 8.56,
+       "confidence": 0.89,
+       "punctuated_word": "kids."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 11780,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 5.6,
+  "start": 5.88,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "We used to go there in the summer when we were kids. The beach was nice, but the water was um very cold.",
+     "confidence": 0.8639130434782609,
+     "words": [
+      {
+       "word": "we",
+       "start": 5.88,
+       "end": 6.06,
+       "confidence": 0.86,
+       "punctuated_word": "We"
+      },
+      {
+       "word": "used",
+       "start": 6.1,
+       "end": 6.28,
+       "confidence": 0.89,
+       "punctuated_word": "used"
+      },
+      {
+       "word": "to",
+       "start": 6.32,
+       "end": 6.5,
+       "confidence": 0.92,
+       "punctuated_word": "to"
+      },
+      {
+       "word": "go",
+       "start": 6.54,
+       "end": 6.72,
+       "confidence": 0.8,
+       "punctuated_word": "go"
+      },
+      {
+       "word": "there",
+       "start": 6.76,
+       "end": 6.94,
+       "confidence": 0.83,
+       "punctuated_word": "there"
+      },
+      {
+       "word": "in",
+       "start": 6.98,
+       "end": 7.16,
+       "confidence": 0.86,
+       "punctuated_word": "in"
+      },
+      {
+       "word": "the",
+       "start": 7.2,
+       "end": 7.38,
+       "confidence": 0.89,
+       "punctuated_word": "the"
+      },
+      {
+       "word": "summer",
+       "start": 7.42,
+       "end": 7.68,
+       "confidence": 0.92,
+       "punctuated_word": "summer"
+      },
+      {
+       "word": "when",
+       "start": 7.72,
+       "end": 7.9,
+       "confidence": 0.8,
+       "punctuated_word": "when"
+      },
+      {
+       "word": "we",
+       "start": 7.94,
+       "end": 8.12,
+       "confidence": 0.83,
+       "punctuated_word": "we"
+      },
+      {
+       "word": "were",
+       "start": 8.16,
+       "end": 8.34,
+       "confidence": 0.86,
+       "punctuated_word": "were"
+      },
+      {
+       "word": "kids",
+       "start": 8.38,
+       "end": 8.56,
+       "confidence": 0.89,
+       "punctuated_word": "kids."
+      },
+      {
+       "word": "the",
+       "start": 8.86,
+       "end": 9.04,
+       "confidence": 0.92,
+       "punctuated_word": "The"
+      },
+      {
+       "word": "beach",
+       "start": 9.08,
+       "end": 9.26,
+       "confidence": 0.8,
+       "punctuated_word": "beach"
+      },
+      {
+       "word": "was",
+       "start": 9.3,
+       "end": 9.48,
+       "confidence": 0.83,
+       "punctuated_word": "was"
+      },
+      {
+       "word": "nice",
+       "start": 9.52,
+       "end": 9.7,
+       "confidence": 0.86,
+       "punctuated_word": "nice,"
+      },
+      {
+       "word": "but",
+       "start": 9.74,
+       "end": 9.92,
+       "confidence": 0.89,
+       "punctuated_word": "but"
+      },
+      {
+       "word": "the",
+       "start": 9.96,
+       "end": 10.14,
+       "confidence": 0.92,
+       "punctuated_word": "the"
+      },
+      {
+       "word": "water",
+       "start": 10.18,
+       "end": 10.44,
+       "confidence": 0.8,
+       "punctuated_word": "water"
+      },
+      {
+       "word": "was",
+       "start": 10.48,
+       "end": 10.66,
+       "confidence": 0.83,
+       "punctuated_word": "was"
+      },
+      {
+       "word": "um",
+       "start": 10.7,
+       "end": 10.96,
+       "confidence": 0.86,
+       "punctuated_word": "um"
+      },
+      {
+       "word": "very",
+       "start": 11,
+       "end": 11.26,
+       "confidence": 0.89,
+       "punctuated_word": "very"
+      },
+      {
+       "word": "cold",
+       "start": 11.3,
+       "end": 11.48,
+       "confidence": 0.92,
+       "punctuated_word": "cold."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 11860,
+  "type": "SpeechStarted",
+  "channel": [
+   0,
+   2
+  ],
+  "timestamp": 11.86
+ },
+ {
+  "_atMs": 12480,
+  "type": "UtteranceEnd",
+  "channel": [
+   1,
+   2
+  ],
+  "last_word_end": 11.48
+ },
+ {
+  "_atMs": 12920,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 1.06,
+  "start": 11.86,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "Oh, nice. I would like",
+     "confidence": 0.9,
+     "words": [
+      {
+       "word": "oh",
+       "start": 11.86,
+       "end": 12.04,
+       "confidence": 0.86,
+       "punctuated_word": "Oh,"
+      },
+      {
+       "word": "nice",
+       "start": 12.08,
+       "end": 12.26,
+       "confidence": 0.88,
+       "punctuated_word": "nice."
+      },
+      {
+       "word": "i",
+       "start": 12.3,
+       "end": 12.48,
+       "confidence": 0.9,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "would",
+       "start": 12.52,
+       "end": 12.7,
+       "confidence": 0.92,
+       "punctuated_word": "would"
+      },
+      {
+       "word": "like",
+       "start": 12.74,
+       "end": 12.92,
+       "confidence": 0.94,
+       "punctuated_word": "like"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 14260,
+  "type": "SpeechStarted",
+  "channel": [
+   1,
+   2
+  ],
+  "timestamp": 14.26
+ },
+ {
+  "_atMs": 14400,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 2.24,
+  "start": 11.86,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "Oh, nice. I would like to go to Busan too.",
+     "confidence": 0.89,
+     "words": [
+      {
+       "word": "oh",
+       "start": 11.86,
+       "end": 12.04,
+       "confidence": 0.86,
+       "punctuated_word": "Oh,"
+      },
+      {
+       "word": "nice",
+       "start": 12.08,
+       "end": 12.26,
+       "confidence": 0.88,
+       "punctuated_word": "nice."
+      },
+      {
+       "word": "i",
+       "start": 12.3,
+       "end": 12.48,
+       "confidence": 0.9,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "would",
+       "start": 12.52,
+       "end": 12.7,
+       "confidence": 0.92,
+       "punctuated_word": "would"
+      },
+      {
+       "word": "like",
+       "start": 12.74,
+       "end": 12.92,
+       "confidence": 0.94,
+       "punctuated_word": "like"
+      },
+      {
+       "word": "to",
+       "start": 12.96,
+       "end": 13.14,
+       "confidence": 0.84,
+       "punctuated_word": "to"
+      },
+      {
+       "word": "go",
+       "start": 13.18,
+       "end": 13.36,
+       "confidence": 0.86,
+       "punctuated_word": "go"
+      },
+      {
+       "word": "to",
+       "start": 13.4,
+       "end": 13.58,
+       "confidence": 0.88,
+       "punctuated_word": "to"
+      },
+      {
+       "word": "busan",
+       "start": 13.62,
+       "end": 13.88,
+       "confidence": 0.9,
+       "punctuated_word": "Busan"
+      },
+      {
+       "word": "too",
+       "start": 13.92,
+       "end": 14.1,
+       "confidence": 0.92,
+       "punctuated_word": "too."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 14440,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 0.18,
+  "start": 14.26,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "mhmm",
+     "confidence": 0.8,
+     "words": [
+      {
+       "word": "mhmm",
+       "start": 14.26,
+       "end": 14.44,
+       "confidence": 0.8,
+       "punctuated_word": "mhmm"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 14600,
+  "type": "SpeechStarted",
+  "channel": [
+   0,
+   2
+  ],
+  "timestamp": 14.6
+ },
+ {
+  "_atMs": 14740,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 0.18,
+  "start": 14.26,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "mhmm",
+     "confidence": 0.8,
+     "words": [
+      {
+       "word": "mhmm",
+       "start": 14.26,
+       "end": 14.44,
+       "confidence": 0.8,
+       "punctuated_word": "mhmm"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 15100,
+  "type": "UtteranceEnd",
+  "channel": [
+   0,
+   2
+  ],
+  "last_word_end": 14.1
+ },
+ {
+  "_atMs": 15440,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 0.84,
+  "start": 14.6,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "Did you eat the",
+     "confidence": 0.8799999999999999,
+     "words": [
+      {
+       "word": "did",
+       "start": 14.6,
+       "end": 14.78,
+       "confidence": 0.94,
+       "punctuated_word": "Did"
+      },
+      {
+       "word": "you",
+       "start": 14.82,
+       "end": 15,
+       "confidence": 0.84,
+       "punctuated_word": "you"
+      },
+      {
+       "word": "eat",
+       "start": 15.04,
+       "end": 15.22,
+       "confidence": 0.86,
+       "punctuated_word": "eat"
+      },
+      {
+       "word": "the",
+       "start": 15.26,
+       "end": 15.44,
+       "confidence": 0.88,
+       "punctuated_word": "the"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 15440,
+  "type": "UtteranceEnd",
+  "channel": [
+   1,
+   2
+  ],
+  "last_word_end": 14.44
+ },
+ {
+  "_atMs": 16400,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 1.5,
+  "start": 14.6,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "Did you eat the the fish there?",
+     "confidence": 0.897142857142857,
+     "words": [
+      {
+       "word": "did",
+       "start": 14.6,
+       "end": 14.78,
+       "confidence": 0.94,
+       "punctuated_word": "Did"
+      },
+      {
+       "word": "you",
+       "start": 14.82,
+       "end": 15,
+       "confidence": 0.84,
+       "punctuated_word": "you"
+      },
+      {
+       "word": "eat",
+       "start": 15.04,
+       "end": 15.22,
+       "confidence": 0.86,
+       "punctuated_word": "eat"
+      },
+      {
+       "word": "the",
+       "start": 15.26,
+       "end": 15.44,
+       "confidence": 0.88,
+       "punctuated_word": "the"
+      },
+      {
+       "word": "the",
+       "start": 15.48,
+       "end": 15.66,
+       "confidence": 0.9,
+       "punctuated_word": "the"
+      },
+      {
+       "word": "fish",
+       "start": 15.7,
+       "end": 15.88,
+       "confidence": 0.92,
+       "punctuated_word": "fish"
+      },
+      {
+       "word": "there",
+       "start": 15.92,
+       "end": 16.1,
+       "confidence": 0.94,
+       "punctuated_word": "there?"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 16560,
+  "type": "SpeechStarted",
+  "channel": [
+   1,
+   2
+  ],
+  "timestamp": 16.56
+ },
+ {
+  "_atMs": 17100,
+  "type": "UtteranceEnd",
+  "channel": [
+   0,
+   2
+  ],
+  "last_word_end": 16.1
+ },
+ {
+  "_atMs": 17400,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 0.84,
+  "start": 16.56,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "Yes, we ate a",
+     "confidence": 0.875,
+     "words": [
+      {
+       "word": "yes",
+       "start": 16.56,
+       "end": 16.74,
+       "confidence": 0.83,
+       "punctuated_word": "Yes,"
+      },
+      {
+       "word": "we",
+       "start": 16.78,
+       "end": 16.96,
+       "confidence": 0.86,
+       "punctuated_word": "we"
+      },
+      {
+       "word": "ate",
+       "start": 17,
+       "end": 17.18,
+       "confidence": 0.89,
+       "punctuated_word": "ate"
+      },
+      {
+       "word": "a",
+       "start": 17.22,
+       "end": 17.4,
+       "confidence": 0.92,
+       "punctuated_word": "a"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 18360,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 1.5,
+  "start": 16.56,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "Yes, we ate a lot of fish.",
+     "confidence": 0.8557142857142858,
+     "words": [
+      {
+       "word": "yes",
+       "start": 16.56,
+       "end": 16.74,
+       "confidence": 0.83,
+       "punctuated_word": "Yes,"
+      },
+      {
+       "word": "we",
+       "start": 16.78,
+       "end": 16.96,
+       "confidence": 0.86,
+       "punctuated_word": "we"
+      },
+      {
+       "word": "ate",
+       "start": 17,
+       "end": 17.18,
+       "confidence": 0.89,
+       "punctuated_word": "ate"
+      },
+      {
+       "word": "a",
+       "start": 17.22,
+       "end": 17.4,
+       "confidence": 0.92,
+       "punctuated_word": "a"
+      },
+      {
+       "word": "lot",
+       "start": 17.44,
+       "end": 17.62,
+       "confidence": 0.8,
+       "punctuated_word": "lot"
+      },
+      {
+       "word": "of",
+       "start": 17.66,
+       "end": 17.84,
+       "confidence": 0.83,
+       "punctuated_word": "of"
+      },
+      {
+       "word": "fish",
+       "start": 17.88,
+       "end": 18.06,
+       "confidence": 0.86,
+       "punctuated_word": "fish."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 18440,
+  "type": "SpeechStarted",
+  "channel": [
+   1,
+   2
+  ],
+  "timestamp": 18.44
+ },
+ {
+  "_atMs": 19060,
+  "type": "UtteranceEnd",
+  "channel": [
+   1,
+   2
+  ],
+  "last_word_end": 18.06
+ },
+ {
+  "_atMs": 20000,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 1.56,
+  "start": 18.44,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "My sister used to hate fish,",
+     "confidence": 0.8650000000000001,
+     "words": [
+      {
+       "word": "my",
+       "start": 18.44,
+       "end": 18.62,
+       "confidence": 0.89,
+       "punctuated_word": "My"
+      },
+      {
+       "word": "sister",
+       "start": 18.66,
+       "end": 18.92,
+       "confidence": 0.92,
+       "punctuated_word": "sister"
+      },
+      {
+       "word": "used",
+       "start": 18.96,
+       "end": 19.14,
+       "confidence": 0.8,
+       "punctuated_word": "used"
+      },
+      {
+       "word": "to",
+       "start": 19.18,
+       "end": 19.36,
+       "confidence": 0.83,
+       "punctuated_word": "to"
+      },
+      {
+       "word": "hate",
+       "start": 19.6,
+       "end": 19.78,
+       "confidence": 0.86,
+       "punctuated_word": "hate"
+      },
+      {
+       "word": "fish",
+       "start": 19.82,
+       "end": 20,
+       "confidence": 0.89,
+       "punctuated_word": "fish,"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 21400,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 2.66,
+  "start": 18.44,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "My sister used to hate fish, but now she loves it.",
+     "confidence": 0.8627272727272728,
+     "words": [
+      {
+       "word": "my",
+       "start": 18.44,
+       "end": 18.62,
+       "confidence": 0.89,
+       "punctuated_word": "My"
+      },
+      {
+       "word": "sister",
+       "start": 18.66,
+       "end": 18.92,
+       "confidence": 0.92,
+       "punctuated_word": "sister"
+      },
+      {
+       "word": "used",
+       "start": 18.96,
+       "end": 19.14,
+       "confidence": 0.8,
+       "punctuated_word": "used"
+      },
+      {
+       "word": "to",
+       "start": 19.18,
+       "end": 19.36,
+       "confidence": 0.83,
+       "punctuated_word": "to"
+      },
+      {
+       "word": "hate",
+       "start": 19.6,
+       "end": 19.78,
+       "confidence": 0.86,
+       "punctuated_word": "hate"
+      },
+      {
+       "word": "fish",
+       "start": 19.82,
+       "end": 20,
+       "confidence": 0.89,
+       "punctuated_word": "fish,"
+      },
+      {
+       "word": "but",
+       "start": 20.04,
+       "end": 20.22,
+       "confidence": 0.92,
+       "punctuated_word": "but"
+      },
+      {
+       "word": "now",
+       "start": 20.26,
+       "end": 20.44,
+       "confidence": 0.8,
+       "punctuated_word": "now"
+      },
+      {
+       "word": "she",
+       "start": 20.48,
+       "end": 20.66,
+       "confidence": 0.83,
+       "punctuated_word": "she"
+      },
+      {
+       "word": "loves",
+       "start": 20.7,
+       "end": 20.88,
+       "confidence": 0.86,
+       "punctuated_word": "loves"
+      },
+      {
+       "word": "it",
+       "start": 20.92,
+       "end": 21.1,
+       "confidence": 0.89,
+       "punctuated_word": "it."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 21800,
+  "type": "SpeechStarted",
+  "channel": [
+   1,
+   2
+  ],
+  "timestamp": 21.8
+ },
+ {
+  "_atMs": 22100,
+  "type": "UtteranceEnd",
+  "channel": [
+   1,
+   2
+  ],
+  "last_word_end": 21.1
+ },
+ {
+  "_atMs": 22200,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 0.4,
+  "start": 21.8,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "What did",
+     "confidence": 0.8600000000000001,
+     "words": [
+      {
+       "word": "what",
+       "start": 21.8,
+       "end": 21.98,
+       "confidence": 0.92,
+       "punctuated_word": "What"
+      },
+      {
+       "word": "did",
+       "start": 22.02,
+       "end": 22.2,
+       "confidence": 0.8,
+       "punctuated_word": "did"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 22940,
+  "type": "SpeechStarted",
+  "channel": [
+   0,
+   2
+  ],
+  "timestamp": 22.94
+ },
+ {
+  "_atMs": 22940,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 0.84,
+  "start": 21.8,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "What did you do?",
+     "confidence": 0.8525,
+     "words": [
+      {
+       "word": "what",
+       "start": 21.8,
+       "end": 21.98,
+       "confidence": 0.92,
+       "punctuated_word": "What"
+      },
+      {
+       "word": "did",
+       "start": 22.02,
+       "end": 22.2,
+       "confidence": 0.8,
+       "punctuated_word": "did"
+      },
+      {
+       "word": "you",
+       "start": 22.24,
+       "end": 22.42,
+       "confidence": 0.83,
+       "punctuated_word": "you"
+      },
+      {
+       "word": "do",
+       "start": 22.46,
+       "end": 22.64,
+       "confidence": 0.86,
+       "punctuated_word": "do?"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 23640,
+  "type": "UtteranceEnd",
+  "channel": [
+   1,
+   2
+  ],
+  "last_word_end": 22.64
+ },
+ {
+  "_atMs": 23780,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 0.84,
+  "start": 22.94,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "I stayed home and",
+     "confidence": 0.87,
+     "words": [
+      {
+       "word": "i",
+       "start": 22.94,
+       "end": 23.12,
+       "confidence": 0.84,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "stayed",
+       "start": 23.16,
+       "end": 23.34,
+       "confidence": 0.86,
+       "punctuated_word": "stayed"
+      },
+      {
+       "word": "home",
+       "start": 23.38,
+       "end": 23.56,
+       "confidence": 0.88,
+       "punctuated_word": "home"
+      },
+      {
+       "word": "and",
+       "start": 23.6,
+       "end": 23.78,
+       "confidence": 0.9,
+       "punctuated_word": "and"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 25120,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 1.88,
+  "start": 22.94,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "I stayed home and studied for my exam.",
+     "confidence": 0.88,
+     "words": [
+      {
+       "word": "i",
+       "start": 22.94,
+       "end": 23.12,
+       "confidence": 0.84,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "stayed",
+       "start": 23.16,
+       "end": 23.34,
+       "confidence": 0.86,
+       "punctuated_word": "stayed"
+      },
+      {
+       "word": "home",
+       "start": 23.38,
+       "end": 23.56,
+       "confidence": 0.88,
+       "punctuated_word": "home"
+      },
+      {
+       "word": "and",
+       "start": 23.6,
+       "end": 23.78,
+       "confidence": 0.9,
+       "punctuated_word": "and"
+      },
+      {
+       "word": "studied",
+       "start": 23.82,
+       "end": 24.08,
+       "confidence": 0.92,
+       "punctuated_word": "studied"
+      },
+      {
+       "word": "for",
+       "start": 24.12,
+       "end": 24.3,
+       "confidence": 0.94,
+       "punctuated_word": "for"
+      },
+      {
+       "word": "my",
+       "start": 24.34,
+       "end": 24.52,
+       "confidence": 0.84,
+       "punctuated_word": "my"
+      },
+      {
+       "word": "exam",
+       "start": 24.56,
+       "end": 24.82,
+       "confidence": 0.86,
+       "punctuated_word": "exam."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 25260,
+  "type": "SpeechStarted",
+  "channel": [
+   0,
+   2
+  ],
+  "timestamp": 25.26
+ },
+ {
+  "_atMs": 25820,
+  "type": "UtteranceEnd",
+  "channel": [
+   0,
+   2
+  ],
+  "last_word_end": 24.82
+ },
+ {
+  "_atMs": 27380,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 2.12,
+  "start": 25.26,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "I think I think it went well. Then on",
+     "confidence": 0.8933333333333334,
+     "words": [
+      {
+       "word": "i",
+       "start": 25.26,
+       "end": 25.44,
+       "confidence": 0.88,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "think",
+       "start": 25.48,
+       "end": 25.66,
+       "confidence": 0.9,
+       "punctuated_word": "think"
+      },
+      {
+       "word": "i",
+       "start": 25.7,
+       "end": 25.88,
+       "confidence": 0.92,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "think",
+       "start": 25.92,
+       "end": 26.1,
+       "confidence": 0.94,
+       "punctuated_word": "think"
+      },
+      {
+       "word": "it",
+       "start": 26.14,
+       "end": 26.32,
+       "confidence": 0.84,
+       "punctuated_word": "it"
+      },
+      {
+       "word": "went",
+       "start": 26.36,
+       "end": 26.54,
+       "confidence": 0.86,
+       "punctuated_word": "went"
+      },
+      {
+       "word": "well",
+       "start": 26.58,
+       "end": 26.76,
+       "confidence": 0.88,
+       "punctuated_word": "well."
+      },
+      {
+       "word": "then",
+       "start": 26.98,
+       "end": 27.16,
+       "confidence": 0.9,
+       "punctuated_word": "Then"
+      },
+      {
+       "word": "on",
+       "start": 27.2,
+       "end": 27.38,
+       "confidence": 0.92,
+       "punctuated_word": "on"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 28200,
+  "type": "SpeechStarted",
+  "channel": [
+   1,
+   2
+  ],
+  "timestamp": 28.2
+ },
+ {
+  "_atMs": 28380,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 0.18,
+  "start": 28.2,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "my",
+     "confidence": 0.42,
+     "words": [
+      {
+       "word": "my",
+       "start": 28.2,
+       "end": 28.38,
+       "confidence": 0.42,
+       "punctuated_word": "my"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 28900,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 0.4,
+  "start": 28.2,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "my friends",
+     "confidence": 0.42,
+     "words": [
+      {
+       "word": "my",
+       "start": 28.2,
+       "end": 28.38,
+       "confidence": 0.42,
+       "punctuated_word": "my"
+      },
+      {
+       "word": "friends",
+       "start": 28.42,
+       "end": 28.6,
+       "confidence": 0.42,
+       "punctuated_word": "friends"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 29600,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 4.04,
+  "start": 25.26,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "I think I think it went well. Then on Sunday I met my friends at a cafe.",
+     "confidence": 0.8917647058823529,
+     "words": [
+      {
+       "word": "i",
+       "start": 25.26,
+       "end": 25.44,
+       "confidence": 0.88,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "think",
+       "start": 25.48,
+       "end": 25.66,
+       "confidence": 0.9,
+       "punctuated_word": "think"
+      },
+      {
+       "word": "i",
+       "start": 25.7,
+       "end": 25.88,
+       "confidence": 0.92,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "think",
+       "start": 25.92,
+       "end": 26.1,
+       "confidence": 0.94,
+       "punctuated_word": "think"
+      },
+      {
+       "word": "it",
+       "start": 26.14,
+       "end": 26.32,
+       "confidence": 0.84,
+       "punctuated_word": "it"
+      },
+      {
+       "word": "went",
+       "start": 26.36,
+       "end": 26.54,
+       "confidence": 0.86,
+       "punctuated_word": "went"
+      },
+      {
+       "word": "well",
+       "start": 26.58,
+       "end": 26.76,
+       "confidence": 0.88,
+       "punctuated_word": "well."
+      },
+      {
+       "word": "then",
+       "start": 26.98,
+       "end": 27.16,
+       "confidence": 0.9,
+       "punctuated_word": "Then"
+      },
+      {
+       "word": "on",
+       "start": 27.2,
+       "end": 27.38,
+       "confidence": 0.92,
+       "punctuated_word": "on"
+      },
+      {
+       "word": "sunday",
+       "start": 27.42,
+       "end": 27.68,
+       "confidence": 0.94,
+       "punctuated_word": "Sunday"
+      },
+      {
+       "word": "i",
+       "start": 27.72,
+       "end": 27.9,
+       "confidence": 0.84,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "met",
+       "start": 27.94,
+       "end": 28.12,
+       "confidence": 0.86,
+       "punctuated_word": "met"
+      },
+      {
+       "word": "my",
+       "start": 28.16,
+       "end": 28.34,
+       "confidence": 0.88,
+       "punctuated_word": "my"
+      },
+      {
+       "word": "friends",
+       "start": 28.38,
+       "end": 28.56,
+       "confidence": 0.9,
+       "punctuated_word": "friends"
+      },
+      {
+       "word": "at",
+       "start": 28.6,
+       "end": 28.78,
+       "confidence": 0.92,
+       "punctuated_word": "at"
+      },
+      {
+       "word": "a",
+       "start": 28.82,
+       "end": 29,
+       "confidence": 0.94,
+       "punctuated_word": "a"
+      },
+      {
+       "word": "cafe",
+       "start": 29.04,
+       "end": 29.3,
+       "confidence": 0.84,
+       "punctuated_word": "cafe."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 29600,
+  "type": "UtteranceEnd",
+  "channel": [
+   1,
+   2
+  ],
+  "last_word_end": 28.6
+ },
+ {
+  "_atMs": 29820,
+  "type": "SpeechStarted",
+  "channel": [
+   1,
+   2
+  ],
+  "timestamp": 29.82
+ },
+ {
+  "_atMs": 30300,
+  "type": "UtteranceEnd",
+  "channel": [
+   0,
+   2
+  ],
+  "last_word_end": 29.3
+ },
+ {
+  "_atMs": 31220,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 1.4,
+  "start": 29.82,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "That sounds fun. Which cafe",
+     "confidence": 0.8600000000000001,
+     "words": [
+      {
+       "word": "that",
+       "start": 29.82,
+       "end": 30,
+       "confidence": 0.89,
+       "punctuated_word": "That"
+      },
+      {
+       "word": "sounds",
+       "start": 30.04,
+       "end": 30.22,
+       "confidence": 0.92,
+       "punctuated_word": "sounds"
+      },
+      {
+       "word": "fun",
+       "start": 30.26,
+       "end": 30.44,
+       "confidence": 0.8,
+       "punctuated_word": "fun."
+      },
+      {
+       "word": "which",
+       "start": 30.74,
+       "end": 30.92,
+       "confidence": 0.83,
+       "punctuated_word": "Which"
+      },
+      {
+       "word": "cafe",
+       "start": 30.96,
+       "end": 31.22,
+       "confidence": 0.86,
+       "punctuated_word": "cafe"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 31980,
+  "type": "SpeechStarted",
+  "channel": [
+   0,
+   2
+  ],
+  "timestamp": 31.98
+ },
+ {
+  "_atMs": 32400,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 2.28,
+  "start": 29.82,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "That sounds fun. Which cafe did you go to?",
+     "confidence": 0.86,
+     "words": [
+      {
+       "word": "that",
+       "start": 29.82,
+       "end": 30,
+       "confidence": 0.89,
+       "punctuated_word": "That"
+      },
+      {
+       "word": "sounds",
+       "start": 30.04,
+       "end": 30.22,
+       "confidence": 0.92,
+       "punctuated_word": "sounds"
+      },
+      {
+       "word": "fun",
+       "start": 30.26,
+       "end": 30.44,
+       "confidence": 0.8,
+       "punctuated_word": "fun."
+      },
+      {
+       "word": "which",
+       "start": 30.74,
+       "end": 30.92,
+       "confidence": 0.83,
+       "punctuated_word": "Which"
+      },
+      {
+       "word": "cafe",
+       "start": 30.96,
+       "end": 31.22,
+       "confidence": 0.86,
+       "punctuated_word": "cafe"
+      },
+      {
+       "word": "did",
+       "start": 31.26,
+       "end": 31.44,
+       "confidence": 0.89,
+       "punctuated_word": "did"
+      },
+      {
+       "word": "you",
+       "start": 31.48,
+       "end": 31.66,
+       "confidence": 0.92,
+       "punctuated_word": "you"
+      },
+      {
+       "word": "go",
+       "start": 31.7,
+       "end": 31.88,
+       "confidence": 0.8,
+       "punctuated_word": "go"
+      },
+      {
+       "word": "to",
+       "start": 31.92,
+       "end": 32.1,
+       "confidence": 0.83,
+       "punctuated_word": "to?"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 32600,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 0.62,
+  "start": 31.98,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "The new one",
+     "confidence": 0.88,
+     "words": [
+      {
+       "word": "the",
+       "start": 31.98,
+       "end": 32.16,
+       "confidence": 0.86,
+       "punctuated_word": "The"
+      },
+      {
+       "word": "new",
+       "start": 32.2,
+       "end": 32.38,
+       "confidence": 0.88,
+       "punctuated_word": "new"
+      },
+      {
+       "word": "one",
+       "start": 32.42,
+       "end": 32.6,
+       "confidence": 0.9,
+       "punctuated_word": "one"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 33100,
+  "type": "UtteranceEnd",
+  "channel": [
+   1,
+   2
+  ],
+  "last_word_end": 32.1
+ },
+ {
+  "_atMs": 33560,
+  "type": "SpeechStarted",
+  "channel": [
+   1,
+   2
+  ],
+  "timestamp": 33.56
+ },
+ {
+  "_atMs": 33640,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 1.36,
+  "start": 31.98,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "The new one near the station.",
+     "confidence": 0.89,
+     "words": [
+      {
+       "word": "the",
+       "start": 31.98,
+       "end": 32.16,
+       "confidence": 0.86,
+       "punctuated_word": "The"
+      },
+      {
+       "word": "new",
+       "start": 32.2,
+       "end": 32.38,
+       "confidence": 0.88,
+       "punctuated_word": "new"
+      },
+      {
+       "word": "one",
+       "start": 32.42,
+       "end": 32.6,
+       "confidence": 0.9,
+       "punctuated_word": "one"
+      },
+      {
+       "word": "near",
+       "start": 32.64,
+       "end": 32.82,
+       "confidence": 0.92,
+       "punctuated_word": "near"
+      },
+      {
+       "word": "the",
+       "start": 32.86,
+       "end": 33.04,
+       "confidence": 0.94,
+       "punctuated_word": "the"
+      },
+      {
+       "word": "station",
+       "start": 33.08,
+       "end": 33.34,
+       "confidence": 0.84,
+       "punctuated_word": "station."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 33740,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 0.18,
+  "start": 33.56,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "yeah",
+     "confidence": 0.86,
+     "words": [
+      {
+       "word": "yeah",
+       "start": 33.56,
+       "end": 33.74,
+       "confidence": 0.86,
+       "punctuated_word": "yeah"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 33940,
+  "type": "SpeechStarted",
+  "channel": [
+   0,
+   2
+  ],
+  "timestamp": 33.94
+ },
+ {
+  "_atMs": 34040,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 0.18,
+  "start": 33.56,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "yeah",
+     "confidence": 0.86,
+     "words": [
+      {
+       "word": "yeah",
+       "start": 33.56,
+       "end": 33.74,
+       "confidence": 0.86,
+       "punctuated_word": "yeah"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 34340,
+  "type": "UtteranceEnd",
+  "channel": [
+   0,
+   2
+  ],
+  "last_word_end": 33.34
+ },
+ {
+  "_atMs": 34740,
+  "type": "UtteranceEnd",
+  "channel": [
+   1,
+   2
+  ],
+  "last_word_end": 33.74
+ },
+ {
+  "_atMs": 34860,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 0.92,
+  "start": 33.94,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "It has big windows",
+     "confidence": 0.89,
+     "words": [
+      {
+       "word": "it",
+       "start": 33.94,
+       "end": 34.12,
+       "confidence": 0.86,
+       "punctuated_word": "It"
+      },
+      {
+       "word": "has",
+       "start": 34.16,
+       "end": 34.34,
+       "confidence": 0.88,
+       "punctuated_word": "has"
+      },
+      {
+       "word": "big",
+       "start": 34.38,
+       "end": 34.56,
+       "confidence": 0.9,
+       "punctuated_word": "big"
+      },
+      {
+       "word": "windows",
+       "start": 34.6,
+       "end": 34.86,
+       "confidence": 0.92,
+       "punctuated_word": "windows"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 35900,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 1.66,
+  "start": 33.94,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "It has big windows and good coffee.",
+     "confidence": 0.8857142857142858,
+     "words": [
+      {
+       "word": "it",
+       "start": 33.94,
+       "end": 34.12,
+       "confidence": 0.86,
+       "punctuated_word": "It"
+      },
+      {
+       "word": "has",
+       "start": 34.16,
+       "end": 34.34,
+       "confidence": 0.88,
+       "punctuated_word": "has"
+      },
+      {
+       "word": "big",
+       "start": 34.38,
+       "end": 34.56,
+       "confidence": 0.9,
+       "punctuated_word": "big"
+      },
+      {
+       "word": "windows",
+       "start": 34.6,
+       "end": 34.86,
+       "confidence": 0.92,
+       "punctuated_word": "windows"
+      },
+      {
+       "word": "and",
+       "start": 34.9,
+       "end": 35.08,
+       "confidence": 0.94,
+       "punctuated_word": "and"
+      },
+      {
+       "word": "good",
+       "start": 35.12,
+       "end": 35.3,
+       "confidence": 0.84,
+       "punctuated_word": "good"
+      },
+      {
+       "word": "coffee",
+       "start": 35.34,
+       "end": 35.6,
+       "confidence": 0.86,
+       "punctuated_word": "coffee."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 35940,
+  "type": "SpeechStarted",
+  "channel": [
+   0,
+   2
+  ],
+  "timestamp": 35.94
+ },
+ {
+  "_atMs": 36340,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 0.4,
+  "start": 35.94,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "We talked",
+     "confidence": 0.89,
+     "words": [
+      {
+       "word": "we",
+       "start": 35.94,
+       "end": 36.12,
+       "confidence": 0.88,
+       "punctuated_word": "We"
+      },
+      {
+       "word": "talked",
+       "start": 36.16,
+       "end": 36.34,
+       "confidence": 0.9,
+       "punctuated_word": "talked"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 36600,
+  "type": "UtteranceEnd",
+  "channel": [
+   0,
+   2
+  ],
+  "last_word_end": 35.6
+ },
+ {
+  "_atMs": 37080,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 0.84,
+  "start": 35.94,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "We talked all day.",
+     "confidence": 0.91,
+     "words": [
+      {
+       "word": "we",
+       "start": 35.94,
+       "end": 36.12,
+       "confidence": 0.88,
+       "punctuated_word": "We"
+      },
+      {
+       "word": "talked",
+       "start": 36.16,
+       "end": 36.34,
+       "confidence": 0.9,
+       "punctuated_word": "talked"
+      },
+      {
+       "word": "all",
+       "start": 36.38,
+       "end": 36.56,
+       "confidence": 0.92,
+       "punctuated_word": "all"
+      },
+      {
+       "word": "day",
+       "start": 36.6,
+       "end": 36.78,
+       "confidence": 0.94,
+       "punctuated_word": "day."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 37180,
+  "type": "SpeechStarted",
+  "channel": [
+   1,
+   2
+  ],
+  "timestamp": 37.18
+ },
+ {
+  "_atMs": 37780,
+  "type": "UtteranceEnd",
+  "channel": [
+   0,
+   2
+  ],
+  "last_word_end": 36.78
+ },
+ {
+  "_atMs": 38920,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 1.74,
+  "start": 37.18,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "All day? That is a long time.",
+     "confidence": 0.8728571428571429,
+     "words": [
+      {
+       "word": "all",
+       "start": 37.18,
+       "end": 37.36,
+       "confidence": 0.89,
+       "punctuated_word": "All"
+      },
+      {
+       "word": "day",
+       "start": 37.4,
+       "end": 37.58,
+       "confidence": 0.92,
+       "punctuated_word": "day?"
+      },
+      {
+       "word": "that",
+       "start": 37.86,
+       "end": 38.04,
+       "confidence": 0.8,
+       "punctuated_word": "That"
+      },
+      {
+       "word": "is",
+       "start": 38.08,
+       "end": 38.26,
+       "confidence": 0.83,
+       "punctuated_word": "is"
+      },
+      {
+       "word": "a",
+       "start": 38.3,
+       "end": 38.48,
+       "confidence": 0.86,
+       "punctuated_word": "a"
+      },
+      {
+       "word": "long",
+       "start": 38.52,
+       "end": 38.7,
+       "confidence": 0.89,
+       "punctuated_word": "long"
+      },
+      {
+       "word": "time",
+       "start": 38.74,
+       "end": 38.92,
+       "confidence": 0.92,
+       "punctuated_word": "time."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 40840,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 3.36,
+  "start": 37.18,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "All day? That is a long time. I would like to try that cafe",
+     "confidence": 0.8600000000000001,
+     "words": [
+      {
+       "word": "all",
+       "start": 37.18,
+       "end": 37.36,
+       "confidence": 0.89,
+       "punctuated_word": "All"
+      },
+      {
+       "word": "day",
+       "start": 37.4,
+       "end": 37.58,
+       "confidence": 0.92,
+       "punctuated_word": "day?"
+      },
+      {
+       "word": "that",
+       "start": 37.86,
+       "end": 38.04,
+       "confidence": 0.8,
+       "punctuated_word": "That"
+      },
+      {
+       "word": "is",
+       "start": 38.08,
+       "end": 38.26,
+       "confidence": 0.83,
+       "punctuated_word": "is"
+      },
+      {
+       "word": "a",
+       "start": 38.3,
+       "end": 38.48,
+       "confidence": 0.86,
+       "punctuated_word": "a"
+      },
+      {
+       "word": "long",
+       "start": 38.52,
+       "end": 38.7,
+       "confidence": 0.89,
+       "punctuated_word": "long"
+      },
+      {
+       "word": "time",
+       "start": 38.74,
+       "end": 38.92,
+       "confidence": 0.92,
+       "punctuated_word": "time."
+      },
+      {
+       "word": "i",
+       "start": 38.96,
+       "end": 39.14,
+       "confidence": 0.8,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "would",
+       "start": 39.18,
+       "end": 39.36,
+       "confidence": 0.83,
+       "punctuated_word": "would"
+      },
+      {
+       "word": "like",
+       "start": 39.4,
+       "end": 39.58,
+       "confidence": 0.86,
+       "punctuated_word": "like"
+      },
+      {
+       "word": "to",
+       "start": 39.62,
+       "end": 39.8,
+       "confidence": 0.89,
+       "punctuated_word": "to"
+      },
+      {
+       "word": "try",
+       "start": 39.84,
+       "end": 40.02,
+       "confidence": 0.92,
+       "punctuated_word": "try"
+      },
+      {
+       "word": "that",
+       "start": 40.06,
+       "end": 40.24,
+       "confidence": 0.8,
+       "punctuated_word": "that"
+      },
+      {
+       "word": "cafe",
+       "start": 40.28,
+       "end": 40.54,
+       "confidence": 0.83,
+       "punctuated_word": "cafe"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 40960,
+  "type": "SpeechStarted",
+  "channel": [
+   1,
+   2
+  ],
+  "timestamp": 40.96
+ },
+ {
+  "_atMs": 41540,
+  "type": "UtteranceEnd",
+  "channel": [
+   1,
+   2
+  ],
+  "last_word_end": 40.54
+ },
+ {
+  "_atMs": 41660,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 0.7,
+  "start": 40.96,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "next week, maybe",
+     "confidence": 0.89,
+     "words": [
+      {
+       "word": "next",
+       "start": 40.96,
+       "end": 41.14,
+       "confidence": 0.86,
+       "punctuated_word": "next"
+      },
+      {
+       "word": "week",
+       "start": 41.18,
+       "end": 41.36,
+       "confidence": 0.89,
+       "punctuated_word": "week,"
+      },
+      {
+       "word": "maybe",
+       "start": 41.4,
+       "end": 41.66,
+       "confidence": 0.92,
+       "punctuated_word": "maybe"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 42700,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 1.44,
+  "start": 40.96,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "next week, maybe with my sister.",
+     "confidence": 0.86,
+     "words": [
+      {
+       "word": "next",
+       "start": 40.96,
+       "end": 41.14,
+       "confidence": 0.86,
+       "punctuated_word": "next"
+      },
+      {
+       "word": "week",
+       "start": 41.18,
+       "end": 41.36,
+       "confidence": 0.89,
+       "punctuated_word": "week,"
+      },
+      {
+       "word": "maybe",
+       "start": 41.4,
+       "end": 41.66,
+       "confidence": 0.92,
+       "punctuated_word": "maybe"
+      },
+      {
+       "word": "with",
+       "start": 41.7,
+       "end": 41.88,
+       "confidence": 0.8,
+       "punctuated_word": "with"
+      },
+      {
+       "word": "my",
+       "start": 41.92,
+       "end": 42.1,
+       "confidence": 0.83,
+       "punctuated_word": "my"
+      },
+      {
+       "word": "sister",
+       "start": 42.14,
+       "end": 42.4,
+       "confidence": 0.86,
+       "punctuated_word": "sister."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 42760,
+  "type": "SpeechStarted",
+  "channel": [
+   0,
+   2
+  ],
+  "timestamp": 42.76
+ },
+ {
+  "_atMs": 43400,
+  "type": "UtteranceEnd",
+  "channel": [
+   1,
+   2
+  ],
+  "last_word_end": 42.4
+ },
+ {
+  "_atMs": 44820,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 2.06,
+  "start": 42.76,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "You should go. It is quiet in the",
+     "confidence": 0.88,
+     "words": [
+      {
+       "word": "you",
+       "start": 42.76,
+       "end": 42.94,
+       "confidence": 0.84,
+       "punctuated_word": "You"
+      },
+      {
+       "word": "should",
+       "start": 42.98,
+       "end": 43.16,
+       "confidence": 0.86,
+       "punctuated_word": "should"
+      },
+      {
+       "word": "go",
+       "start": 43.2,
+       "end": 43.38,
+       "confidence": 0.88,
+       "punctuated_word": "go."
+      },
+      {
+       "word": "it",
+       "start": 43.68,
+       "end": 43.86,
+       "confidence": 0.9,
+       "punctuated_word": "It"
+      },
+      {
+       "word": "is",
+       "start": 43.9,
+       "end": 44.08,
+       "confidence": 0.92,
+       "punctuated_word": "is"
+      },
+      {
+       "word": "quiet",
+       "start": 44.12,
+       "end": 44.38,
+       "confidence": 0.94,
+       "punctuated_word": "quiet"
+      },
+      {
+       "word": "in",
+       "start": 44.42,
+       "end": 44.6,
+       "confidence": 0.84,
+       "punctuated_word": "in"
+      },
+      {
+       "word": "the",
+       "start": 44.64,
+       "end": 44.82,
+       "confidence": 0.86,
+       "punctuated_word": "the"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 47120,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 4.06,
+  "start": 42.76,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "You should go. It is quiet in the um morning, so you can study there too.",
+     "confidence": 0.885,
+     "words": [
+      {
+       "word": "you",
+       "start": 42.76,
+       "end": 42.94,
+       "confidence": 0.84,
+       "punctuated_word": "You"
+      },
+      {
+       "word": "should",
+       "start": 42.98,
+       "end": 43.16,
+       "confidence": 0.86,
+       "punctuated_word": "should"
+      },
+      {
+       "word": "go",
+       "start": 43.2,
+       "end": 43.38,
+       "confidence": 0.88,
+       "punctuated_word": "go."
+      },
+      {
+       "word": "it",
+       "start": 43.68,
+       "end": 43.86,
+       "confidence": 0.9,
+       "punctuated_word": "It"
+      },
+      {
+       "word": "is",
+       "start": 43.9,
+       "end": 44.08,
+       "confidence": 0.92,
+       "punctuated_word": "is"
+      },
+      {
+       "word": "quiet",
+       "start": 44.12,
+       "end": 44.38,
+       "confidence": 0.94,
+       "punctuated_word": "quiet"
+      },
+      {
+       "word": "in",
+       "start": 44.42,
+       "end": 44.6,
+       "confidence": 0.84,
+       "punctuated_word": "in"
+      },
+      {
+       "word": "the",
+       "start": 44.64,
+       "end": 44.82,
+       "confidence": 0.86,
+       "punctuated_word": "the"
+      },
+      {
+       "word": "um",
+       "start": 44.86,
+       "end": 45.12,
+       "confidence": 0.88,
+       "punctuated_word": "um"
+      },
+      {
+       "word": "morning",
+       "start": 45.16,
+       "end": 45.42,
+       "confidence": 0.9,
+       "punctuated_word": "morning,"
+      },
+      {
+       "word": "so",
+       "start": 45.46,
+       "end": 45.64,
+       "confidence": 0.92,
+       "punctuated_word": "so"
+      },
+      {
+       "word": "you",
+       "start": 45.68,
+       "end": 45.86,
+       "confidence": 0.94,
+       "punctuated_word": "you"
+      },
+      {
+       "word": "can",
+       "start": 45.9,
+       "end": 46.08,
+       "confidence": 0.84,
+       "punctuated_word": "can"
+      },
+      {
+       "word": "study",
+       "start": 46.12,
+       "end": 46.38,
+       "confidence": 0.86,
+       "punctuated_word": "study"
+      },
+      {
+       "word": "there",
+       "start": 46.42,
+       "end": 46.6,
+       "confidence": 0.88,
+       "punctuated_word": "there"
+      },
+      {
+       "word": "too",
+       "start": 46.64,
+       "end": 46.82,
+       "confidence": 0.9,
+       "punctuated_word": "too."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 47420,
+  "type": "SpeechStarted",
+  "channel": [
+   1,
+   2
+  ],
+  "timestamp": 47.42
+ },
+ {
+  "_atMs": 47600,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 0.18,
+  "start": 47.42,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "Good",
+     "confidence": 0.89,
+     "words": [
+      {
+       "word": "good",
+       "start": 47.42,
+       "end": 47.6,
+       "confidence": 0.89,
+       "punctuated_word": "Good"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 47820,
+  "type": "UtteranceEnd",
+  "channel": [
+   0,
+   2
+  ],
+  "last_word_end": 46.82
+ },
+ {
+  "_atMs": 48280,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 0.56,
+  "start": 47.42,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "Good idea.",
+     "confidence": 0.905,
+     "words": [
+      {
+       "word": "good",
+       "start": 47.42,
+       "end": 47.6,
+       "confidence": 0.89,
+       "punctuated_word": "Good"
+      },
+      {
+       "word": "idea",
+       "start": 47.64,
+       "end": 47.98,
+       "confidence": 0.92,
+       "punctuated_word": "idea."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 48300,
+  "type": "SpeechStarted",
+  "channel": [
+   1,
+   2
+  ],
+  "timestamp": 48.3
+ },
+ {
+  "_atMs": 48980,
+  "type": "UtteranceEnd",
+  "channel": [
+   1,
+   2
+  ],
+  "last_word_end": 47.98
+ },
+ {
+  "_atMs": 49880,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 1.58,
+  "start": 48.3,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "I have a test on Friday, so",
+     "confidence": 0.8471428571428571,
+     "words": [
+      {
+       "word": "i",
+       "start": 48.3,
+       "end": 48.48,
+       "confidence": 0.8,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "have",
+       "start": 48.52,
+       "end": 48.7,
+       "confidence": 0.83,
+       "punctuated_word": "have"
+      },
+      {
+       "word": "a",
+       "start": 48.74,
+       "end": 48.92,
+       "confidence": 0.86,
+       "punctuated_word": "a"
+      },
+      {
+       "word": "test",
+       "start": 48.96,
+       "end": 49.14,
+       "confidence": 0.89,
+       "punctuated_word": "test"
+      },
+      {
+       "word": "on",
+       "start": 49.18,
+       "end": 49.36,
+       "confidence": 0.92,
+       "punctuated_word": "on"
+      },
+      {
+       "word": "friday",
+       "start": 49.4,
+       "end": 49.66,
+       "confidence": 0.8,
+       "punctuated_word": "Friday,"
+      },
+      {
+       "word": "so",
+       "start": 49.7,
+       "end": 49.88,
+       "confidence": 0.83,
+       "punctuated_word": "so"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 51880,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 3.28,
+  "start": 48.3,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "I have a test on Friday, so I need a quiet place to study.",
+     "confidence": 0.8557142857142858,
+     "words": [
+      {
+       "word": "i",
+       "start": 48.3,
+       "end": 48.48,
+       "confidence": 0.8,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "have",
+       "start": 48.52,
+       "end": 48.7,
+       "confidence": 0.83,
+       "punctuated_word": "have"
+      },
+      {
+       "word": "a",
+       "start": 48.74,
+       "end": 48.92,
+       "confidence": 0.86,
+       "punctuated_word": "a"
+      },
+      {
+       "word": "test",
+       "start": 48.96,
+       "end": 49.14,
+       "confidence": 0.89,
+       "punctuated_word": "test"
+      },
+      {
+       "word": "on",
+       "start": 49.18,
+       "end": 49.36,
+       "confidence": 0.92,
+       "punctuated_word": "on"
+      },
+      {
+       "word": "friday",
+       "start": 49.4,
+       "end": 49.66,
+       "confidence": 0.8,
+       "punctuated_word": "Friday,"
+      },
+      {
+       "word": "so",
+       "start": 49.7,
+       "end": 49.88,
+       "confidence": 0.83,
+       "punctuated_word": "so"
+      },
+      {
+       "word": "i",
+       "start": 49.92,
+       "end": 50.1,
+       "confidence": 0.86,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "need",
+       "start": 50.14,
+       "end": 50.32,
+       "confidence": 0.89,
+       "punctuated_word": "need"
+      },
+      {
+       "word": "a",
+       "start": 50.36,
+       "end": 50.54,
+       "confidence": 0.92,
+       "punctuated_word": "a"
+      },
+      {
+       "word": "quiet",
+       "start": 50.58,
+       "end": 50.84,
+       "confidence": 0.8,
+       "punctuated_word": "quiet"
+      },
+      {
+       "word": "place",
+       "start": 50.88,
+       "end": 51.06,
+       "confidence": 0.83,
+       "punctuated_word": "place"
+      },
+      {
+       "word": "to",
+       "start": 51.1,
+       "end": 51.28,
+       "confidence": 0.86,
+       "punctuated_word": "to"
+      },
+      {
+       "word": "study",
+       "start": 51.32,
+       "end": 51.58,
+       "confidence": 0.89,
+       "punctuated_word": "study."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 52000,
+  "type": "SpeechStarted",
+  "channel": [
+   0,
+   2
+  ],
+  "timestamp": 52
+ },
+ {
+  "_atMs": 52580,
+  "type": "UtteranceEnd",
+  "channel": [
+   1,
+   2
+  ],
+  "last_word_end": 51.58
+ },
+ {
+  "_atMs": 53140,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 1.14,
+  "start": 52,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "We uh I can go",
+     "confidence": 0.8879999999999999,
+     "words": [
+      {
+       "word": "we",
+       "start": 52,
+       "end": 52.18,
+       "confidence": 0.92,
+       "punctuated_word": "We"
+      },
+      {
+       "word": "uh",
+       "start": 52.22,
+       "end": 52.48,
+       "confidence": 0.94,
+       "punctuated_word": "uh"
+      },
+      {
+       "word": "i",
+       "start": 52.52,
+       "end": 52.7,
+       "confidence": 0.84,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "can",
+       "start": 52.74,
+       "end": 52.92,
+       "confidence": 0.86,
+       "punctuated_word": "can"
+      },
+      {
+       "word": "go",
+       "start": 52.96,
+       "end": 53.14,
+       "confidence": 0.88,
+       "punctuated_word": "go"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 54540,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 2.24,
+  "start": 52,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "We uh I can go with you if you want.",
+     "confidence": 0.8899999999999999,
+     "words": [
+      {
+       "word": "we",
+       "start": 52,
+       "end": 52.18,
+       "confidence": 0.92,
+       "punctuated_word": "We"
+      },
+      {
+       "word": "uh",
+       "start": 52.22,
+       "end": 52.48,
+       "confidence": 0.94,
+       "punctuated_word": "uh"
+      },
+      {
+       "word": "i",
+       "start": 52.52,
+       "end": 52.7,
+       "confidence": 0.84,
+       "punctuated_word": "I"
+      },
+      {
+       "word": "can",
+       "start": 52.74,
+       "end": 52.92,
+       "confidence": 0.86,
+       "punctuated_word": "can"
+      },
+      {
+       "word": "go",
+       "start": 52.96,
+       "end": 53.14,
+       "confidence": 0.88,
+       "punctuated_word": "go"
+      },
+      {
+       "word": "with",
+       "start": 53.18,
+       "end": 53.36,
+       "confidence": 0.9,
+       "punctuated_word": "with"
+      },
+      {
+       "word": "you",
+       "start": 53.4,
+       "end": 53.58,
+       "confidence": 0.92,
+       "punctuated_word": "you"
+      },
+      {
+       "word": "if",
+       "start": 53.62,
+       "end": 53.8,
+       "confidence": 0.94,
+       "punctuated_word": "if"
+      },
+      {
+       "word": "you",
+       "start": 53.84,
+       "end": 54.02,
+       "confidence": 0.84,
+       "punctuated_word": "you"
+      },
+      {
+       "word": "want",
+       "start": 54.06,
+       "end": 54.24,
+       "confidence": 0.86,
+       "punctuated_word": "want."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 54600,
+  "type": "SpeechStarted",
+  "channel": [
+   0,
+   2
+  ],
+  "timestamp": 54.6
+ },
+ {
+  "_atMs": 55240,
+  "type": "UtteranceEnd",
+  "channel": [
+   0,
+   2
+  ],
+  "last_word_end": 54.24
+ },
+ {
+  "_atMs": 55380,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 0.78,
+  "start": 54.6,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "The cafe opens",
+     "confidence": 0.9,
+     "words": [
+      {
+       "word": "the",
+       "start": 54.6,
+       "end": 54.78,
+       "confidence": 0.88,
+       "punctuated_word": "The"
+      },
+      {
+       "word": "cafe",
+       "start": 54.82,
+       "end": 55.08,
+       "confidence": 0.9,
+       "punctuated_word": "cafe"
+      },
+      {
+       "word": "opens",
+       "start": 55.12,
+       "end": 55.38,
+       "confidence": 0.92,
+       "punctuated_word": "opens"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 56120,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 1.22,
+  "start": 54.6,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "The cafe opens at nine.",
+     "confidence": 0.8960000000000001,
+     "words": [
+      {
+       "word": "the",
+       "start": 54.6,
+       "end": 54.78,
+       "confidence": 0.88,
+       "punctuated_word": "The"
+      },
+      {
+       "word": "cafe",
+       "start": 54.82,
+       "end": 55.08,
+       "confidence": 0.9,
+       "punctuated_word": "cafe"
+      },
+      {
+       "word": "opens",
+       "start": 55.12,
+       "end": 55.38,
+       "confidence": 0.92,
+       "punctuated_word": "opens"
+      },
+      {
+       "word": "at",
+       "start": 55.42,
+       "end": 55.6,
+       "confidence": 0.94,
+       "punctuated_word": "at"
+      },
+      {
+       "word": "nine",
+       "start": 55.64,
+       "end": 55.82,
+       "confidence": 0.84,
+       "punctuated_word": "nine."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 56200,
+  "type": "SpeechStarted",
+  "channel": [
+   1,
+   2
+  ],
+  "timestamp": 56.2
+ },
+ {
+  "_atMs": 56820,
+  "type": "UtteranceEnd",
+  "channel": [
+   0,
+   2
+  ],
+  "last_word_end": 55.82
+ },
+ {
+  "_atMs": 56820,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 0.62,
+  "start": 56.2,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "That would be",
+     "confidence": 0.8500000000000001,
+     "words": [
+      {
+       "word": "that",
+       "start": 56.2,
+       "end": 56.38,
+       "confidence": 0.92,
+       "punctuated_word": "That"
+      },
+      {
+       "word": "would",
+       "start": 56.42,
+       "end": 56.6,
+       "confidence": 0.8,
+       "punctuated_word": "would"
+      },
+      {
+       "word": "be",
+       "start": 56.64,
+       "end": 56.82,
+       "confidence": 0.83,
+       "punctuated_word": "be"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 58000,
+  "type": "SpeechStarted",
+  "channel": [
+   0,
+   2
+  ],
+  "timestamp": 58
+ },
+ {
+  "_atMs": 58000,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 1.5,
+  "start": 56.2,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "That would be great. Thank you.",
+     "confidence": 0.87,
+     "words": [
+      {
+       "word": "that",
+       "start": 56.2,
+       "end": 56.38,
+       "confidence": 0.92,
+       "punctuated_word": "That"
+      },
+      {
+       "word": "would",
+       "start": 56.42,
+       "end": 56.6,
+       "confidence": 0.8,
+       "punctuated_word": "would"
+      },
+      {
+       "word": "be",
+       "start": 56.64,
+       "end": 56.82,
+       "confidence": 0.83,
+       "punctuated_word": "be"
+      },
+      {
+       "word": "great",
+       "start": 56.86,
+       "end": 57.04,
+       "confidence": 0.86,
+       "punctuated_word": "great."
+      },
+      {
+       "word": "thank",
+       "start": 57.3,
+       "end": 57.48,
+       "confidence": 0.89,
+       "punctuated_word": "Thank"
+      },
+      {
+       "word": "you",
+       "start": 57.52,
+       "end": 57.7,
+       "confidence": 0.92,
+       "punctuated_word": "you."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 58620,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 0.62,
+  "start": 58,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "See you on",
+     "confidence": 0.88,
+     "words": [
+      {
+       "word": "see",
+       "start": 58,
+       "end": 58.18,
+       "confidence": 0.86,
+       "punctuated_word": "See"
+      },
+      {
+       "word": "you",
+       "start": 58.22,
+       "end": 58.4,
+       "confidence": 0.88,
+       "punctuated_word": "you"
+      },
+      {
+       "word": "on",
+       "start": 58.44,
+       "end": 58.62,
+       "confidence": 0.9,
+       "punctuated_word": "on"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 58700,
+  "type": "UtteranceEnd",
+  "channel": [
+   1,
+   2
+  ],
+  "last_word_end": 57.7
+ },
+ {
+  "_atMs": 59440,
+  "type": "Results",
+  "channel_index": [
+   0,
+   2
+  ],
+  "duration": 1.14,
+  "start": 58,
+  "is_final": true,
+  "speech_final": true,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "See you on Friday then.",
+     "confidence": 0.9,
+     "words": [
+      {
+       "word": "see",
+       "start": 58,
+       "end": 58.18,
+       "confidence": 0.86,
+       "punctuated_word": "See"
+      },
+      {
+       "word": "you",
+       "start": 58.22,
+       "end": 58.4,
+       "confidence": 0.88,
+       "punctuated_word": "you"
+      },
+      {
+       "word": "on",
+       "start": 58.44,
+       "end": 58.62,
+       "confidence": 0.9,
+       "punctuated_word": "on"
+      },
+      {
+       "word": "friday",
+       "start": 58.66,
+       "end": 58.92,
+       "confidence": 0.92,
+       "punctuated_word": "Friday"
+      },
+      {
+       "word": "then",
+       "start": 58.96,
+       "end": 59.14,
+       "confidence": 0.94,
+       "punctuated_word": "then."
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 60140,
+  "type": "UtteranceEnd",
+  "channel": [
+   0,
+   2
+  ],
+  "last_word_end": 59.14
+ }
+]
