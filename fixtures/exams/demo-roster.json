@@ -1,0 +1,6 @@
+[
+  { "name": "Demo Student One", "participantId": "DEMO-001", "consentStatus": "granted" },
+  { "name": "Demo Student Two", "participantId": "DEMO-002", "consentStatus": "granted" },
+  { "name": "Demo Student Three", "participantId": "DEMO-003", "consentStatus": "granted" },
+  { "name": "Demo Student Four", "participantId": "DEMO-004", "consentStatus": "declined" }
+]
