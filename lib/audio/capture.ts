@@ -134,7 +134,14 @@ export class Capture {
     return this.toWavMs(this.ctx.currentTime * 1000);
   }
 
-  async stop(): Promise<void> {
+  /**
+   * Stops capture. tailMs keeps recording that long first, so the WAV runs past
+   * the Stop marker even when the main-thread clock that stamps the marker runs
+   * a render block or two ahead of the audio thread (RESEARCH_PRINCIPLES.md
+   * principle 1 keeps audio after Stop).
+   */
+  async stop(tailMs = 0): Promise<void> {
+    if (tailMs > 0 && this.ctx.state === "running") await new Promise((r) => setTimeout(r, tailMs));
     // Ask the worklet for its partial raw chunk first, so no captured sample is lost.
     if (this.down && this.ctx.state === "running") {
       await new Promise<void>((resolve) => {
