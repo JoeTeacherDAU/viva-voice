@@ -118,17 +118,26 @@ def _turns_from(floor: list[dict]) -> list[Turn]:
     return turns
 
 
-def build_turns(words: list[dict], backchannels: set[str], floor_lapse_ms: float) -> list[Turn]:
-    """Floor turns, by the app's rule (docs/OPERATIONAL_DEFINITIONS.md).
+@dataclass
+class Candidate:
+    """A backchannel candidate and the facts that classify it (docs/OPERATIONAL_DEFINITIONS.md)."""
 
-    A candidate is a run of backchannel tokens on one channel with no partner
-    word starting inside it. It is a backchannel only while the partner holds
-    the floor: inside a partner turn (computed without candidates), and either
-    overlapping a partner word or inside a partner silence shorter than
-    floor_lapse_ms (config floorLapseMs). Every other candidate is a floor word, so a
-    lone "okay" that answers after the partner falls silent is a one-word turn,
-    and "yeah" or "really" inside a speaker's own turn is an ordinary word."""
-    candidates: list[list[dict]] = []
+    words: list[dict]
+    overlaps_partner: bool
+    partner_silence_ms: float | None
+    partner_resumes_next: bool
+    floor_class: str  # "backchannel", "standalone_turn", or "turn_part"
+
+
+def classify_candidates(words: list[dict], backchannels: set[str], floor_lapse_ms: float) -> list[Candidate]:
+    """The app's rule. A candidate is a run of backchannel tokens on one channel
+    with no partner word starting inside it. It is a backchannel only while the
+    partner holds the floor: inside a partner turn (computed without
+    candidates), and either overlapping a partner word or inside a partner
+    silence shorter than floor_lapse_ms (config floorLapseMs). Any other run is
+    floor speech: "standalone_turn" when it is the student's entire turn,
+    "turn_part" when it opens or sits inside a longer turn by the same student."""
+    runs: list[list[dict]] = []
     for ch in (0, 1):
         own = sorted((w for w in words if w["channel"] == ch), key=lambda w: w["startMs"])
         partner_starts = [w["startMs"] for w in words if w["channel"] != ch]
@@ -136,30 +145,56 @@ def build_turns(words: list[dict], backchannels: set[str], floor_lapse_ms: float
         for w in own:
             if token(w["word"]) not in backchannels:
                 if run:
-                    candidates.append(run)
+                    runs.append(run)
                 run = []
                 continue
             if run and any(run[-1]["startMs"] < s < w["startMs"] for s in partner_starts):
-                candidates.append(run)
+                runs.append(run)
                 run = []
             run.append(w)
         if run:
-            candidates.append(run)
-    cand_ids = {id(w) for g in candidates for w in g}
-    first = _turns_from([w for w in words if id(w) not in cand_ids])
+            runs.append(run)
+    cand_ids = {id(w) for g in runs for w in g}
+    floor = [w for w in words if id(w) not in cand_ids]
+    first = _turns_from(floor)
 
-    def holds_floor(g: list[dict]) -> bool:
-        start, end = g[0]["startMs"], g[-1]["endMs"]
-        turn = next((t for t in first if t.channel != g[0]["channel"] and t.start <= start and end <= t.end), None)
-        if turn is None:
-            return False
-        before = [w for w in turn.words if w["startMs"] <= start]
-        nxt = next((w for w in turn.words if w["startMs"] >= end), None)
-        if not before or before[-1]["endMs"] > start or nxt is None:
-            return True
-        return nxt["startMs"] - before[-1]["endMs"] < floor_lapse_ms
+    out: list[Candidate] = []
+    for g in runs:
+        ch, start, end = g[0]["channel"], g[0]["startMs"], g[-1]["endMs"]
+        partner = [w for w in floor if w["channel"] != ch]
+        own = sorted((w for w in floor if w["channel"] == ch), key=lambda w: w["startMs"])
+        overlaps = any(w["startMs"] < end and start < w["endMs"] for w in partner)
+        before = [w for w in partner if w["startMs"] <= start]
+        nxt = min((w for w in partner if w["startMs"] >= end), key=lambda w: w["startMs"], default=None)
+        own_next = next((w for w in own if w["startMs"] >= end), None)
+        prev = max(before, key=lambda w: w["startMs"], default=None)
+        silence = None if overlaps or prev is None or nxt is None else nxt["startMs"] - prev["endMs"]
+        inside = any(t.channel != ch and t.start <= start and end <= t.end for t in first)
+        holds = overlaps or (silence is not None and silence < floor_lapse_ms)
+        out.append(
+            Candidate(
+                words=g,
+                overlaps_partner=overlaps,
+                partner_silence_ms=silence,
+                partner_resumes_next=nxt is not None and (own_next is None or nxt["startMs"] < own_next["startMs"]),
+                floor_class="backchannel" if inside and holds else "turn_part",
+            )
+        )
+    backchannel_ids = {id(w) for c in out if c.floor_class == "backchannel" for w in c.words}
+    final = _turns_from([w for w in words if id(w) not in backchannel_ids])
+    for c in out:
+        if c.floor_class == "backchannel":
+            continue
+        turn = next((t for t in final if any(w is c.words[0] for w in t.words)), None)
+        c.floor_class = "standalone_turn" if turn and len(turn.words) == len(c.words) else "turn_part"
+    return out
 
-    backchannel_ids = {id(w) for g in candidates if holds_floor(g) for w in g}
+
+def build_turns(words: list[dict], backchannels: set[str], floor_lapse_ms: float) -> list[Turn]:
+    """Floor turns: every word except the backchannels classify_candidates finds."""
+    backchannel_ids = {
+        id(w) for c in classify_candidates(words, backchannels, floor_lapse_ms) if c.floor_class == "backchannel" for w in c.words
+    }
     return _turns_from([w for w in words if id(w) not in backchannel_ids])
 
 

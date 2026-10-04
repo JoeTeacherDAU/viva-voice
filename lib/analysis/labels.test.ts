@@ -159,7 +159,7 @@ describe("floor labels on backchannel candidates", () => {
       overlapsPartner: false,
       partnerSilenceMs: 2680 - 680,
       partnerResumesNext: true,
-      floorClass: "turn",
+      floorClass: "standalone_turn",
     });
     expect(by("mhmm")).toMatchObject({
       overlapsPartner: false,
@@ -180,10 +180,30 @@ describe("floor labels on backchannel candidates", () => {
     expect(count("A")).toBe(0);
   });
 
+  it("labels a token that opens or sits inside a longer own turn as turn_part, which never counts", () => {
+    const r = run(
+      [
+        ...say("so what now?", 0, 0),
+        ...say("yeah, I think that's really right.", 2500, 1),
+        ...say("good", 6000, 0),
+      ],
+      null,
+      DEFAULT_CONFIG,
+      null,
+      { pass: 2, markers: { startMs: 0, stopMs: 10000 }, rolling: false },
+    );
+    for (const t of ["yeah", "really", "right"])
+      expect(r.words.find((x) => x.word === t)!.floorClass).toBe("turn_part");
+    expect(
+      r.features.find((f) => f.featureId === "open_floor_response_count" && f.participant === "B")!
+        .value,
+    ).toBe(0);
+  });
+
   it("classifies by floorLapseMs, not by turnThresholdMs", () => {
     const cls = (cfg: Partial<typeof DEFAULT_CONFIG>) =>
       runWith(cfg).words.find((x) => x.word === "okay")!.floorClass;
-    expect(cls({ turnThresholdMs: 5000 })).toBe("turn");
+    expect(cls({ turnThresholdMs: 5000 })).toBe("standalone_turn");
     expect(cls({ floorLapseMs: 2500 })).toBe("backchannel");
     const r = runWith({ floorLapseMs: 2500 });
     expect(

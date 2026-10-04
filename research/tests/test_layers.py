@@ -6,7 +6,7 @@ import csv
 import json
 
 from viva import export, verbatim
-from viva.archive import Archive, build_turns, contexts
+from viva.archive import Archive, build_turns, classify_candidates, contexts
 
 
 def w(word, start, end, ch, punct=None):
@@ -81,3 +81,20 @@ def test_contexts_read_floor_lapse_ms_not_turn_threshold():
     turns = lambda cfg: [c for c in contexts({**base, "config": cfg}, words)][0].turns
     assert [t.channel for t in turns({"turnThresholdMs": 9000})] == [0, 1, 0]
     assert [t.channel for t in turns({"floorLapseMs": 2500})] == [0]
+
+
+def test_floor_classes_match_the_app():
+    words = [
+        w("are", 0, 200, 0), w("you", 240, 400, 0), w("ready", 440, 680, 0, "ready?"),
+        w("okay", 2400, 2660, 1, "Okay."),
+        w("good", 4000, 4200, 0), w("we", 4240, 4400, 0), w("start", 4440, 4600, 0, "start."),
+        w("mhmm", 4800, 4960, 1),
+        w("now", 5200, 5400, 0, "now?"),
+        w("yeah", 7500, 7700, 1, "Yeah,"), w("I", 7740, 7900, 1), w("agree", 7940, 8200, 1, "agree."),
+        w("fine", 9000, 9200, 0),
+    ]
+    by = {c.words[0]["word"]: c for c in classify_candidates(words, BC, 1500)}
+    assert by["okay"].floor_class == "standalone_turn"
+    assert by["okay"].partner_silence_ms == 4000 - 680 and by["okay"].partner_resumes_next
+    assert by["mhmm"].floor_class == "backchannel" and by["mhmm"].partner_silence_ms < 1500
+    assert by["yeah"].floor_class == "turn_part" and not by["yeah"].partner_resumes_next

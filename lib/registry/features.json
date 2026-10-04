@@ -1,6 +1,6 @@
 {
   "$schema": "../../schemas/features.schema.json",
-  "registryVersion": "1.1.0",
+  "registryVersion": "1.2.0",
   "generated": "2026-10-05",
   "tiers": {
     "1": "Ships in the TypeScript app. Computed in pass one and pass two. Appears in the student DOCX and the cohort CSV.",
@@ -428,13 +428,13 @@
       "inputs": [
         "words"
       ],
-      "formula": "count(backchannel candidates whose partnerSilenceMs >= floorLapseMs)",
+      "formula": "count(backchannel candidate runs with floorClass standalone_turn and partnerSilenceMs >= floorLapseMs)",
       "params": {
         "floorLapseMs": 1500
       },
       "reference": "Joe's ruling on the floor-holding rule, 2026-10-05; docs/OPERATIONAL_DEFINITIONS.md",
       "caveats": [
-        "a candidate is any run of backchannel tokens, so a token that opens or sits inside the student's own turn counts when the partner is silent that long",
+        "counts only runs that form the student's entire turn; a token that opens or sits inside a longer turn (floorClass turn_part) never counts",
         "each candidate word carries overlapsPartner, partnerSilenceMs, partnerResumesNext, and floorClass labels"
       ]
     },

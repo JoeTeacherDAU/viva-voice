@@ -30,7 +30,7 @@ export interface Word {
   overlapsPartner?: boolean;
   partnerSilenceMs?: number | null;
   partnerResumesNext?: boolean;
-  floorClass?: "backchannel" | "turn";
+  floorClass?: "backchannel" | "standalone_turn" | "turn_part";
 }
 
 export interface CompositeWeights {

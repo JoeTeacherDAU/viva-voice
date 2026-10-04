@@ -690,8 +690,9 @@ function compute(fx, turns, bcs, crossCopies, config, markers, gaps) {
       );
       push("mattr_raw", P, pass, null, mattr(raw.map((w) => w.token)));
       // Backchannel candidates: runs of backchannel tokens on one channel with no
-      // partner word starting inside. Count those in a partner silence of
-      // floorLapseMs or more, using floor words that leave every candidate out.
+      // partner word starting inside. Count the runs that form a whole turn and
+      // sit in a partner silence of floorLapseMs or more, using floor words that
+      // leave every candidate out.
       const everyWord = [...turns.flatMap((t) => t.words), ...bcs].sort(
         (a, b) => a.startMs - b.startMs,
       );
@@ -719,6 +720,9 @@ function compute(fx, turns, bcs, crossCopies, config, markers, gaps) {
       const floorWords = everyWord.filter((w) => !inCandidate.has(w));
       let openFloor = 0;
       for (const run of candidates.filter((r) => r[0].channel === ch)) {
+        // Only a run that forms the student's whole authored turn counts.
+        const turn = turns.find((t) => t.words.includes(run[0]));
+        if (!turn || turn.words.length !== run.length) continue;
         const start = run[0].startMs;
         const end = run[run.length - 1].endMs;
         const partner = floorWords.filter((w) => w.channel !== ch);

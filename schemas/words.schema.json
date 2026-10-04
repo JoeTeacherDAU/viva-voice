@@ -38,7 +38,7 @@
         "overlapsPartner": { "type": "boolean" },
         "partnerSilenceMs": { "type": ["number", "null"] },
         "partnerResumesNext": { "type": "boolean" },
-        "floorClass": { "enum": ["backchannel", "turn"] },
+        "floorClass": { "enum": ["backchannel", "standalone_turn", "turn_part"] },
         "speakerLabel": { "enum": ["A", "B"] }
       }
     }

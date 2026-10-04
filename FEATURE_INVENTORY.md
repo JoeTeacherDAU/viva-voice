@@ -1,6 +1,6 @@
 # Viva Voice: feature inventory
 
-Every speech feature this system can measure now or later, grouped by tier. scripts/gen-inventory.py generates this file from `features.json` (registry version 1.1.0, 2026-10-05). Edit the JSON and regenerate; never edit this file by hand.
+Every speech feature this system can measure now or later, grouped by tier. scripts/gen-inventory.py generates this file from `features.json` (registry version 1.2.0, 2026-10-05). Edit the JSON and regenerate; never edit this file by hand.
 
 ## How to read this file
 
@@ -94,7 +94,7 @@ Ships in the TypeScript app. Computed in pass one and pass two. Appears in the s
 
 **backchannel_count**. Unit: count. Inputs: words. Formula: count(token in backchannelTokens inside partner's turn). Parameters: backchannelTokens=["mhmm", "mm-mm", "uh-huh", "uh-uh", "nuh-uh", "yeah", "right", "okay", "really"]. Reference: Galaczi 2014; Borger 2019. Caveats: interactive listening proxy; a token counts as a backchannel only inside a partner turn; elsewhere it is an ordinary word.
 
-**open_floor_response_count**. Unit: count. Inputs: words. Formula: count(backchannel candidates whose partnerSilenceMs >= floorLapseMs). Parameters: floorLapseMs=1500. Reference: Joe's ruling on the floor-holding rule, 2026-10-05; docs/OPERATIONAL_DEFINITIONS.md. Caveats: a candidate is any run of backchannel tokens, so a token that opens or sits inside the student's own turn counts when the partner is silent that long; each candidate word carries overlapsPartner, partnerSilenceMs, partnerResumesNext, and floorClass labels.
+**open_floor_response_count**. Unit: count. Inputs: words. Formula: count(backchannel candidate runs with floorClass standalone_turn and partnerSilenceMs >= floorLapseMs). Parameters: floorLapseMs=1500. Reference: Joe's ruling on the floor-holding rule, 2026-10-05; docs/OPERATIONAL_DEFINITIONS.md. Caveats: counts only runs that form the student's entire turn; a token that opens or sits inside a longer turn (floorClass turn_part) never counts; each candidate word carries overlapsPartner, partnerSilenceMs, partnerResumesNext, and floorClass labels.
 
 **question_count**. Unit: count. Inputs: words. Formula: count(turns whose last punctuated_word ends with ?). Parameters: none. Reference: Galaczi 2014. Caveats: punctuation proxy.
 

@@ -1,7 +1,7 @@
 {
  "fixture": "asymmetric",
  "generatedBy": "scripts/make-fixtures.mjs",
- "registryVersion": "1.1.0",
+ "registryVersion": "1.2.0",
  "tolerance": {
   "rateRelative": 0.005,
   "countAbsolute": 0,
@@ -726,7 +726,7 @@
    "pass": 1,
    "window": "full",
    "thresholdMs": null,
-   "value": 3,
+   "value": 0,
    "unit": "count"
   },
   {
@@ -1837,7 +1837,7 @@
    "pass": 2,
    "window": "full",
    "thresholdMs": null,
-   "value": 3,
+   "value": 0,
    "unit": "count"
   },
   {

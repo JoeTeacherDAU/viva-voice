@@ -47,13 +47,14 @@ defineFeature("question_count", (ctx, P) => [
   },
 ]);
 
-// Backchannel candidates that fell in a partner silence at or above floorLapseMs.
+// Standalone-turn candidate runs in a partner silence at or above floorLapseMs.
 defineFeature("open_floor_response_count", (ctx, P) => [
   {
     thresholdMs: null,
     value: ctx.candidates.filter(
       (c) =>
         c.channel === ctx.p[P].channel &&
+        c.floorClass === "standalone_turn" &&
         c.partnerSilenceMs !== null &&
         c.partnerSilenceMs >= ctx.floorLapseMs,
     ).length,

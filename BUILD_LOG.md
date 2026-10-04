@@ -304,3 +304,18 @@ GitHub Actions then failed on 3df8242, the commit that added only the entry abov
 That fix went out with a process error of mine: my command pushed 3acdc92 even though the local acceptance run had failed one browser test, and CI failed on the same test. The live-display test read the session record from IndexedDB after Stop, but the session archives itself and then clears its local copy, and the 500 ms tail changed the timing enough that the copy was sometimes already gone. The test now waits for the archive to confirm and reads the record from the archive, which checks more than the local copy did. The full acceptance sequence passed before this commit, and from here the push runs only if every step passes.
 
 GitHub Actions passed on d047757: 907 unit tests, 13 Python tests, and 8 browser tests.
+
+## 2026-10-05, Three floor classes; open_floor_response_count counts standalone answers only
+
+Branch: fix/lossless-descriptive. Not merged.
+
+Joe's instruction, done:
+
+- floorClass now takes three values. "backchannel" means the partner held the floor. "standalone_turn" means the candidate run is the student's entire turn. "turn_part" means the run opens or sits inside a longer turn by the same student. The pipeline settles the last two once the final turns exist. schemas/words.schema.json lists the three values.
+- open_floor_response_count counts standalone_turn runs only, and only in a partner silence at or above floorLapseMs. In the fixtures, asymmetric student A drops from 3 to 0, because "Yeah," "right," and "really" inside A's own turn are now turn_part. B's lone answering "Okay." still counts 1 in asymmetric and in gappy.
+- docs/OPERATIONAL_DEFINITIONS.md, the fixture script (whose own count now requires the run to be the whole authored turn), and the research layer follow the new rule. research/viva/archive.py has a classify_candidates function that returns the same four facts and three classes as the app, and a pytest case checks one example of each class.
+- The student document now reads "One-word answers (such as okay) given as a whole turn after your partner had stopped talking".
+- registryVersion is 1.2.0 in both copies of features.json, with generated 2026-10-05, and the feature's formula and caveats describe the narrower count. FEATURE_INVENTORY.md is regenerated with scripts/gen-inventory.py.
+- I copied features.json, FEATURE_INVENTORY.md, and schemas/features.schema.json into ~/Library/Mobile Documents/com~apple~CloudDocs/Viva Voice Dev/. Before overwriting, I confirmed that the three iCloud copies still matched what I had copied from there at the start of work order 01, so no edit of Joe's was lost. After copying, each file compares byte for byte with the repository.
+
+Acceptance on this Mac, all passing before the push: lint; vitest without VIVA_MOCK_ASR and with it (908 passed, 1 skipped, both ways); coverage; build; contrast; feature-coverage (48 tier 1 features); check-fixtures; pytest (14 passed); Playwright (7 passed, 1 skipped on macOS).

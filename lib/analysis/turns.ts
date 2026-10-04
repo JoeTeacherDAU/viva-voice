@@ -78,8 +78,15 @@ export interface Candidate {
   partnerSilenceMs: number | null;
   /** The partner's next floor word comes before this student's next floor word. */
   partnerResumesNext: boolean;
-  floorClass: "backchannel" | "turn";
+  /**
+   * "backchannel" while the partner holds the floor; otherwise
+   * "standalone_turn" when the run is the student's entire turn, or
+   * "turn_part" when it opens or sits inside a longer turn by the same student.
+   */
+  floorClass: FloorClass;
 }
+
+export type FloorClass = "backchannel" | "standalone_turn" | "turn_part";
 
 export interface TurnAnalysis {
   turns: Turn[];
@@ -134,7 +141,8 @@ export function analyseTurns(
       overlapsPartner,
       partnerSilenceMs,
       partnerResumesNext: !!nextP && (!ownNext || nextP.startMs < ownNext.startMs),
-      floorClass: inPartnerTurn && holdsFloor ? "backchannel" : "turn",
+      // Settled below once the final turns exist.
+      floorClass: (inPartnerTurn && holdsFloor ? "backchannel" : "turn_part") as FloorClass,
     };
   });
   const backchannels = candidates
@@ -150,6 +158,13 @@ export function analyseTurns(
           channelMap,
           gaps,
         );
+
+  // A non-backchannel run is a standalone turn when its words are the whole turn.
+  for (const c of candidates) {
+    if (c.floorClass === "backchannel") continue;
+    const turn = turns.find((t) => t.words.some((w) => w.index === c.words[0].index));
+    c.floorClass = turn && turn.words.length === c.words.length ? "standalone_turn" : "turn_part";
+  }
 
   const transitions: Transition[] = [];
   for (let i = 1; i < turns.length; i++) {
