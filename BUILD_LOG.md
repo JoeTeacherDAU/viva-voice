@@ -273,3 +273,28 @@ Requests for Joe:
 - Decide whether capture should keep recording for a set time after Stop.
 
 Commits on the branch: a5273bf, b3765c4, dad9288, and 9b4be64. GitHub Actions passed on 9b4be64: 893 unit tests, 12 Python tests, and 8 browser tests, including the fake-microphone test on Linux.
+
+## 2026-10-05, Floor-holding rule kept, with its own key, labels, and a count
+
+Branch: fix/lossless-descriptive. Commit 6b91d01. Not merged.
+
+Joe kept the floor-holding rule from work order 01 and asked for four changes, all done:
+
+- config.floorLapseMs, default 1500, now decides when a partner silence leaves the floor open. It is separate from turnThresholdMs, which only defines a long pause. It appears in schemas/session.schema.json, DEFAULT_CONFIG, the fixture config, the research layer, and docs/OPERATIONAL_DEFINITIONS.md. A unit test confirms that changing turnThresholdMs leaves the classification alone, while changing floorLapseMs moves it.
+- Every backchannel candidate word in a stored transcript carries overlapsPartner, partnerSilenceMs, partnerResumesNext, and floorClass. Words that are not candidates carry none of the four. schemas/words.schema.json lists them.
+- New tier 1 feature open_floor_response_count, in features.json, lib/registry/features.json, the pipeline, the fixture script, and the student document (under Conversation, labelled "Short responses (such as okay) given after your partner had stopped talking"). I regenerated FEATURE_INVENTORY.md with scripts/gen-inventory.py.
+- Fixture case: in gappy, a lone "Okay." from B sits in a 2,000 ms silence of A's (860 ms, the 260 ms word, then 880 ms), and A resumes. It counts as an answering turn, partnerResumesNext is true, and open_floor_response_count for B is 1.
+
+Acceptance: lint, vitest with and without VIVA_MOCK_ASR=1 (907 passed, 1 skipped), coverage, build, contrast, feature-coverage (48 tier 1 features), check-fixtures, pytest (13 passed), and Playwright (7 passed, 1 skipped on macOS) all passed on this Mac. GitHub Actions passed on 6b91d01 with 907 unit tests, 13 Python tests, and 8 browser tests. The golden test checks 756 expected values, and every one matches.
+
+Choices I made, each with its reason:
+
+- Floor words for the labels are the first-pass floor words, which leave every candidate out. That keeps the definition from depending on its own answer.
+- partnerSilenceMs is null when the candidate overlaps partner speech or the partner has no floor word on one side.
+- The rule refines one edge: a candidate that touches the partner's next word now counts as overlapping, where the old check looked only at the previous word. No fixture changes because of it.
+- floorLapseMs is optional in the session schema, so session records written before it existed still validate, and the pipeline then uses 1500.
+- The registry version stays 1.1.0 even though it gained one feature, because I did not want to set registry versions on my own. If you want 1.1.1 or 1.2.0, the change is one line in both copies of features.json.
+
+Finding for Joe: as the instruction defines it, open_floor_response_count also counts backchannel-token words that open or sit inside the student's own turn while the partner is silent. In the asymmetric fixture, student A scores 3 from "Yeah," "right," and "really" inside A's own turn, while B's lone answering "Okay." scores 1. The labels make it possible to separate the two readings later: a standalone answer has floorClass "turn" and is not part of a longer run of the student's own speech.
+
+Request for Joe: decide whether open_floor_response_count should count only standalone answers, or keep the literal definition.
