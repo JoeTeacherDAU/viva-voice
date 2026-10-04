@@ -321,3 +321,11 @@ Joe's instruction, done:
 Acceptance on this Mac, all passing before the push: lint; vitest without VIVA_MOCK_ASR and with it (908 passed, 1 skipped, both ways); coverage; build; contrast; feature-coverage (48 tier 1 features); check-fixtures; pytest (14 passed); Playwright (7 passed, 1 skipped on macOS).
 
 GitHub Actions passed on 779dd8e: 908 unit tests, 14 Python tests, and 8 browser tests.
+
+## 2026-10-05, Merge of fix/lossless-descriptive into main
+
+Joe approved the merge. Before merging I ran git fetch origin and confirmed that origin/fix/lossless-descriptive pointed to a9fcd38 and that its latest CI run, on a9fcd38, had passed. I then checked out main, pulled origin main (main stood at 521d486), and ran git merge --no-ff fix/lossless-descriptive. The merge produced commit 17a1bdb with no conflicts.
+
+On main, after npm ci, the full acceptance sequence passed: lint; vitest without VIVA_MOCK_ASR and with it (908 passed, 1 skipped, both ways); coverage; build; contrast (11 pairings); feature-coverage (48 tier 1 features); check-fixtures; Playwright (7 passed, 1 skipped on macOS); and pytest (14 passed). I pushed main only after every check passed. GitHub Actions passed on 17a1bdb: 908 unit tests, 14 Python tests, and 8 browser tests.
+
+Main now carries pipeline version 1.1.0 and registry version 1.2.0. The branch fix/lossless-descriptive stays on GitHub, as Joe asked.
