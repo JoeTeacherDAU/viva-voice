@@ -12,7 +12,9 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "fixtures": "node scripts/make-fixtures.mjs",
-    "prepare": "husky"
+    "prepare": "husky",
+    "prebuild": "node scripts/feature-coverage.mjs",
+    "feature-coverage": "node scripts/feature-coverage.mjs"
   },
   "dependencies": {
     "ajv": "^8.20.0",

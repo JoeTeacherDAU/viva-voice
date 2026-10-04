@@ -99,3 +99,108 @@ export const DEFAULT_CONFIG: Config = {
   keyterms: [],
   durationMs: 300000,
 };
+
+// ---------------------------------------------------------------- pipeline
+
+/** One 20 ms energy frame on one channel. */
+export interface EnergyFrame {
+  atMs: number;
+  channel: Channel;
+  dbfs: number;
+}
+
+/** Columnar energy as stored in energy/{sessionId}.json and the fixtures. */
+export interface EnergyTrack {
+  frameMs: number;
+  startMs: number;
+  channels: [number[], number[]];
+}
+
+export interface Markers {
+  startMs: number;
+  stopMs: number;
+}
+
+export interface Gap {
+  startMs: number;
+  endMs: number;
+}
+
+/** A word plus its index in the pipeline's attributed list. */
+export interface IndexedWord extends Word {
+  index: number;
+}
+
+export interface Turn {
+  channel: Channel;
+  participant: Participant;
+  words: IndexedWord[];
+  startMs: number;
+  endMs: number;
+}
+
+export interface Transition {
+  from: Participant;
+  into: Participant;
+  fromEndMs: number;
+  toStartMs: number;
+  latencyMs: number;
+}
+
+export interface Pause {
+  participant: Participant;
+  startMs: number;
+  endMs: number;
+  durationMs: number;
+  /** The word before the pause. */
+  afterWord: IndexedWord;
+  boundary: "mid" | "end";
+}
+
+export interface Run {
+  participant: Participant;
+  words: IndexedWord[];
+  prunedCount: number;
+}
+
+export interface RemovedSpan {
+  channel: Channel;
+  startMs: number;
+  endMs: number;
+  words: string[];
+  reason: "sequence" | "single";
+}
+
+export type WindowLabel = "full" | `roll10:${number}`;
+
+export interface FeatureValue {
+  featureId: string;
+  participant: Participant;
+  pass: PassNumber;
+  window: WindowLabel;
+  thresholdMs: number | null;
+  value: number | null;
+  unit: string;
+  detail?: unknown;
+}
+
+export interface BaselineComponent {
+  mean: number;
+  sd: number;
+}
+
+export interface Baseline {
+  n: number;
+  components: {
+    speech_rate_wpm: BaselineComponent;
+    silent_pause_rate: BaselineComponent;
+    mean_length_of_run: BaselineComponent;
+  };
+}
+
+export interface GatingResult {
+  speechFrames: number;
+  attributedFrames: [number, number];
+  unattributedFrames: number;
+  unattributedRatio: number | null;
+}

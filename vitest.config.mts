@@ -12,7 +12,12 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["lib/**/*.ts"],
+      exclude: ["**/*.test.ts", "lib/analysis/testutil.ts"],
       reporter: ["text-summary", "lcov"],
+      // build-plan P2.11: 90 % on the analysis pipeline.
+      thresholds: {
+        "lib/analysis/**": { statements: 90, branches: 90, functions: 90, lines: 90 },
+      },
     },
   },
 });

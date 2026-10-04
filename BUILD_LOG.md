@@ -40,4 +40,29 @@ Local machine note: this Mac runs Node 25.8.1. CI pins Node 22 as build-plan.jso
 
 Deferred: nothing.
 
+Commit: eac500e. GitHub Actions ran ci.yml on that commit and passed in 43 seconds.
+
+## 2026-10-04, P2: Analysis pipeline, all tier 1 features, golden tests
+
+Tasks done: P2.1, P2.2, P2.3, P2.4, P2.5, P2.6, P2.7, P2.8, P2.9, P2.10, P2.11, P2.12.
+
+Acceptance: `npm run test && node scripts/feature-coverage.mjs` exited 0 on the first attempt. Vitest ran 558 tests. The golden test runs the pipeline on all three fixtures for both passes and checks 480 expected values, and every one matched within the plan's tolerances. To confirm the golden test can fail, I raised one expected pause rate by 1 percent and one turn count by 1; the test reported exactly those two failures, and I regenerated the fixtures afterwards. Coverage on lib/analysis reached 98 percent of statements and 93 percent of branches, and vitest.config.mts now fails the coverage run below 90 percent.
+
+What I built:
+
+- lib/analysis modules for windowing and gaps, cross-talk rejection, energy gating, pruning, turns and backchannels, pauses and runs, the composite index, and the pipeline itself, which exports PIPELINE_VERSION 1.0.0 and adds rolling 10-second windows for the four live features.
+- One feature file per construct under lib/analysis/features. Each feature registers under its registry id with defineFeature, and the pipeline reads units from the registry.
+- lib/analysis/syllables.json, built by scripts/build-syllable-table.mjs from the CMU Pronouncing Dictionary. The table keeps only the 20,101 words whose dictionary count differs from the vowel-group rule, which brings it to 183 KB instead of several megabytes. A word missing from the table gets the rule, so every dictionary word still gets its dictionary count.
+- scripts/feature-coverage.mjs. It now runs before every `npm run build`, so a tier 1 feature without a function or a fixture value fails the build, as CLAUDE.md requires.
+- An ESLint rule that stops lib/analysis from importing node:*, next, or React, or from touching window or document.
+
+A bug the unit tests caught: cross-talk rejection crashed when a shared phrase began at the first word on both channels, because the run-start check read index minus one. The golden fixtures never put a match there. I fixed the bounds check and kept the test.
+
+Places where I departed from the plan, and why:
+
+- run() takes the session markers, gap events, channel map, and the pass-one features in its options object, beside the `pass` field P2.10 names. The pipeline needs the markers to trim the window and the pass-one features to compute pass agreement.
+- The rolling windows run back to back from the Start marker (0 to 10 s, 10 to 20 s, and so on) and drop a final partial window. The live display in P5 can call run() with markers for the last 10 seconds when it needs a trailing window.
+
+Deferred: nothing.
+
 Commit: recorded in the next entry.
