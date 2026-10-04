@@ -108,7 +108,7 @@ describe("wav", () => {
   it("parses the golden fixture WAV and rejects junk", () => {
     const buf = readFileSync(join(__dirname, "../../fixtures/golden/gappy/stereo.wav"));
     const info = parseWav(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
-    expect(info.frames).toBe(40 * 48000); // 38 s window plus 1 s each side
+    expect(info.frames).toBe(48 * 48000); // 46 s window plus 1 s each side
     expect(() => parseWav(new ArrayBuffer(12))).toThrow();
     expect(() => parseWav(wavHeader(0).slice(0, 12))).toThrow(/data/);
   });

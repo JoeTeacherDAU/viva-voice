@@ -179,11 +179,20 @@ describe("gating", () => {
 });
 
 describe("prune", () => {
-  const prune = (text: string) =>
-    pruneTurn(indexed(say(text, 0)), set("uh", "um"), set("yeah", "okay"));
-  it("drops fillers, word repetitions, bigram repetitions, and backchannel tokens", () => {
+  const prune = (text: string) => pruneTurn(indexed(say(text, 0)), set("uh", "um"));
+  it("drops fillers and repetitions, keeps backchannel-token words, and reports what it pruned", () => {
     const r = prune("I uh think the the cat yeah I think I think so");
-    expect(r.kept.map((x) => x.word)).toEqual(["i", "think", "the", "cat", "i", "think", "so"]);
+    expect(r.kept.map((x) => x.word)).toEqual([
+      "i",
+      "think",
+      "the",
+      "cat",
+      "yeah",
+      "i",
+      "think",
+      "so",
+    ]);
+    expect(r.repeated.map((x) => x.word)).toEqual(["the", "i", "think"]);
     expect(r.repetitions).toBe(2);
     expect(r.fillers).toBe(1);
   });
@@ -194,43 +203,63 @@ describe("prune", () => {
 });
 
 describe("turns", () => {
-  it("closes a turn on the partner's floor word or on long silence", () => {
+  it("closes a turn only on the partner's floor word; a long silence stays inside", () => {
     const words = indexed([
       ...say("one two", 0, 0),
       ...say("three", 1000, 1),
       ...say("four", 1300, 1),
-      ...say("five", 3200, 1),
+      ...say("five", 9200, 1),
     ]);
-    const turns = buildTurns(words, 1500, MAP);
+    const turns = buildTurns(words, MAP);
     expect(turns.map((t) => [t.participant, t.words.map((x) => x.word).join(" ")])).toEqual([
       ["A", "one two"],
-      ["B", "three four"],
-      ["B", "five"],
+      ["B", "three four five"],
     ]);
   });
 
-  it("treats a backchannel inside a partner turn as a backchannel", () => {
+  it("treats a backchannel-token run as a backchannel while the partner holds the floor", () => {
     const words = indexed([
       ...say("I went", 0, 0),
       w("yeah", 600, 800, 1),
       ...say("home today", 1000, 0),
     ]);
-    const r = analyseTurns(words, set("yeah"), 1500, MAP);
+    const r = analyseTurns(words, set("yeah"), MAP);
     expect(r.turns).toHaveLength(1);
     expect(r.backchannels.map((x) => x.word)).toEqual(["yeah"]);
     expect(r.transitions).toHaveLength(0);
   });
 
-  it("treats a backchannel token outside every partner turn as a floor turn", () => {
+  it("treats a token in a partner silence of turnThresholdMs or more as an answering floor turn", () => {
     const words = indexed([
-      ...say("are you ready", 0, 0),
+      ...say("are you ready?", 0, 0),
       w("okay.", 2000, 2200, 1),
       ...say("good", 2600, 0),
     ]);
-    const r = analyseTurns(words, set("okay"), 1500, MAP);
+    const r = analyseTurns(words, set("okay"), MAP, [], 1500);
     expect(r.turns.map((t) => t.participant)).toEqual(["A", "B", "A"]);
     expect(r.backchannels).toHaveLength(0);
     expect(r.transitions.map((t) => t.latencyMs)).toEqual([2000 - 680, 400]);
+    // With a longer threshold the partner still holds the floor across that silence.
+    expect(analyseTurns(words, set("okay"), MAP, [], 3000).backchannels).toHaveLength(1);
+  });
+
+  it("keeps a backchannel token that overlaps the partner's speech as a backchannel", () => {
+    const words = indexed([
+      ...say("we went there", 0, 0),
+      w("mhmm", 250, 400, 1),
+      ...say("today", 5000, 0),
+    ]);
+    expect(analyseTurns(words, set("mhmm"), MAP).backchannels).toHaveLength(1);
+  });
+
+  it("keeps a backchannel token that opens or sits inside one's own turn as an ordinary word", () => {
+    const words = indexed([
+      ...say("so what now?", 0, 0),
+      ...say("yeah, I think that's really right.", 1200, 1),
+    ]);
+    const r = analyseTurns(words, set("yeah", "really", "right"), MAP);
+    expect(r.backchannels).toHaveLength(0);
+    expect(r.turns.map((t) => t.words.length)).toEqual([3, 6]);
   });
 
   it("reports a negative latency for an overlap and drops transitions across a gap", () => {
@@ -239,9 +268,9 @@ describe("turns", () => {
       ...say("me too", 380, 1),
       ...say("fine", 2000, 0),
     ]);
-    const r = analyseTurns(words, set(), 1500, MAP);
+    const r = analyseTurns(words, set(), MAP);
     expect(r.transitions.map((t) => t.latencyMs)).toEqual([380 - 440, 2000 - 820]);
-    const gapped = analyseTurns(words, set(), 1500, MAP, [{ startMs: 1000, endMs: 1500 }]);
+    const gapped = analyseTurns(words, set(), MAP, [{ startMs: 1000, endMs: 1500 }]);
     expect(gapped.transitions.map((t) => t.latencyMs)).toEqual([-60]);
     expect(overlapIntervals(words)).toEqual([[380, 440]]);
   });

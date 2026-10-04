@@ -179,12 +179,21 @@ export async function runPass2(
       },
     },
     events: [
-      ...rec.events,
+      // A rerun of pass two replaces its own long-pause events.
+      ...rec.events.filter(
+        (e) =>
+          !(e.type === "long_pause" && (e.detail as { pass?: number } | undefined)?.pass === 2),
+      ),
       {
         type: "pass2",
         atMs: markers.stopMs,
         detail: { model, source, at: now },
       },
+      ...result.longPauses.map((lp) => ({
+        type: "long_pause",
+        atMs: lp.startMs,
+        detail: { pass: 2, ...lp },
+      })),
     ],
   };
   await putJson(store, paths.session(sessionId), record);
@@ -192,10 +201,16 @@ export async function runPass2(
   // Course baseline from pass-two values (record of account).
   const comps = (["A", "B"] as const).map((P) => ({
     speech_rate_wpm: findValue(result.features, "speech_rate_wpm", P, null)?.value ?? null,
-    silent_pause_rate: findValue(result.features, "silent_pause_rate", P, 350)?.value ?? null,
+    // Weights 1.1: the pause component is the mid-clause rate.
+    silent_pause_rate:
+      findValue(result.features, "silent_pause_mid_clause_rate", P, 350)?.value ?? null,
     mean_length_of_run: findValue(result.features, "mean_length_of_run", P, 350)?.value ?? null,
   }));
-  await putJson(store, paths.baseline(rec.examId), updateBaseline(baseline, comps, sessionId));
+  await putJson(
+    store,
+    paths.baseline(rec.examId),
+    updateBaseline(baseline, comps, sessionId, rec.config.weightsVersion),
+  );
 
   // Ruling R1: the live score goes to its own file for the research export.
   const instructor = (await getJson<{ sessions: Record<string, unknown> }>(

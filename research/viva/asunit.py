@@ -27,6 +27,8 @@ SKIPS = {
     "clauses_per_as_unit": "needs clause boundaries from a dependency parse; not built in version 1",
     "mean_length_clause": "needs clause boundaries from a dependency parse; not built in version 1",
     "dependent_clauses_per_clause": "needs clause boundaries from a dependency parse; not built in version 1",
+    "pause_before_low_frequency_word_ratio": "needs a word frequency list (SUBTLEX-US or COCA spoken); none is bundled",
+    "pause_function_profile": "its pre-low-frequency-word class needs a word frequency list; none is bundled",
 }
 
 TERMINAL = re.compile(r"[.?!]$")

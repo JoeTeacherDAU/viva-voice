@@ -63,10 +63,10 @@ for (const name of FIXTURES) {
     const thresholds = Array.isArray(f.params.pauseThresholdMs) ? f.params.pauseThresholdMs : null;
     for (const participant of ["A", "B"]) {
       for (const pass of [1, 2]) {
-        const keys = thresholds
-          ? thresholds.map((t) => `${f.id}|${participant}|${pass}|${t}`)
-          : [null, 350].map((t) => `${f.id}|${participant}|${pass}|${t}`);
-        const ok = thresholds ? keys.every((k) => have.has(k)) : keys.some((k) => have.has(k));
+        // Features without their own thresholds may record the one they used.
+        const ok = thresholds
+          ? thresholds.every((t) => have.has(`${f.id}|${participant}|${pass}|${t}`))
+          : [...have].some((k) => k.startsWith(`${f.id}|${participant}|${pass}|`));
         if (!ok)
           problems.push(`${name}: expected.json lacks ${f.id} for ${participant} pass ${pass}`);
       }

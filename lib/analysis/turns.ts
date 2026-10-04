@@ -6,21 +6,18 @@ export type ChannelMap = { "0": Participant; "1": Participant };
 
 const byStart = (a: IndexedWord, b: IndexedWord) => a.startMs - b.startMs || a.channel - b.channel;
 
-/** Builds turns from floor words of both channels. */
-export function buildTurns(
-  floor: IndexedWord[],
-  turnThresholdMs: number,
-  channelMap: ChannelMap,
-  gaps: Gap[] = [],
-): Turn[] {
+/**
+ * Builds turns from floor words of both channels. A turn closes only when a
+ * partner floor word starts after its last word, or when a transcriber gap
+ * (pass one) interrupts it. A same-channel silence of any length stays inside
+ * the turn as a pause (RESEARCH_PRINCIPLES.md principle 1; work order 01).
+ */
+export function buildTurns(floor: IndexedWord[], channelMap: ChannelMap, gaps: Gap[] = []): Turn[] {
   const turns: Turn[] = [];
   let cur: Turn | null = null;
   for (const w of [...floor].sort(byStart)) {
     const continues =
-      cur !== null &&
-      w.channel === cur.channel &&
-      w.startMs - cur.endMs <= turnThresholdMs &&
-      !overlapsAny(gaps, cur.endMs, w.startMs);
+      cur !== null && w.channel === cur.channel && !overlapsAny(gaps, cur.endMs, w.startMs);
     if (cur && continues) {
       cur.words.push(w);
       cur.endMs = Math.max(cur.endMs, w.endMs);
@@ -67,10 +64,35 @@ function candidateGroups(words: IndexedWord[], bc: Set<string>): IndexedWord[][]
   return groups;
 }
 
+/** One backchannel candidate and the facts that classify it. */
+export interface Candidate {
+  words: IndexedWord[];
+  channel: Channel;
+  /** The candidate overlaps a partner floor word. */
+  overlapsPartner: boolean;
+  /**
+   * Partner silence around the candidate: the partner's next floor word start
+   * minus the partner's previous floor word end. Null when the candidate
+   * overlaps partner speech or the partner has no floor word on one side.
+   */
+  partnerSilenceMs: number | null;
+  /** The partner's next floor word comes before this student's next floor word. */
+  partnerResumesNext: boolean;
+  /**
+   * "backchannel" while the partner holds the floor; otherwise
+   * "standalone_turn" when the run is the student's entire turn, or
+   * "turn_part" when it opens or sits inside a longer turn by the same student.
+   */
+  floorClass: FloorClass;
+}
+
+export type FloorClass = "backchannel" | "standalone_turn" | "turn_part";
+
 export interface TurnAnalysis {
   turns: Turn[];
   backchannels: IndexedWord[];
   transitions: Transition[];
+  candidates: Candidate[];
 }
 
 /**
@@ -80,21 +102,52 @@ export interface TurnAnalysis {
 export function analyseTurns(
   attributed: IndexedWord[],
   backchannelTokens: Set<string>,
-  turnThresholdMs: number,
   channelMap: ChannelMap,
   gaps: Gap[] = [],
+  floorLapseMs = 1500,
 ): TurnAnalysis {
   const groups = candidateGroups(attributed, backchannelTokens);
   const candidateIdx = new Set(groups.flat().map((w) => w.index));
   const firstFloor = attributed.filter((w) => !candidateIdx.has(w.index));
-  const firstTurns = buildTurns(firstFloor, turnThresholdMs, channelMap, gaps);
+  const firstTurns = buildTurns(firstFloor, channelMap, gaps);
 
-  const inPartnerTurn = (g: IndexedWord[]) =>
-    firstTurns.some(
-      (t) =>
-        t.channel !== g[0].channel && t.startMs <= g[0].startMs && g[g.length - 1].endMs <= t.endMs,
+  // A candidate is a backchannel while the partner holds the floor: it sits
+  // inside a partner turn and either overlaps the partner's speech or falls in
+  // a partner silence shorter than floorLapseMs. A partner silence that long
+  // leaves the floor open, so a token there answers: it becomes a one-word
+  // floor turn (docs/OPERATIONAL_DEFINITIONS.md). Floor words here are the
+  // first-pass floor words, which leave every candidate out.
+  const candidates: Candidate[] = groups.map((g) => {
+    const ch = g[0].channel;
+    const start = g[0].startMs;
+    const end = g[g.length - 1].endMs;
+    const partner = firstFloor.filter((w) => w.channel !== ch);
+    const own = firstFloor.filter((w) => w.channel === ch);
+    const overlapsPartner = partner.some((w) => w.startMs < end && start < w.endMs);
+    const before = partner.filter((w) => w.startMs <= start);
+    const prevP = before[before.length - 1];
+    const nextP = partner.find((w) => w.startMs >= end);
+    const ownNext = own.find((w) => w.startMs >= end);
+    const partnerSilenceMs =
+      overlapsPartner || !prevP || !nextP ? null : nextP.startMs - prevP.endMs;
+    const inPartnerTurn = firstTurns.some(
+      (t) => t.channel !== ch && t.startMs <= start && end <= t.endMs,
     );
-  const backchannels = groups.filter(inPartnerTurn).flat();
+    const holdsFloor =
+      overlapsPartner || (partnerSilenceMs !== null && partnerSilenceMs < floorLapseMs);
+    return {
+      words: g,
+      channel: ch,
+      overlapsPartner,
+      partnerSilenceMs,
+      partnerResumesNext: !!nextP && (!ownNext || nextP.startMs < ownNext.startMs),
+      // Settled below once the final turns exist.
+      floorClass: (inPartnerTurn && holdsFloor ? "backchannel" : "turn_part") as FloorClass,
+    };
+  });
+  const backchannels = candidates
+    .filter((c) => c.floorClass === "backchannel")
+    .flatMap((c) => c.words);
   const bcIdx = new Set(backchannels.map((w) => w.index));
 
   const turns =
@@ -102,10 +155,16 @@ export function analyseTurns(
       ? firstTurns
       : buildTurns(
           attributed.filter((w) => !bcIdx.has(w.index)),
-          turnThresholdMs,
           channelMap,
           gaps,
         );
+
+  // A non-backchannel run is a standalone turn when its words are the whole turn.
+  for (const c of candidates) {
+    if (c.floorClass === "backchannel") continue;
+    const turn = turns.find((t) => t.words.some((w) => w.index === c.words[0].index));
+    c.floorClass = turn && turn.words.length === c.words.length ? "standalone_turn" : "turn_part";
+  }
 
   const transitions: Transition[] = [];
   for (let i = 1; i < turns.length; i++) {
@@ -123,7 +182,7 @@ export function analyseTurns(
       latencyMs: next.startMs - prev.endMs,
     });
   }
-  return { turns, backchannels: backchannels.sort(byStart), transitions };
+  return { turns, backchannels: backchannels.sort(byStart), transitions, candidates };
 }
 
 function mergeIntervals(iv: [number, number][]): [number, number][] {

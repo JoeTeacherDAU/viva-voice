@@ -1,5 +1,7 @@
 # Viva Voice: measurement framework
 
+RESEARCH_PRINCIPLES.md governs this file. It sets five rules this framework follows: keep everything, label every word and delete none, describe pauses and fillers by location and kind, describe L1 influence without a native-speaker yardstick, and state what the system cannot hear.
+
 What the system measures, why each measure earns a place, and how the numbers support a judgement of conversational fluency. Version 1.0, 2026-10-04. This file governs `features.json`; when the two disagree, fix `features.json`.
 
 ## 1. The construct
@@ -84,7 +86,7 @@ Target-structure hits: count and spans of matches against the unit's `targetPatt
 
 ### 4.6 Composite index
 
-Inputs: speech rate, silent pause rate at 350 ms, mean length of run at 350 ms. Each standardised against the cohort baseline (mean and standard deviation of the stored sessions for the same course). Pause rate inverted so a higher index reads as more fluent. Default weights: pause rate 0.5, speech rate 0.25, mean length of run 0.25, following Gao and Sun (2025) for dialogue. Below `baselineMinSessions` sessions the index does not exist, and the slot shows the three raw components. The weighting version and the baseline session count go into every record.
+Inputs: speech rate, mid-clause silent pause rate at 350 ms, and mean length of run at 350 ms. Each standardised against the cohort baseline for the same course. The mid-clause pause rate inverted so a higher index reads as more fluent. Weights: pause rate 0.5, speech rate 0.25, mean length of run 0.25 (weights version 1.1). Kahng (2014) found the clearest difference between Korean L2 and L1 English speakers in pauses inside clauses, and de Jong (2016) found L1 and L2 speakers paused alike between utterances, so end-clause pauses stay out of the index and appear as their own measure. Below `baselineMinSessions` sessions the index does not exist. The student document labels the index "Speed and pausing index, relative to this class".
 
 ## 5. From numbers to a judgement
 
@@ -108,6 +110,10 @@ Recognition error on L2 speech runs high and uneven. Yu (2026) reported a median
 A paired conversation is co-constructed. May (2011) notes that raters saw some features as mutual achievements. Talk-time share and latency describe the pair as much as the person. The document reports them with the partner's identity removed and the partner's numbers absent.
 
 ## References
+
+de Jong, N. H. (2016). Predicting pauses in L1 and L2 speech: The effects of utterance boundaries and word frequency. IRAL. https://consensus.app/papers/details/c65173da5a255dfba5234cea84d4204c/
+
+Kahng, J. (2014). Exploring utterance and cognitive fluency of L1 and L2 English speakers: Temporal measures and stimulated recall. Language Learning. https://consensus.app/papers/details/7e1c775de61e5821b77278dada2e995f/
 
 Bailey, A. L., et al. (2025). Addressing bias in spoken language systems. Journal of Educational Measurement. https://consensus.app/papers/details/662db19eb3545ac5ac842dd93acf769d/
 

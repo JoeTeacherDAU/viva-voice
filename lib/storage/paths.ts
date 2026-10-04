@@ -15,6 +15,12 @@ export const paths = {
   onboardStereo: (id: string) => `audio/${assertId(id)}/onboard-stereo.wav`,
   energy: (id: string) => `energy/${assertId(id)}.json`,
   transcript: (id: string, pass: 1 | 2) => `transcripts/${assertId(id)}/pass${pass}.json`,
+  /** Every live Deepgram message, interim and final, verbatim, as JSON Lines. */
+  transcriptRaw: (id: string) => `transcripts/${assertId(id)}/pass1-raw.jsonl`,
+  /** Research-layer slots (work order 01, 4.4). The app never writes them. */
+  verbatim: (id: string, student: "A" | "B") =>
+    `transcripts/${assertId(id)}/verbatim-${student}.json`,
+  phones: (id: string, student: "A" | "B") => `phones/${assertId(id)}/${student}.json`,
   measurements: (id: string, pass: 1 | 2) => `measurements/${assertId(id)}/pass${pass}.json`,
   document: (id: string, student: "A" | "B") => `documents/${assertId(id)}/${student}.docx`,
   bundle: (id: string) => `bundles/${assertId(id)}/bundle.zip`,
@@ -25,8 +31,13 @@ export const paths = {
   retentionLog: () => "retention/log.json",
 };
 
-export const UPLOAD_CONTENT_TYPES = ["audio/wav", "application/json"];
-export const UPLOAD_MAX_BYTES = 120_000_000;
+export const UPLOAD_CONTENT_TYPES = ["audio/wav", "application/json", "application/x-ndjson"];
+/**
+ * 2 GB. P6.1 set 120 MB, but the WAV now keeps the whole capture, including any
+ * wait before Start (RESEARCH_PRINCIPLES.md principle 1); 2 GB holds about
+ * three hours of 48 kHz 16-bit stereo.
+ */
+export const UPLOAD_MAX_BYTES = 2_000_000_000;
 
 /**
  * Pathnames a browser may upload (build-plan P6.1). The session id in the
@@ -39,6 +50,7 @@ export function uploadPathAllowed(pathname: string): boolean {
     new RegExp(`^audio/${id}/(stereo|onboard-stereo)\\.wav$`),
     new RegExp(`^energy/${id}\\.json$`),
     new RegExp(`^transcripts/${id}/pass1\\.json$`),
+    new RegExp(`^transcripts/${id}/pass1-raw\\.jsonl$`),
     new RegExp(`^measurements/${id}/pass1\\.json$`),
     new RegExp(`^sessions/${id}\\.json$`),
   ].some((re) => re.test(pathname));
@@ -47,6 +59,7 @@ export function uploadPathAllowed(pathname: string): boolean {
 export function contentTypeFor(pathname: string): string {
   if (pathname.endsWith(".json")) return "application/json";
   if (pathname.endsWith(".wav")) return "audio/wav";
+  if (pathname.endsWith(".jsonl")) return "application/x-ndjson";
   if (pathname.endsWith(".csv")) return "text/csv; charset=utf-8";
   if (pathname.endsWith(".zip")) return "application/zip";
   if (pathname.endsWith(".docx"))

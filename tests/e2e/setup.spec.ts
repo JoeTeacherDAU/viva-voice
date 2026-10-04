@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { login, readSessionRecord } from "./helpers";
+import { expectDescriptiveText, login, readSessionRecord } from "./helpers";
 
 test.beforeEach(async ({ page }) => {
   await login(page);
@@ -28,6 +28,7 @@ test("setup reaches a passing state on the synthetic stereo device", async ({ pa
   await page.getByLabel("Student A", { exact: true }).selectOption("DEMO-001");
   await page.getByLabel("Student B", { exact: true }).selectOption("DEMO-002");
   await expect(page.getByTestId("setup-ready")).toBeVisible();
+  await expectDescriptiveText(page);
 
   await page.getByRole("button", { name: "Continue to session" }).click();
   await expect(page).toHaveURL(/\/session\?id=demo-exam-/);
@@ -43,6 +44,7 @@ test("a declined student blocks the session", async ({ page }) => {
   await page.getByLabel("Student A", { exact: true }).selectOption("DEMO-001");
   await page.getByLabel("Student B", { exact: true }).selectOption("DEMO-004");
   await expect(page.getByTestId("blocking").filter({ hasText: "consented" })).toBeVisible();
+  await expectDescriptiveText(page);
   await expect(page.getByRole("button", { name: "Continue to session" })).toBeDisabled();
 });
 

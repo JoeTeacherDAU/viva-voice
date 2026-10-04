@@ -27,6 +27,7 @@ import {
   WIDE_META,
 } from "./csv";
 import { featureLabel, formatValue } from "./format";
+import { bannedWordsIn, displayLabel, SECTIONS } from "./labels";
 import { deleteAfter, runRetention } from "./retention";
 import { buildStudentDoc } from "./studentDoc";
 
@@ -86,7 +87,7 @@ describe("student document", () => {
     });
     const text = docText(doc);
     for (const f of byTier(1)) {
-      const needle = `${featureLabel(f.id)} (${f.unit}):`;
+      const needle = `${displayLabel(f.id)} (${f.unit}):`;
       expect(text.split(needle).length - 1, needle).toBe(1);
     }
     // A's own speech rate appears; B's distinctive values do not.
@@ -113,7 +114,14 @@ describe("student document", () => {
     expect(text.toLowerCase()).not.toMatch(/instructor|live score/);
     // Transcript: speaker labels with timestamps and the removed cross-talk marker.
     expect(text).toMatch(/A 00:00 {2}So,/);
-    expect(text).toContain("cross-talk removed from B's microphone");
+    expect(text).toContain("partner speech set aside from B's microphone");
+    // Section 5: plain section titles, each opening sentence, and no banned word anywhere.
+    for (const s of SECTIONS) {
+      expect(text).toContain(s.title);
+      expect(text).toContain(s.intro);
+    }
+    expect(text).toContain("Speed and pausing index, relative to this class");
+    expect(bannedWordsIn(text)).toEqual([]);
     expect(text).toContain("Pipeline version: 1.0.0");
   });
 
@@ -175,6 +183,12 @@ describe("bundle and paths", () => {
     expect(uploadPathAllowed("transcripts/s1/pass2.json")).toBe(false);
     expect(uploadPathAllowed("audio/../roster/x.wav")).toBe(false);
     expect(uploadPathAllowed("baselines/e1.json")).toBe(false);
+    expect(uploadPathAllowed(paths.transcriptRaw("s1"))).toBe(true);
+    // Research-layer slots: the app never writes them (work order 01, 4.4).
+    expect(paths.verbatim("s1", "A")).toBe("transcripts/s1/verbatim-A.json");
+    expect(paths.phones("s1", "B")).toBe("phones/s1/B.json");
+    expect(uploadPathAllowed(paths.verbatim("s1", "A"))).toBe(false);
+    expect(uploadPathAllowed(paths.phones("s1", "B"))).toBe(false);
     expect(() => paths.session("../x")).toThrow();
   });
 });
@@ -230,12 +244,11 @@ describe("routes with the in-memory store", () => {
         },
       ],
     }));
-    const fetchMock = vi.fn().mockResolvedValue(
-      Response.json({
-        metadata: { model_info: { x: { name: "nova-3", version: "2026-09" } } },
-        results: { channels },
-      }),
-    );
+    const body = {
+      metadata: { model_info: { x: { name: "nova-3", version: "2026-09" } } },
+      results: { channels },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(Response.json(body));
     vi.stubGlobal("fetch", fetchMock);
     const { POST } = await import("@/app/api/pass2/route");
     const res = await POST(
@@ -249,6 +262,9 @@ describe("routes with the in-memory store", () => {
     expect(url).toBe(`https://api.deepgram.com/v1/listen?${batchQuery()}`);
     expect(JSON.parse(init.body).url).toBe(`memory://${paths.stereo(session.id)}`);
 
+    // Work order 01, 4.3: the stored raw response equals the body as received.
+    const stored2 = await getJson<{ raw: unknown }>(store, paths.transcript(session.id, 2));
+    expect(stored2!.raw).toEqual(JSON.parse(JSON.stringify(body)));
     const rec = await getJson<SessionRecord>(store, paths.session(session.id));
     expect(rec!.state).toBe("done");
     expect(rec!.passes["2"]!.measurements).toBe(paths.measurements(session.id, 2));

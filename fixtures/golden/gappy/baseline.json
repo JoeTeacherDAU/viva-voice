@@ -1,13 +1,14 @@
 {
   "n": 8,
+  "weightsVersion": "1.1",
   "components": {
     "speech_rate_wpm": {
       "mean": 70,
       "sd": 15
     },
     "silent_pause_rate": {
-      "mean": 30,
-      "sd": 8
+      "mean": 8,
+      "sd": 4
     },
     "mean_length_of_run": {
       "mean": 5,

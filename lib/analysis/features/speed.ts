@@ -24,3 +24,8 @@ defineFeature("articulation_rate_sps_est", (ctx, P) => {
 defineFeature("phonation_time_ratio", (ctx, P) =>
   atThresholds(ctx, (t) => (ctx.windowMs > 0 ? ctx.phonation(P, t) / ctx.windowMs : null)),
 );
+
+// Raw twin (RESEARCH_PRINCIPLES.md principle 2): every attributed word counts.
+defineFeature("articulation_rate_raw_wpm", (ctx, P) =>
+  atThresholds(ctx, (t) => perMinute(ctx.p[P].attributed.length, ctx.phonation(P, t))),
+);

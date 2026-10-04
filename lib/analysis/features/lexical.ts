@@ -99,6 +99,11 @@ defineFeature("mattr", (ctx, P) => [
   { thresholdMs: null, value: mattr(ctx.p[P].pruned.map((w) => tokenOf(w.word))) },
 ]);
 
+// Raw twin: every attributed token in time order, fillers, repetitions, and backchannels included.
+defineFeature("mattr_raw", (ctx, P) => [
+  { thresholdMs: null, value: mattr(ctx.p[P].attributed.map((w) => tokenOf(w.word))) },
+]);
+
 defineFeature("mtld", (ctx, P) => [
   { thresholdMs: null, value: mtld(ctx.p[P].pruned.map((w) => tokenOf(w.word))) },
 ]);

@@ -2030,49 +2030,6 @@
   }
  },
  {
-  "_atMs": 32600,
-  "type": "Results",
-  "channel_index": [
-   0,
-   2
-  ],
-  "duration": 0.62,
-  "start": 31.98,
-  "is_final": false,
-  "speech_final": false,
-  "channel": {
-   "alternatives": [
-    {
-     "transcript": "The new one",
-     "confidence": 0.88,
-     "words": [
-      {
-       "word": "the",
-       "start": 31.98,
-       "end": 32.16,
-       "confidence": 0.86,
-       "punctuated_word": "The"
-      },
-      {
-       "word": "new",
-       "start": 32.2,
-       "end": 32.38,
-       "confidence": 0.88,
-       "punctuated_word": "new"
-      },
-      {
-       "word": "one",
-       "start": 32.42,
-       "end": 32.6,
-       "confidence": 0.9,
-       "punctuated_word": "one"
-      }
-     ]
-    }
-   ]
-  }
- },
- {
   "_atMs": 33100,
   "type": "UtteranceEnd",
   "channel": [
@@ -2091,21 +2048,50 @@
   "timestamp": 33.56
  },
  {
-  "_atMs": 33640,
+  "_atMs": 33740,
+  "type": "Results",
+  "channel_index": [
+   1,
+   2
+  ],
+  "duration": 0.18,
+  "start": 33.56,
+  "is_final": false,
+  "speech_final": false,
+  "channel": {
+   "alternatives": [
+    {
+     "transcript": "yeah",
+     "confidence": 0.86,
+     "words": [
+      {
+       "word": "yeah",
+       "start": 33.56,
+       "end": 33.74,
+       "confidence": 0.86,
+       "punctuated_word": "yeah"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "_atMs": 33780,
   "type": "Results",
   "channel_index": [
    0,
    2
   ],
-  "duration": 1.36,
+  "duration": 1.8,
   "start": 31.98,
-  "is_final": true,
-  "speech_final": true,
+  "is_final": false,
+  "speech_final": false,
   "channel": {
    "alternatives": [
     {
-     "transcript": "The new one near the station.",
-     "confidence": 0.89,
+     "transcript": "The new one near the station. yeah",
+     "confidence": 0.8128571428571428,
      "words": [
       {
        "word": "the",
@@ -2148,49 +2134,18 @@
        "end": 33.34,
        "confidence": 0.84,
        "punctuated_word": "station."
-      }
-     ]
-    }
-   ]
-  }
- },
- {
-  "_atMs": 33740,
-  "type": "Results",
-  "channel_index": [
-   1,
-   2
-  ],
-  "duration": 0.18,
-  "start": 33.56,
-  "is_final": false,
-  "speech_final": false,
-  "channel": {
-   "alternatives": [
-    {
-     "transcript": "yeah",
-     "confidence": 0.86,
-     "words": [
+      },
       {
        "word": "yeah",
-       "start": 33.56,
-       "end": 33.74,
-       "confidence": 0.86,
+       "start": 33.6,
+       "end": 33.78,
+       "confidence": 0.35,
        "punctuated_word": "yeah"
       }
      ]
     }
    ]
   }
- },
- {
-  "_atMs": 33940,
-  "type": "SpeechStarted",
-  "channel": [
-   0,
-   2
-  ],
-  "timestamp": 33.94
  },
  {
   "_atMs": 34040,
@@ -2222,15 +2177,6 @@
   }
  },
  {
-  "_atMs": 34340,
-  "type": "UtteranceEnd",
-  "channel": [
-   0,
-   2
-  ],
-  "last_word_end": 33.34
- },
- {
   "_atMs": 34740,
   "type": "UtteranceEnd",
   "channel": [
@@ -2240,72 +2186,71 @@
   "last_word_end": 33.74
  },
  {
-  "_atMs": 34860,
-  "type": "Results",
-  "channel_index": [
-   0,
-   2
-  ],
-  "duration": 0.92,
-  "start": 33.94,
-  "is_final": false,
-  "speech_final": false,
-  "channel": {
-   "alternatives": [
-    {
-     "transcript": "It has big windows",
-     "confidence": 0.89,
-     "words": [
-      {
-       "word": "it",
-       "start": 33.94,
-       "end": 34.12,
-       "confidence": 0.86,
-       "punctuated_word": "It"
-      },
-      {
-       "word": "has",
-       "start": 34.16,
-       "end": 34.34,
-       "confidence": 0.88,
-       "punctuated_word": "has"
-      },
-      {
-       "word": "big",
-       "start": 34.38,
-       "end": 34.56,
-       "confidence": 0.9,
-       "punctuated_word": "big"
-      },
-      {
-       "word": "windows",
-       "start": 34.6,
-       "end": 34.86,
-       "confidence": 0.92,
-       "punctuated_word": "windows"
-      }
-     ]
-    }
-   ]
-  }
- },
- {
   "_atMs": 35900,
   "type": "Results",
   "channel_index": [
    0,
    2
   ],
-  "duration": 1.66,
-  "start": 33.94,
+  "duration": 3.62,
+  "start": 31.98,
   "is_final": true,
   "speech_final": true,
   "channel": {
    "alternatives": [
     {
-     "transcript": "It has big windows and good coffee.",
-     "confidence": 0.8857142857142858,
+     "transcript": "The new one near the station. yeah It has big windows and good coffee.",
+     "confidence": 0.8492857142857142,
      "words": [
+      {
+       "word": "the",
+       "start": 31.98,
+       "end": 32.16,
+       "confidence": 0.86,
+       "punctuated_word": "The"
+      },
+      {
+       "word": "new",
+       "start": 32.2,
+       "end": 32.38,
+       "confidence": 0.88,
+       "punctuated_word": "new"
+      },
+      {
+       "word": "one",
+       "start": 32.42,
+       "end": 32.6,
+       "confidence": 0.9,
+       "punctuated_word": "one"
+      },
+      {
+       "word": "near",
+       "start": 32.64,
+       "end": 32.82,
+       "confidence": 0.92,
+       "punctuated_word": "near"
+      },
+      {
+       "word": "the",
+       "start": 32.86,
+       "end": 33.04,
+       "confidence": 0.94,
+       "punctuated_word": "the"
+      },
+      {
+       "word": "station",
+       "start": 33.08,
+       "end": 33.34,
+       "confidence": 0.84,
+       "punctuated_word": "station."
+      },
+      {
+       "word": "yeah",
+       "start": 33.6,
+       "end": 33.78,
+       "confidence": 0.35,
+       "punctuated_word": "yeah"
+      },
       {
        "word": "it",
        "start": 33.94,

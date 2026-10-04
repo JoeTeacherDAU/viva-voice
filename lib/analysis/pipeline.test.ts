@@ -62,7 +62,7 @@ describe("pipeline.run", () => {
     const r = run(words, frames, DEFAULT_CONFIG, null, { pass: 2, markers, rolling: false });
     expect(r.quality.speechFrames).toBe(1);
     expect(r.quality.unattributedRatio).toBe(1);
-    expect(r.pipelineVersion).toBe("1.0.0");
+    expect(r.pipelineVersion).toBe("1.1.0");
   });
 
   it("reports null pass agreement without pass-one features", () => {

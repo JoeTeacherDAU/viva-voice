@@ -1,6 +1,6 @@
 import type { Participant, Word } from "@/lib/analysis/types";
 import { pcmDurationMs, SessionClock } from "../clock";
-import type { Transcriber, TranscriberConfig, TranscriberEvent } from "../types";
+import type { RawMessage, Transcriber, TranscriberConfig, TranscriberEvent } from "../types";
 
 export const LISTEN_URL = "wss://api.deepgram.com/v1/listen";
 export const KEEPALIVE_MS = 5000;
@@ -96,6 +96,7 @@ export class DeepgramTranscriber implements Transcriber {
   private cfg: TranscriberConfig | null = null;
   private wordCbs: ((w: Word[]) => void)[] = [];
   private eventCbs: ((e: TranscriberEvent) => void)[] = [];
+  private rawCbs: ((m: RawMessage) => void)[] = [];
   private keepAlive: ReturnType<typeof setInterval> | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private attempts = 0;
@@ -136,6 +137,10 @@ export class DeepgramTranscriber implements Transcriber {
 
   onEvent(cb: (e: TranscriberEvent) => void): void {
     this.eventCbs.push(cb);
+  }
+
+  onRaw(cb: (m: RawMessage) => void): void {
+    this.rawCbs.push(cb);
   }
 
   /** Sends CloseStream so Deepgram flushes final results, then waits for the close. */
@@ -228,6 +233,13 @@ export class DeepgramTranscriber implements Transcriber {
 
   private handleMessage(data: unknown) {
     if (typeof data !== "string") return;
+    // Keep every message verbatim before parsing (RESEARCH_PRINCIPLES.md principle 1).
+    const raw: RawMessage = {
+      connectionOffsetMs: this.clock.connectionOffsetMs,
+      receivedAtMs: this.clock.capturedMs,
+      data,
+    };
+    for (const cb of this.rawCbs) cb(raw);
     let msg: DgMessage;
     try {
       msg = JSON.parse(data) as DgMessage;

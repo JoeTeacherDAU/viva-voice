@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
-import { login, setupSyntheticSession } from "./helpers";
+import { expectDescriptiveText, login, setupSyntheticSession } from "./helpers";
 
 // build-plan P6 acceptance: a full mock session produces two DOCX files, a
 // long.csv row set, a zip, and a session record in state "done", using the
@@ -24,11 +24,12 @@ test("a mock session archives, runs pass two, and produces every output", async 
   await page.getByRole("button", { name: "Run pass two" }).click();
   await expect(page.getByTestId("review-state")).toHaveText("State: done", { timeout: 30_000 });
   await expect(page.getByRole("link", { name: "A.docx" })).toBeVisible();
+  await expectDescriptiveText(page);
 
   // build-plan P7 acceptance: an unchanged pipeline replicates with zero differences.
   await page.getByRole("button", { name: "Recompute from stored transcript" }).click();
   await expect(page.getByTestId("comparison-result")).toContainText(
-    "Replication run (pipeline 1.0.0): 0 differences",
+    "Replication run (pipeline 1.1.0): 0 differences",
   );
 
   const get = async (url: string) => {
@@ -43,7 +44,8 @@ test("a mock session archives, runs pass two, and produces every output", async 
     );
     const xml = strFromU8(unzipSync(docx)["word/document.xml"]);
     expect(xml).toContain(`Viva Voice report: student ${student}`);
-    expect(xml).toContain("Speech rate WPM");
+    expect(xml).toContain("Words per minute, without fillers or repeated words");
+    expect(xml).toContain("Speed and pausing index, relative to this class");
   }
 
   const long = strFromU8(await get("/api/export?examId=demo-exam&format=long"))
@@ -70,11 +72,54 @@ test("a mock session archives, runs pass two, and produces every output", async 
   );
   expect(strFromU8(zip["stereo.wav"].subarray(0, 4))).toBe("RIFF");
 
+  // Work order 01, 4.5: the archive holds every final word the transcriber
+  // produced. The raw JSON Lines file and the pass-one transcript come from
+  // separate code paths, so each checks the other.
+  const raw = strFromU8(
+    await get(`/api/file?pathname=${encodeURIComponent(`transcripts/${id}/pass1-raw.jsonl`)}`),
+  )
+    .trim()
+    .split("\n")
+    .map(
+      (l) =>
+        JSON.parse(l) as { captureStartMs: number; connectionOffsetMs: number; message: string },
+    );
+  const finals = raw.flatMap((line) => {
+    const m = JSON.parse(line.message);
+    if (m.type !== "Results" || !m.is_final) return [];
+    return m.channel.alternatives[0].words.map(
+      (x: { word: string; start: number }) =>
+        `${m.channel_index[0]}|${x.word}|${Math.round(x.start * 1000 + line.connectionOffsetMs + line.captureStartMs)}`,
+    );
+  });
+  const archived = JSON.parse(
+    strFromU8(
+      await get(`/api/file?pathname=${encodeURIComponent(`transcripts/${id}/pass1.json`)}`),
+    ),
+  ).words as {
+    word: string;
+    channel: number;
+    startMs: number;
+    inWindow: boolean;
+    isFiller: boolean;
+  }[];
+  expect(finals.length).toBeGreaterThan(10);
+  expect(archived).toHaveLength(finals.length);
+  const keys = new Set(archived.map((x) => `${x.channel}|${x.word}|${Math.round(x.startMs)}`));
+  for (const f of finals) expect(keys.has(f), `missing ${f}`).toBe(true);
+  expect(
+    archived.every((x) => typeof x.inWindow === "boolean" && typeof x.isFiller === "boolean"),
+  ).toBe(true);
+
   const rec = JSON.parse(
     strFromU8(await get(`/api/file?pathname=${encodeURIComponent(`sessions/${id}.json`)}`)),
   );
   expect(rec.state).toBe("done");
   expect(rec.passes["1"]).toBeTruthy();
   expect(rec.passes["2"]).toBeTruthy();
-  expect(rec.events.some((e: { type: string }) => e.type === "archive")).toBe(true);
+  const archive = rec.events.find((e: { type: string }) => e.type === "archive");
+  expect(archive.detail.wavOffsetMs).toBe(0);
+  // The WAV keeps every captured sample, from the first one to past the Stop marker.
+  const frames = (zip["stereo.wav"].length - 44) / 4;
+  expect((frames / 48000) * 1000).toBeGreaterThanOrEqual(rec.markers.stopMs);
 });

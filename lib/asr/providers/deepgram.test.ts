@@ -280,6 +280,20 @@ describe("DeepgramTranscriber", () => {
     expect(events.at(-1)).toMatchObject({ type: "error", detail: { fatal: true } });
   });
 
+  it("passes every text message through verbatim with the connection's offset", async () => {
+    const { sockets, t } = await connected();
+    const raws: { connectionOffsetMs: number | null; data: string }[] = [];
+    t.onRaw((m) => raws.push(m));
+    t.sendFrames(chunk100ms());
+    const exact =
+      '{"type":"Results","channel_index":[0,2],"is_final":false,"speech_final":false,"start":0,"duration":0,"channel":{"alternatives":[{"transcript":"","confidence":0,"words":[]}]}}';
+    sockets[0].onmessage?.({ data: exact });
+    sockets[0].onmessage?.({ data: "{not json" });
+    sockets[0].onmessage?.({ data: new ArrayBuffer(2) });
+    expect(raws.map((r) => r.data)).toEqual([exact, "{not json"]);
+    expect(raws[0].connectionOffsetMs).toBe(0);
+  });
+
   it("ignores binary frames, junk JSON, and results without words", async () => {
     const { sockets, words } = await connected();
     sockets[0].onmessage?.({ data: new ArrayBuffer(4) });

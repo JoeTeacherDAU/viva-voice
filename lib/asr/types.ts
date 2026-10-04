@@ -26,10 +26,22 @@ export interface TranscriberEvent {
   detail?: unknown;
 }
 
+/** One message from the recognizer, exactly as received (work order 01, 4.2). */
+export interface RawMessage {
+  /** Session-clock ms at which the receiving connection's audio began. */
+  connectionOffsetMs: number | null;
+  /** Session-clock ms of audio sent when the message arrived. */
+  receivedAtMs: number;
+  /** The message text, unparsed. */
+  data: string;
+}
+
 export interface Transcriber {
   connect(cfg: TranscriberConfig): Promise<void>;
   sendFrames(buf: ArrayBuffer): void;
   onWords(cb: (w: Word[]) => void): void;
   onEvent(cb: (e: TranscriberEvent) => void): void;
+  /** Every recognizer message, verbatim, for the archive. */
+  onRaw?(cb: (m: RawMessage) => void): void;
   close(): Promise<void>;
 }

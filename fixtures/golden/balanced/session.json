@@ -17,6 +17,7 @@
       350
     ],
     "turnThresholdMs": 1500,
+    "floorLapseMs": 1500,
     "gatingMarginDb": 6,
     "speechFloorDbfs": -60,
     "compositeWeights": {
@@ -24,7 +25,7 @@
       "speech_rate_wpm": 0.25,
       "mean_length_of_run": 0.25
     },
-    "weightsVersion": "1.0",
+    "weightsVersion": "1.1",
     "baselineMinSessions": 10,
     "fillerTokens": [
       "uh",

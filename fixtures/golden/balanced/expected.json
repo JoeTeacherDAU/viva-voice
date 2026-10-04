@@ -1,7 +1,7 @@
 {
  "fixture": "balanced",
  "generatedBy": "scripts/make-fixtures.mjs",
- "registryVersion": "1.0.0",
+ "registryVersion": "1.2.0",
  "tolerance": {
   "rateRelative": 0.005,
   "countAbsolute": 0,
@@ -227,6 +227,11 @@
     "channel": 1,
     "startMs": 28420,
     "word": "friends"
+   },
+   {
+    "channel": 0,
+    "startMs": 33600,
+    "word": "yeah"
    }
   ],
   "gaps": [],
@@ -334,6 +339,69 @@
    "unit": "pruned words between pauses"
   },
   {
+   "featureId": "articulation_rate_raw_wpm",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 263.7931034482759,
+   "unit": "raw words per minute of phonation time"
+  },
+  {
+   "featureId": "mean_length_of_run_raw",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 6.8,
+   "unit": "raw words between pauses"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_rate",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 0,
+   "unit": "mid-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_end_clause_rate",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 20.689655172413794,
+   "unit": "end-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_mean_ms",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": null,
+   "unit": "ms"
+  },
+  {
+   "featureId": "silent_pause_end_clause_mean_ms",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 377.5,
+   "unit": "ms"
+  },
+  {
+   "featureId": "acoustic_pause_rate",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 8,
+   "unit": "per minute of window time"
+  },
+  {
    "featureId": "articulation_rate_wpm",
    "participant": "A",
    "pass": 1,
@@ -404,6 +472,69 @@
    "thresholdMs": 350,
    "value": 8.818181818181818,
    "unit": "pruned words between pauses"
+  },
+  {
+   "featureId": "articulation_rate_raw_wpm",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 251.64473684210526,
+   "unit": "raw words per minute of phonation time"
+  },
+  {
+   "featureId": "mean_length_of_run_raw",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 9.272727272727273,
+   "unit": "raw words between pauses"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_rate",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 0,
+   "unit": "mid-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_end_clause_rate",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 9.868421052631579,
+   "unit": "end-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_mean_ms",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": null,
+   "unit": "ms"
+  },
+  {
+   "featureId": "silent_pause_end_clause_mean_ms",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 475,
+   "unit": "ms"
+  },
+  {
+   "featureId": "acoustic_pause_rate",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 4,
+   "unit": "per minute of window time"
   },
   {
    "featureId": "filled_pause_count",
@@ -571,7 +702,7 @@
    "pass": 1,
    "window": "full",
    "thresholdMs": null,
-   "value": 0,
+   "value": 1,
    "unit": "count"
   },
   {
@@ -582,6 +713,87 @@
    "thresholdMs": null,
    "value": 0.8900000000000005,
    "unit": "0-1"
+  },
+  {
+   "featureId": "long_pause_count",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
+   "featureId": "uh_count",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 1,
+   "unit": "count"
+  },
+  {
+   "featureId": "um_count",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 1,
+   "unit": "count"
+  },
+  {
+   "featureId": "filled_pause_mid_clause_count",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 2,
+   "unit": "count"
+  },
+  {
+   "featureId": "filled_pause_end_clause_count",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
+   "featureId": "silence_after_filler_mean_ms",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 40,
+   "unit": "ms"
+  },
+  {
+   "featureId": "mattr_raw",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0.803018867924528,
+   "unit": "ratio"
+  },
+  {
+   "featureId": "open_floor_response_count",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
+   "featureId": "asr_acoustic_pause_agreement",
+   "participant": "A",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 1,
+   "unit": "ratio"
   },
   {
    "featureId": "speech_rate_wpm",
@@ -683,6 +895,69 @@
    "unit": "pruned words between pauses"
   },
   {
+   "featureId": "articulation_rate_raw_wpm",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 270.3862660944206,
+   "unit": "raw words per minute of phonation time"
+  },
+  {
+   "featureId": "mean_length_of_run_raw",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 6.4375,
+   "unit": "raw words between pauses"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_rate",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 5.150214592274678,
+   "unit": "mid-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_end_clause_rate",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 20.600858369098713,
+   "unit": "end-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_mean_ms",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 330,
+   "unit": "ms"
+  },
+  {
+   "featureId": "silent_pause_end_clause_mean_ms",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 367.5,
+   "unit": "ms"
+  },
+  {
+   "featureId": "acoustic_pause_rate",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 10,
+   "unit": "per minute of window time"
+  },
+  {
    "featureId": "articulation_rate_wpm",
    "participant": "B",
    "pass": 1,
@@ -753,6 +1028,69 @@
    "thresholdMs": 350,
    "value": 10.2,
    "unit": "pruned words between pauses"
+  },
+  {
+   "featureId": "articulation_rate_raw_wpm",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 252,
+   "unit": "raw words per minute of phonation time"
+  },
+  {
+   "featureId": "mean_length_of_run_raw",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 10.3,
+   "unit": "raw words between pauses"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_rate",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 2.4,
+   "unit": "mid-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_end_clause_rate",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 7.199999999999999,
+   "unit": "end-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_mean_ms",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 420,
+   "unit": "ms"
+  },
+  {
+   "featureId": "silent_pause_end_clause_mean_ms",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 493.3333333333333,
+   "unit": "ms"
+  },
+  {
+   "featureId": "acoustic_pause_rate",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 4,
+   "unit": "per minute of window time"
   },
   {
    "featureId": "filled_pause_count",
@@ -941,6 +1279,87 @@
    "thresholdMs": null,
    "value": 0.8599999999999997,
    "unit": "0-1"
+  },
+  {
+   "featureId": "long_pause_count",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
+   "featureId": "uh_count",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
+   "featureId": "um_count",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 1,
+   "unit": "count"
+  },
+  {
+   "featureId": "filled_pause_mid_clause_count",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 1,
+   "unit": "count"
+  },
+  {
+   "featureId": "filled_pause_end_clause_count",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
+   "featureId": "silence_after_filler_mean_ms",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 40,
+   "unit": "ms"
+  },
+  {
+   "featureId": "mattr_raw",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0.8092857142857143,
+   "unit": "ratio"
+  },
+  {
+   "featureId": "open_floor_response_count",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
+   "featureId": "asr_acoustic_pause_agreement",
+   "participant": "B",
+   "pass": 1,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 1,
+   "unit": "ratio"
   },
   {
    "featureId": "speech_rate_wpm",
@@ -1042,6 +1461,69 @@
    "unit": "pruned words between pauses"
   },
   {
+   "featureId": "articulation_rate_raw_wpm",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 263.7931034482759,
+   "unit": "raw words per minute of phonation time"
+  },
+  {
+   "featureId": "mean_length_of_run_raw",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 6.8,
+   "unit": "raw words between pauses"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_rate",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 0,
+   "unit": "mid-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_end_clause_rate",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 20.689655172413794,
+   "unit": "end-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_mean_ms",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": null,
+   "unit": "ms"
+  },
+  {
+   "featureId": "silent_pause_end_clause_mean_ms",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 377.5,
+   "unit": "ms"
+  },
+  {
+   "featureId": "acoustic_pause_rate",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 8,
+   "unit": "per minute of window time"
+  },
+  {
    "featureId": "articulation_rate_wpm",
    "participant": "A",
    "pass": 2,
@@ -1112,6 +1594,69 @@
    "thresholdMs": 350,
    "value": 8.818181818181818,
    "unit": "pruned words between pauses"
+  },
+  {
+   "featureId": "articulation_rate_raw_wpm",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 251.64473684210526,
+   "unit": "raw words per minute of phonation time"
+  },
+  {
+   "featureId": "mean_length_of_run_raw",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 9.272727272727273,
+   "unit": "raw words between pauses"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_rate",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 0,
+   "unit": "mid-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_end_clause_rate",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 9.868421052631579,
+   "unit": "end-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_mean_ms",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": null,
+   "unit": "ms"
+  },
+  {
+   "featureId": "silent_pause_end_clause_mean_ms",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 475,
+   "unit": "ms"
+  },
+  {
+   "featureId": "acoustic_pause_rate",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 4,
+   "unit": "per minute of window time"
   },
   {
    "featureId": "filled_pause_count",
@@ -1279,7 +1824,7 @@
    "pass": 2,
    "window": "full",
    "thresholdMs": null,
-   "value": 0,
+   "value": 1,
    "unit": "count"
   },
   {
@@ -1290,6 +1835,87 @@
    "thresholdMs": null,
    "value": 0.8900000000000005,
    "unit": "0-1"
+  },
+  {
+   "featureId": "long_pause_count",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
+   "featureId": "uh_count",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 1,
+   "unit": "count"
+  },
+  {
+   "featureId": "um_count",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 1,
+   "unit": "count"
+  },
+  {
+   "featureId": "filled_pause_mid_clause_count",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 2,
+   "unit": "count"
+  },
+  {
+   "featureId": "filled_pause_end_clause_count",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
+   "featureId": "silence_after_filler_mean_ms",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 40,
+   "unit": "ms"
+  },
+  {
+   "featureId": "mattr_raw",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0.803018867924528,
+   "unit": "ratio"
+  },
+  {
+   "featureId": "open_floor_response_count",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
+   "featureId": "asr_acoustic_pause_agreement",
+   "participant": "A",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 1,
+   "unit": "ratio"
   },
   {
    "featureId": "speech_rate_wpm",
@@ -1391,6 +2017,69 @@
    "unit": "pruned words between pauses"
   },
   {
+   "featureId": "articulation_rate_raw_wpm",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 270.3862660944206,
+   "unit": "raw words per minute of phonation time"
+  },
+  {
+   "featureId": "mean_length_of_run_raw",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 6.4375,
+   "unit": "raw words between pauses"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_rate",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 5.150214592274678,
+   "unit": "mid-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_end_clause_rate",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 20.600858369098713,
+   "unit": "end-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_mean_ms",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 330,
+   "unit": "ms"
+  },
+  {
+   "featureId": "silent_pause_end_clause_mean_ms",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 367.5,
+   "unit": "ms"
+  },
+  {
+   "featureId": "acoustic_pause_rate",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 10,
+   "unit": "per minute of window time"
+  },
+  {
    "featureId": "articulation_rate_wpm",
    "participant": "B",
    "pass": 2,
@@ -1461,6 +2150,69 @@
    "thresholdMs": 350,
    "value": 10.2,
    "unit": "pruned words between pauses"
+  },
+  {
+   "featureId": "articulation_rate_raw_wpm",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 252,
+   "unit": "raw words per minute of phonation time"
+  },
+  {
+   "featureId": "mean_length_of_run_raw",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 10.3,
+   "unit": "raw words between pauses"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_rate",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 2.4,
+   "unit": "mid-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_end_clause_rate",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 7.199999999999999,
+   "unit": "end-clause pauses per minute of phonation time"
+  },
+  {
+   "featureId": "silent_pause_mid_clause_mean_ms",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 420,
+   "unit": "ms"
+  },
+  {
+   "featureId": "silent_pause_end_clause_mean_ms",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 493.3333333333333,
+   "unit": "ms"
+  },
+  {
+   "featureId": "acoustic_pause_rate",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 350,
+   "value": 4,
+   "unit": "per minute of window time"
   },
   {
    "featureId": "filled_pause_count",
@@ -1651,12 +2403,93 @@
    "unit": "0-1"
   },
   {
+   "featureId": "long_pause_count",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
+   "featureId": "uh_count",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
+   "featureId": "um_count",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 1,
+   "unit": "count"
+  },
+  {
+   "featureId": "filled_pause_mid_clause_count",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 1,
+   "unit": "count"
+  },
+  {
+   "featureId": "filled_pause_end_clause_count",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
+   "featureId": "silence_after_filler_mean_ms",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 40,
+   "unit": "ms"
+  },
+  {
+   "featureId": "mattr_raw",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0.8092857142857143,
+   "unit": "ratio"
+  },
+  {
+   "featureId": "open_floor_response_count",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": null,
+   "value": 0,
+   "unit": "count"
+  },
+  {
+   "featureId": "asr_acoustic_pause_agreement",
+   "participant": "B",
+   "pass": 2,
+   "window": "full",
+   "thresholdMs": 200,
+   "value": 1,
+   "unit": "ratio"
+  },
+  {
    "featureId": "composite_fluency_index",
    "participant": "A",
    "pass": 1,
    "window": "full",
    "thresholdMs": null,
-   "value": 2.3445873205741625,
+   "value": 2.0863636363636364,
    "unit": "z-score mean"
   },
   {
@@ -1674,7 +2507,7 @@
    "pass": 1,
    "window": "full",
    "thresholdMs": null,
-   "value": 2.675,
+   "value": 2.1,
    "unit": "z-score mean"
   },
   {
@@ -1692,7 +2525,7 @@
    "pass": 2,
    "window": "full",
    "thresholdMs": null,
-   "value": 2.3445873205741625,
+   "value": 2.0863636363636364,
    "unit": "z-score mean"
   },
   {
@@ -1710,7 +2543,7 @@
    "pass": 2,
    "window": "full",
    "thresholdMs": null,
-   "value": 2.675,
+   "value": 2.1,
    "unit": "z-score mean"
   },
   {

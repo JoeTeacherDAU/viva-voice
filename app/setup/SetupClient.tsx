@@ -500,7 +500,7 @@ export function SetupClient() {
           <ul className="flex flex-col gap-2" aria-label="Blocking problems">
             {blocking.map((b) => (
               <li key={b} className="flex items-start gap-2 text-fault" data-testid="blocking">
-                <Icon name="error" />
+                <Icon name="block" />
                 <span>{b}</span>
               </li>
             ))}

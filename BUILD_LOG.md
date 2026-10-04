@@ -228,3 +228,96 @@ GitHub Actions failed on the P6 and P7 commits, which I had not checked before m
 The previous commit message claimed to clear a lint warning in lib/audio/align.ts, but that edit had not applied. This commit clears it.
 
 The same CI run then exposed a worse problem: app/api/roster/route.ts had never been committed. The .gitignore line `roster/`, meant to keep roster data out of git, matched every folder named roster, including the route's own folder. A Vercel build from main would have failed the same way. The rule now reads `/roster/` and `**/roster/*.json`, which still covers roster data, and the route is committed. I checked everything else git ignores; only generated files remain. Before pushing I ran the whole CI sequence on this Mac with CI's environment, and every step passed.
+
+## 2026-10-05, Work order 01: lossless archive and descriptive measures
+
+Branch: fix/lossless-descriptive, from main at 5690d6b and the two CI fixes after it. Pipeline version 1.1.0, registry version 1.1.0. The branch is not merged.
+
+Sections done: 0 through 8, in four commits (sections 0 to 3 with 6 and 7, then 4, then 5, then this log).
+
+Checks on this Mac before pushing: lint; vitest with and without VIVA_MOCK_ASR=1 (893 passed, 1 skipped, both ways); coverage with the 90 percent gate on lib/analysis; build; the contrast check; feature-coverage (all 47 tier 1 features have a function and a non-null fixture value); check-fixtures; pytest (12 passed); and Playwright (7 passed, 1 skipped on macOS as before). The golden test now checks 744 expected values across the three fixtures, and every one matches.
+
+What changed:
+
+- Turns close only when the partner's floor speech starts, so no silence disappears. A within-turn pause at or above turnThresholdMs counts in long_pause_count and goes into the session record as a long_pause event with its pass.
+- The pipeline returns every word it receives with six labels (removedAsCrosstalk, inWindow, inGap, isFiller, isRepetition, isBackchannel), and the stored pass-one transcript is that labelled list. A backchannel-token word leaves the pruned list only when it is a backchannel. The research layer follows the same rule, and its separate "okay" handling is gone.
+- Fifteen new tier 1 features: the raw twins articulation_rate_raw_wpm, mean_length_of_run_raw, and mattr_raw; pause rates and means by clause location; long_pause_count; uh_count and um_count; fillers by location and the silence after each; acoustic_pause_rate from the energy frames; and asr_acoustic_pause_agreement. docs/OPERATIONAL_DEFINITIONS.md states each rule, and the fixture script computes each value on its own.
+- The composite uses the mid-clause pause rate at 350 ms (weights version 1.1).
+- The WAV keeps every captured sample. Capture time now counts from the first sample, so new sessions record wavOffsetMs 0. Every live recognizer message goes verbatim to transcripts/{id}/pass1-raw.jsonl.
+- The student document, review screen, and setup screen use plain descriptions, and a unit test fails if any banned word appears in a generated document.
+- research/viva/verbatim.py and phones.py run their models only when someone has installed them, and they never write a score.
+- The fixtures gain the seven cases in section 7.
+
+A bug this work order exposed: when capture stopped, the downsample worklet still held up to 100 ms of raw audio that never reached the WAV. The new end-to-end check that the WAV runs past the Stop marker caught it (the WAV ended at 12.000 s, the marker at 12.085 s). Capture now asks the worklet to flush its partial chunk and waits for it before disconnecting.
+
+Departures, each with its reason:
+
+- Backchannels needed a rule the work order does not give. Once silence stops closing turns, the partner turn on each side of a lone "okay" merges, the "okay" lands inside it, and the old containment test calls it a backchannel, which contradicts case 4. The rule now reads: a backchannel-token run is a backchannel only while the partner holds the floor, meaning it overlaps the partner's speech or sits in a partner silence shorter than turnThresholdMs. A partner silence of turnThresholdMs or more leaves the floor open, and a token there is an answering one-word turn. To keep case 1 intact, I moved the gappy fixture's "mhmm" from the 2,500 ms pause to a 600 ms pause; under this rule a "mhmm" inside a 2,500 ms silence would answer and split the turn. Please confirm this rule or give me another; it changes backchannel_count, turn_count, and latency whenever a partner falls silent for 1.5 seconds or more.
+- A pass-one transcriber gap still closes a turn. A gap is missing data rather than an observed silence, so treating it as a pause would invent one.
+- The four new word labels are optional in schemas/words.schema.json. Words arrive from the recognizer without them, and the same schema validates those words; every transcript the pipeline stores carries all six labels, and a unit test checks that for every fixture and both passes.
+- The config keeps the weight name silent_pause_rate, and in weights version 1.1 that weight applies to the mid-clause rate. Renaming the key would make every stored session record fail its schema. Baselines now record their weights version, and the composite returns null against a baseline from another version (or with no version, which means 1.0), so a baseline built on the total pause rate can never standardise the mid-clause rate. The next pass two starts a fresh baseline. No real baseline exists yet.
+- asr_acoustic_pause_agreement uses the word-gap pauses at the lowest configured threshold (200 ms) and records that threshold. long_pause_count records no threshold, since its cutoff is turnThresholdMs.
+- An acoustic frame counts as voiced when the student's channel reaches speechFloorDbfs and is not quieter than the partner's by gatingMarginDb or more. That makes the partner's bleed during a pause count as silence.
+- The upload limit rises from 120 MB to 2 GB, because Principle 1 keeps the whole capture, including any wait before Start. This overrides build-plan P6.1, and RESEARCH_PRINCIPLES.md wins.
+- Principle 4 says no output uses the banned words, while the work order names three outputs. The rendered-text check also covers the live display and the import page, and the "error" icon and "weak match" wording are gone from the login and import screens too.
+- Principle 1 asks for audio after Stop. Capture keeps running after Stop until the session saves its local copy, usually well under a second, then stops. Keeping the microphone open longer needs a decision about how long to record once the window ends.
+- The display labels live in lib/output/labels.ts, because features.json has no label field and the work order did not change the schema. A unit test confirms every tier 1 id has a label and a section.
+- The live mock transcriber now sends Deepgram-shaped messages through the raw hook, so the end-to-end test exercises the JSON Lines path.
+- scripts/check-fixtures.mjs now accepts whatever threshold a threshold-less feature records, since asr_acoustic_pause_agreement records 200.
+- Three fixture windows grew to fit the new cases: balanced stays at 60 s, asymmetric goes to 48 s, and gappy to 43 s.
+- In the research layer, pause_before_low_frequency_word_ratio and pause_function_profile are recorded as skipped, because both need a word frequency list. The verbatim counting rules ([UH] and [UM] for fillers, a trailing hyphen for a partial word) are my reading of CrisperWhisper's output format, and the module's docstring says to check them against real output. phones.py stores phone strings but does not yet code variants against the dictionary form.
+
+Requests for Joe:
+
+- Confirm or replace the floor-holding rule for backchannels above.
+- Decide whether capture should keep recording for a set time after Stop.
+
+Commits on the branch: a5273bf, b3765c4, dad9288, and 9b4be64. GitHub Actions passed on 9b4be64: 893 unit tests, 12 Python tests, and 8 browser tests, including the fake-microphone test on Linux.
+
+## 2026-10-05, Floor-holding rule kept, with its own key, labels, and a count
+
+Branch: fix/lossless-descriptive. Commit 6b91d01. Not merged.
+
+Joe kept the floor-holding rule from work order 01 and asked for four changes, all done:
+
+- config.floorLapseMs, default 1500, now decides when a partner silence leaves the floor open. It is separate from turnThresholdMs, which only defines a long pause. It appears in schemas/session.schema.json, DEFAULT_CONFIG, the fixture config, the research layer, and docs/OPERATIONAL_DEFINITIONS.md. A unit test confirms that changing turnThresholdMs leaves the classification alone, while changing floorLapseMs moves it.
+- Every backchannel candidate word in a stored transcript carries overlapsPartner, partnerSilenceMs, partnerResumesNext, and floorClass. Words that are not candidates carry none of the four. schemas/words.schema.json lists them.
+- New tier 1 feature open_floor_response_count, in features.json, lib/registry/features.json, the pipeline, the fixture script, and the student document (under Conversation, labelled "Short responses (such as okay) given after your partner had stopped talking"). I regenerated FEATURE_INVENTORY.md with scripts/gen-inventory.py.
+- Fixture case: in gappy, a lone "Okay." from B sits in a 2,000 ms silence of A's (860 ms, the 260 ms word, then 880 ms), and A resumes. It counts as an answering turn, partnerResumesNext is true, and open_floor_response_count for B is 1.
+
+Acceptance: lint, vitest with and without VIVA_MOCK_ASR=1 (907 passed, 1 skipped), coverage, build, contrast, feature-coverage (48 tier 1 features), check-fixtures, pytest (13 passed), and Playwright (7 passed, 1 skipped on macOS) all passed on this Mac. GitHub Actions passed on 6b91d01 with 907 unit tests, 13 Python tests, and 8 browser tests. The golden test checks 756 expected values, and every one matches.
+
+Choices I made, each with its reason:
+
+- Floor words for the labels are the first-pass floor words, which leave every candidate out. That keeps the definition from depending on its own answer.
+- partnerSilenceMs is null when the candidate overlaps partner speech or the partner has no floor word on one side.
+- The rule refines one edge: a candidate that touches the partner's next word now counts as overlapping, where the old check looked only at the previous word. No fixture changes because of it.
+- floorLapseMs is optional in the session schema, so session records written before it existed still validate, and the pipeline then uses 1500.
+- The registry version stays 1.1.0 even though it gained one feature, because I did not want to set registry versions on my own. If you want 1.1.1 or 1.2.0, the change is one line in both copies of features.json.
+
+Finding for Joe: as the instruction defines it, open_floor_response_count also counts backchannel-token words that open or sit inside the student's own turn while the partner is silent. In the asymmetric fixture, student A scores 3 from "Yeah," "right," and "really" inside A's own turn, while B's lone answering "Okay." scores 1. The labels make it possible to separate the two readings later: a standalone answer has floorClass "turn" and is not part of a longer run of the student's own speech.
+
+Request for Joe: decide whether open_floor_response_count should count only standalone answers, or keep the literal definition.
+
+GitHub Actions then failed on 3df8242, the commit that added only the entry above. The archive test found the WAV ending 2.7 ms before the Stop marker, which is one audio render block of 128 samples. The Stop marker comes from the browser's main-thread clock, which can run a block or two ahead of the audio the worklet has processed, and with the instant mock transcriber the final flush could arrive before the audio caught up. The session screen now keeps capturing for 500 ms after Stop before it flushes and closes, which also gives every recording half a second of audio after the window, as Principle 1 asks. The archive test passed three runs in a row locally, the full acceptance sequence passed again, and the branch CI result for this fix follows below.
+
+That fix went out with a process error of mine: my command pushed 3acdc92 even though the local acceptance run had failed one browser test, and CI failed on the same test. The live-display test read the session record from IndexedDB after Stop, but the session archives itself and then clears its local copy, and the 500 ms tail changed the timing enough that the copy was sometimes already gone. The test now waits for the archive to confirm and reads the record from the archive, which checks more than the local copy did. The full acceptance sequence passed before this commit, and from here the push runs only if every step passes.
+
+GitHub Actions passed on d047757: 907 unit tests, 13 Python tests, and 8 browser tests.
+
+## 2026-10-05, Three floor classes; open_floor_response_count counts standalone answers only
+
+Branch: fix/lossless-descriptive. Not merged.
+
+Joe's instruction, done:
+
+- floorClass now takes three values. "backchannel" means the partner held the floor. "standalone_turn" means the candidate run is the student's entire turn. "turn_part" means the run opens or sits inside a longer turn by the same student. The pipeline settles the last two once the final turns exist. schemas/words.schema.json lists the three values.
+- open_floor_response_count counts standalone_turn runs only, and only in a partner silence at or above floorLapseMs. In the fixtures, asymmetric student A drops from 3 to 0, because "Yeah," "right," and "really" inside A's own turn are now turn_part. B's lone answering "Okay." still counts 1 in asymmetric and in gappy.
+- docs/OPERATIONAL_DEFINITIONS.md, the fixture script (whose own count now requires the run to be the whole authored turn), and the research layer follow the new rule. research/viva/archive.py has a classify_candidates function that returns the same four facts and three classes as the app, and a pytest case checks one example of each class.
+- The student document now reads "One-word answers (such as okay) given as a whole turn after your partner had stopped talking".
+- registryVersion is 1.2.0 in both copies of features.json, with generated 2026-10-05, and the feature's formula and caveats describe the narrower count. FEATURE_INVENTORY.md is regenerated with scripts/gen-inventory.py.
+- I copied features.json, FEATURE_INVENTORY.md, and schemas/features.schema.json into ~/Library/Mobile Documents/com~apple~CloudDocs/Viva Voice Dev/. Before overwriting, I confirmed that the three iCloud copies still matched what I had copied from there at the start of work order 01, so no edit of Joe's was lost. After copying, each file compares byte for byte with the repository.
+
+Acceptance on this Mac, all passing before the push: lint; vitest without VIVA_MOCK_ASR and with it (908 passed, 1 skipped, both ways); coverage; build; contrast; feature-coverage (48 tier 1 features); check-fixtures; pytest (14 passed); Playwright (7 passed, 1 skipped on macOS).
+
+GitHub Actions passed on 779dd8e: 908 unit tests, 14 Python tests, and 8 browser tests.

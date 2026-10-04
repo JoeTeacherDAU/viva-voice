@@ -16,6 +16,8 @@ import { getSession, putArtifact, putSession } from "@/lib/storage/local";
 import { Button, FaultStrip } from "@/lib/ui";
 
 const SCORES = [1, 2, 3, 4, 5] as const;
+/** Audio kept after the Stop marker before capture closes. */
+const POST_STOP_TAIL_MS = 500;
 
 function mmss(ms: number): string {
   const s = Math.ceil(ms / 1000);
@@ -104,12 +106,13 @@ export function SessionClient() {
     if (!res) return;
     await putArtifact(res.record.id, "transcript-pass1", res.words);
     await putArtifact(res.record.id, "measurements-pass1", res.result.features);
+    await putArtifact(res.record.id, "pass1-raw", res.rawJsonl);
     if (capture.current) {
       await putArtifact(res.record.id, "energy", capture.current.energyTrack());
       await putArtifact(res.record.id, "capture-meta", { rawStartMs: capture.current.rawStartMs });
     }
     await putSession(res.record);
-    await capture.current?.stop();
+    await capture.current?.stop(POST_STOP_TAIL_MS);
     capture.current = null;
     getActiveDevice()
       ?.stream.getTracks()

@@ -47,7 +47,7 @@ export function LoginForm() {
       </label>
       {error ? (
         <p className="flex items-center gap-2 text-fault" role="alert">
-          <Icon name="error" />
+          <Icon name="block" />
           {error}
         </p>
       ) : null}

@@ -17,6 +17,20 @@ export interface Word {
   pass: PassNumber;
   removedAsCrosstalk: boolean;
   speakerLabel: Participant;
+  /**
+   * Labels the pipeline adds (work order 01, section 2). No step deletes a
+   * word; counts filter on these labels.
+   */
+  inWindow?: boolean;
+  isFiller?: boolean;
+  isRepetition?: boolean;
+  isBackchannel?: boolean;
+  inGap?: boolean;
+  /** Set on backchannel candidate words only (docs/OPERATIONAL_DEFINITIONS.md). */
+  overlapsPartner?: boolean;
+  partnerSilenceMs?: number | null;
+  partnerResumesNext?: boolean;
+  floorClass?: "backchannel" | "standalone_turn" | "turn_part";
 }
 
 export interface CompositeWeights {
@@ -29,6 +43,12 @@ export interface Config {
   gainDb: number;
   pauseThresholdsMs: number[];
   turnThresholdMs: number;
+  /**
+   * A partner silence at or above this leaves the floor open, so a
+   * backchannel-token run there counts as a one-word turn. Separate from
+   * turnThresholdMs, which only defines a long pause. Default 1500.
+   */
+  floorLapseMs?: number;
   gatingMarginDb: number;
   speechFloorDbfs?: number;
   compositeWeights: CompositeWeights;
@@ -78,10 +98,11 @@ export const DEFAULT_CONFIG: Config = {
   gainDb: 0,
   pauseThresholdsMs: [200, 350],
   turnThresholdMs: 1500,
+  floorLapseMs: 1500,
   gatingMarginDb: 6,
   speechFloorDbfs: -60,
   compositeWeights: { silent_pause_rate: 0.5, speech_rate_wpm: 0.25, mean_length_of_run: 0.25 },
-  weightsVersion: "1.0",
+  weightsVersion: "1.1",
   baselineMinSessions: 10,
   fillerTokens: ["uh", "um"],
   backchannelTokens: [
@@ -196,6 +217,12 @@ export interface Baseline {
   n: number;
   /** Session ids already counted, so a rerun of pass two does not count twice. */
   sessions?: string[];
+  /**
+   * Composite weights version the components were measured under. Version 1.1
+   * stores the mid-clause pause rate in the silent_pause_rate slot; a baseline
+   * without this field dates from 1.0, when that slot held the total pause rate.
+   */
+  weightsVersion?: string;
   components: {
     speech_rate_wpm: BaselineComponent;
     silent_pause_rate: BaselineComponent;
