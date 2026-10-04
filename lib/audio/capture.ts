@@ -2,7 +2,12 @@ import { PcmWriter, requestPersistence } from "@/lib/storage/local";
 import type { EnergyTrack } from "@/lib/analysis/types";
 import { CAPTURE_RATE, FRAME_MS } from "./dsp";
 import type { EnergyMessage } from "./worklets/energy.worklet";
-import type { DoneMessage, PcmMessage, StartMessage } from "./worklets/downsample.worklet";
+import type {
+  DoneMessage,
+  FlushedMessage,
+  PcmMessage,
+  StartMessage,
+} from "./worklets/downsample.worklet";
 
 export interface CaptureOptions {
   /** When set, raw 48 kHz PCM goes to IndexedDB under this session id. */
@@ -26,6 +31,8 @@ export class Capture {
   private energyStartMs: number | null = null;
   private nodes: AudioNode[] = [];
   framesRecorded = 0;
+  private down: AudioWorkletNode | null = null;
+  private flushed: (() => void) | null = null;
   /** AudioContext time (ms) of raw PCM frame 0, the first sample of the WAV. */
   rawStartMs: number | null = null;
 
@@ -59,8 +66,9 @@ export class Capture {
       });
       splitter.connect(node, ch);
       node.port.onmessage = (e: MessageEvent<EnergyMessage>) => {
-        cap.recordEnergy(ch, e.data.atMs, e.data.dbfs);
-        opts.onEnergy?.(ch, e.data.atMs, e.data.dbfs);
+        const atMs = cap.toWavMs(e.data.atMs);
+        cap.recordEnergy(ch, atMs, e.data.dbfs);
+        opts.onEnergy?.(ch, atMs, e.data.dbfs);
       };
       cap.nodes.push(node);
     });
@@ -75,9 +83,12 @@ export class Capture {
     });
     source.connect(down);
     down.connect(sink);
-    down.port.onmessage = (e: MessageEvent<PcmMessage | DoneMessage | StartMessage>) => {
+    down.port.onmessage = (
+      e: MessageEvent<PcmMessage | DoneMessage | StartMessage | FlushedMessage>,
+    ) => {
       const m = e.data;
       if (m.type === "start") cap.rawStartMs = m.atMs;
+      else if (m.type === "flushed") cap.flushed?.();
       else if (m.type === "pcm16k") opts.onPcm16k?.(m.buf);
       else if (m.type === "raw48k") {
         cap.framesRecorded += m.buf.byteLength / 4;
@@ -87,6 +98,7 @@ export class Capture {
         if (!cap.writer) opts.onDone?.(m.frames);
       }
     };
+    cap.down = down;
     cap.nodes.push(source, splitter, down, sink);
     return cap;
   }
@@ -108,12 +120,32 @@ export class Capture {
     };
   }
 
-  /** Context time in ms, the clock the energy frames use. */
+  /**
+   * Converts AudioContext time to capture time: milliseconds since the first
+   * raw sample, which is sample 0 of the stored WAV. Every stored time uses
+   * this clock, so new sessions record wavOffsetMs 0 (work order 01, 4.1).
+   */
+  toWavMs(ctxMs: number): number {
+    return ctxMs - (this.rawStartMs ?? 0);
+  }
+
+  /** Capture time now: ms since the first WAV sample. */
   nowMs(): number {
-    return this.ctx.currentTime * 1000;
+    return this.toWavMs(this.ctx.currentTime * 1000);
   }
 
   async stop(): Promise<void> {
+    // Ask the worklet for its partial raw chunk first, so no captured sample is lost.
+    if (this.down && this.ctx.state === "running") {
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, 1000);
+        this.flushed = () => {
+          clearTimeout(timer);
+          resolve();
+        };
+        this.down!.port.postMessage({ type: "flush" });
+      });
+    }
     for (const n of this.nodes) n.disconnect();
     await this.writer?.close();
     if (this.ctx.state !== "closed") await this.ctx.close();

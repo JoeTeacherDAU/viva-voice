@@ -4,13 +4,10 @@
 
 import { upload } from "@vercel/blob/client";
 import type { SessionRecord } from "@/lib/analysis/types";
-import { CAPTURE_RATE } from "@/lib/audio/dsp";
-import { buildStereoWav, trimChunks } from "@/lib/audio/wav";
+import { buildStereoWav } from "@/lib/audio/wav";
 import { deleteSession, getArtifact, getSession, readPcm } from "./local";
 import { paths } from "./paths";
 
-/** Audio kept before the Start marker, in ms. */
-export const PRE_ROLL_MS = 5000;
 const RETRY_DELAYS_MS = [1000, 2000, 4000];
 
 export interface ArchiveProgress {
@@ -74,14 +71,12 @@ export async function archiveSession(
     rawStartMs: 0,
   };
 
-  // Trim pre-roll so a long wait before Start does not bloat the WAV.
-  const rawStart = meta.rawStartMs ?? 0;
-  const skipFrames = Math.max(
-    0,
-    Math.round(((rec.markers.startMs - PRE_ROLL_MS - rawStart) * CAPTURE_RATE) / 1000),
-  );
-  const wav = buildStereoWav(trimChunks(await readPcm(id), skipFrames));
-  const wavOffsetMs = rawStart + (skipFrames * 1000) / CAPTURE_RATE;
+  // The WAV keeps every captured sample, before Start and after Stop
+  // (RESEARCH_PRINCIPLES.md principle 1). Capture time already counts from
+  // its first sample, so the offset is 0; the field stays for older records.
+  const wav = buildStereoWav(await readPcm(id));
+  const wavOffsetMs = 0;
+  const rawLines = (await getArtifact<string>(id, "pass1-raw")) ?? "";
 
   const archived: SessionRecord = {
     ...rec,
@@ -105,6 +100,12 @@ export async function archiveSession(
     ["audio", paths.stereo(id), wav, "audio/wav"],
     ["energy", paths.energy(id), json(energy), "application/json"],
     ["transcript", paths.transcript(id, 1), json({ words }), "application/json"],
+    [
+      "raw recognizer messages",
+      paths.transcriptRaw(id),
+      new Blob([rawLines], { type: "application/x-ndjson" }),
+      "application/x-ndjson",
+    ],
     [
       "measurements",
       paths.measurements(id, 1),

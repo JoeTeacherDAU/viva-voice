@@ -85,6 +85,13 @@ describe("talk-time estimator", () => {
 });
 
 class FakeTranscriber implements Transcriber {
+  raws: ((m: { connectionOffsetMs: number | null; receivedAtMs: number; data: string }) => void)[] =
+    [];
+  onRaw(
+    cb: (m: { connectionOffsetMs: number | null; receivedAtMs: number; data: string }) => void,
+  ) {
+    this.raws.push(cb);
+  }
   words: ((w: Word[]) => void)[] = [];
   events: ((e: TranscriberEvent) => void)[] = [];
   sent = 0;
@@ -178,6 +185,33 @@ describe("LiveSession", () => {
     s.score(4);
     expect(view().revealed).toBe(true);
     expect(view().score).toBe(4);
+  });
+
+  it("archives every raw message as one JSON line and returns every final word labelled", async () => {
+    const { s, tr } = make();
+    tr.raws.forEach((cb) => cb({ connectionOffsetMs: 0, receivedAtMs: 0, data: "before start" }));
+    await s.start();
+    tr.raws.forEach((cb) =>
+      cb({ connectionOffsetMs: 0, receivedAtMs: 100, data: '{"type":"Metadata"}' }),
+    );
+    tr.emitWords([word("We", 100, 300, 0, false)]);
+    tr.emitWords([word("We", 100, 300, 0), word("we", 340, 500, 0), word("went.", 540, 800, 0)]);
+    advance(5000);
+    const res = await s.stop();
+    const lines = res!.rawJsonl
+      .trim()
+      .split("\n")
+      .map((l) => JSON.parse(l));
+    expect(lines).toEqual([
+      {
+        captureStartMs: 2000,
+        connectionOffsetMs: 0,
+        receivedAtMs: 100,
+        message: '{"type":"Metadata"}',
+      },
+    ]);
+    expect(res!.words).toHaveLength(3);
+    expect(res!.words.map((w) => w.isRepetition)).toEqual([false, true, false]);
   });
 
   it("sends audio only while live", async () => {

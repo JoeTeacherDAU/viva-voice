@@ -175,6 +175,12 @@ describe("bundle and paths", () => {
     expect(uploadPathAllowed("transcripts/s1/pass2.json")).toBe(false);
     expect(uploadPathAllowed("audio/../roster/x.wav")).toBe(false);
     expect(uploadPathAllowed("baselines/e1.json")).toBe(false);
+    expect(uploadPathAllowed(paths.transcriptRaw("s1"))).toBe(true);
+    // Research-layer slots: the app never writes them (work order 01, 4.4).
+    expect(paths.verbatim("s1", "A")).toBe("transcripts/s1/verbatim-A.json");
+    expect(paths.phones("s1", "B")).toBe("phones/s1/B.json");
+    expect(uploadPathAllowed(paths.verbatim("s1", "A"))).toBe(false);
+    expect(uploadPathAllowed(paths.phones("s1", "B"))).toBe(false);
     expect(() => paths.session("../x")).toThrow();
   });
 });
@@ -230,12 +236,11 @@ describe("routes with the in-memory store", () => {
         },
       ],
     }));
-    const fetchMock = vi.fn().mockResolvedValue(
-      Response.json({
-        metadata: { model_info: { x: { name: "nova-3", version: "2026-09" } } },
-        results: { channels },
-      }),
-    );
+    const body = {
+      metadata: { model_info: { x: { name: "nova-3", version: "2026-09" } } },
+      results: { channels },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(Response.json(body));
     vi.stubGlobal("fetch", fetchMock);
     const { POST } = await import("@/app/api/pass2/route");
     const res = await POST(
@@ -249,6 +254,9 @@ describe("routes with the in-memory store", () => {
     expect(url).toBe(`https://api.deepgram.com/v1/listen?${batchQuery()}`);
     expect(JSON.parse(init.body).url).toBe(`memory://${paths.stereo(session.id)}`);
 
+    // Work order 01, 4.3: the stored raw response equals the body as received.
+    const stored2 = await getJson<{ raw: unknown }>(store, paths.transcript(session.id, 2));
+    expect(stored2!.raw).toEqual(JSON.parse(JSON.stringify(body)));
     const rec = await getJson<SessionRecord>(store, paths.session(session.id));
     expect(rec!.state).toBe("done");
     expect(rec!.passes["2"]!.measurements).toBe(paths.measurements(session.id, 2));

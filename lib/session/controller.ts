@@ -56,6 +56,8 @@ export interface StopResult {
   record: SessionRecord;
   words: Word[];
   result: RunResult;
+  /** Every recognizer message, as JSON Lines (transcripts/{id}/pass1-raw.jsonl). */
+  rawJsonl: string;
 }
 
 const value = (fs: FeatureValue[], id: string, P: Participant, T: number | null = null) =>
@@ -73,6 +75,7 @@ export class LiveSession {
   private rec: SessionRecord;
   private listeners = new Set<(v: LiveView) => void>();
   private finals: Word[] = [];
+  private rawLines: string[] = [];
   private talk = new TalkTimeEstimator();
   private hits: Record<Participant, TargetHit[]> = { A: [], B: [] };
   private index: Record<Participant, IndexDisplay | null> = { A: null, B: null };
@@ -93,6 +96,19 @@ export class LiveSession {
     this.rec = record;
     this.run = deps.run ?? runPipeline;
     deps.transcriber.onWords((w) => this.handleWords(w));
+    deps.transcriber.onRaw?.((m) => {
+      // One JSON line per message: the message verbatim, plus the clocks that
+      // put it on the WAV's timeline (session-clock offset plus captureStartMs).
+      if (this.rec.markers.startMs === null) return;
+      this.rawLines.push(
+        JSON.stringify({
+          captureStartMs: this.rec.markers.startMs,
+          connectionOffsetMs: m.connectionOffsetMs,
+          receivedAtMs: m.receivedAtMs,
+          message: m.data,
+        }),
+      );
+    });
     deps.transcriber.onEvent((e) => this.handleEvent(e));
   }
 
@@ -197,7 +213,12 @@ export class LiveSession {
     }
     this.update(rec);
     // The stored transcript is every final word with its labels; none is dropped.
-    return { record: this.rec, words: result.words, result };
+    return {
+      record: this.rec,
+      words: result.words,
+      result,
+      rawJsonl: this.rawLines.length ? this.rawLines.join("\n") + "\n" : "",
+    };
   }
 
   dispose(): void {

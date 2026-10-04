@@ -1,5 +1,5 @@
 import type { Participant, Word } from "@/lib/analysis/types";
-import type { Transcriber, TranscriberConfig, TranscriberEvent } from "../types";
+import type { RawMessage, Transcriber, TranscriberConfig, TranscriberEvent } from "../types";
 
 export interface MockOptions {
   /** Playback speed. 2 replays twice as fast as real time. */
@@ -23,6 +23,7 @@ type Timer = ReturnType<typeof setTimeout>;
 export class MockTranscriber implements Transcriber {
   private wordCbs: ((w: Word[]) => void)[] = [];
   private eventCbs: ((e: TranscriberEvent) => void)[] = [];
+  private rawCbs: ((m: RawMessage) => void)[] = [];
   private timers: Timer[] = [];
   private bytesSent = 0;
   private readonly opts: Required<MockOptions>;
@@ -79,6 +80,10 @@ export class MockTranscriber implements Transcriber {
     this.eventCbs.push(cb);
   }
 
+  onRaw(cb: (m: RawMessage) => void): void {
+    this.rawCbs.push(cb);
+  }
+
   async close(): Promise<void> {
     this.timers.forEach(clearTimeout);
     this.timers = [];
@@ -109,6 +114,31 @@ export class MockTranscriber implements Transcriber {
   }
 
   private emitWords(w: Word[]) {
+    // A Deepgram-shaped Results message first, so the raw archive path runs in mock sessions too.
+    const data = JSON.stringify({
+      type: "Results",
+      channel_index: [w[0].channel, 2],
+      is_final: w[0].isFinal,
+      speech_final: w[0].isFinal,
+      start: w[0].startMs / 1000,
+      duration: (w[w.length - 1].endMs - w[0].startMs) / 1000,
+      channel: {
+        alternatives: [
+          {
+            transcript: w.map((x) => x.punctuatedWord).join(" "),
+            words: w.map((x) => ({
+              word: x.word,
+              punctuated_word: x.punctuatedWord,
+              start: x.startMs / 1000,
+              end: x.endMs / 1000,
+              confidence: x.confidence,
+            })),
+          },
+        ],
+      },
+    });
+    const receivedAtMs = Math.max(...w.map((x) => x.endMs));
+    for (const cb of this.rawCbs) cb({ connectionOffsetMs: 0, receivedAtMs, data });
     for (const cb of this.wordCbs) cb(w);
   }
 

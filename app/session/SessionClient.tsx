@@ -104,6 +104,7 @@ export function SessionClient() {
     if (!res) return;
     await putArtifact(res.record.id, "transcript-pass1", res.words);
     await putArtifact(res.record.id, "measurements-pass1", res.result.features);
+    await putArtifact(res.record.id, "pass1-raw", res.rawJsonl);
     if (capture.current) {
       await putArtifact(res.record.id, "energy", capture.current.energyTrack());
       await putArtifact(res.record.id, "capture-meta", { rawStartMs: capture.current.rawStartMs });

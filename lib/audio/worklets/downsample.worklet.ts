@@ -8,6 +8,12 @@ export interface PcmMessage {
   startFrame: number;
 }
 
+/** Sent after a "flush" request, once the partial raw chunk has gone out. */
+export interface FlushedMessage {
+  type: "flushed";
+  frames: number;
+}
+
 export interface DoneMessage {
   type: "done";
   frames: number;
@@ -46,6 +52,12 @@ class DownsampleProcessor extends AudioWorkletProcessor {
   constructor(options?: { processorOptions?: unknown }) {
     super(options);
     this.maxFrames = (options?.processorOptions as Options | undefined)?.maxFrames ?? Infinity;
+    // On "flush", send the partial raw chunk so the WAV keeps the last samples.
+    this.port.onmessage = (e: MessageEvent<{ type: string }>) => {
+      if (e.data?.type !== "flush") return;
+      if (this.raw[0].length > 0 && !this.done) this.flushRaw(this.raw[0].length);
+      this.port.postMessage({ type: "flushed", frames: this.rawSent } satisfies FlushedMessage);
+    };
   }
 
   process(inputs: Float32Array[][]): boolean {
