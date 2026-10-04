@@ -1,0 +1,14 @@
+# Plan documents and generated data keep their authored formatting.
+*.md
+features.json
+build-plan.json
+schemas/features.schema.json
+lib/registry/features.json
+lib/analysis/syllables.json
+fixtures/
+package-lock.json
+.next/
+coverage/
+research/
+public/
+next-env.d.ts

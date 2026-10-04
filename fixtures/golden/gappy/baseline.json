@@ -1,0 +1,17 @@
+{
+  "n": 8,
+  "components": {
+    "speech_rate_wpm": {
+      "mean": 70,
+      "sd": 15
+    },
+    "silent_pause_rate": {
+      "mean": 30,
+      "sd": 8
+    },
+    "mean_length_of_run": {
+      "mean": 5,
+      "sd": 1.5
+    }
+  }
+}

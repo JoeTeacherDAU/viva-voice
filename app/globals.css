@@ -1,0 +1,48 @@
+@import "tailwindcss";
+@import "material-symbols/outlined.css";
+@config "../tailwind.config.ts";
+
+/* Weevil Labs tokens, copied from DESIGN.md. Dark theme only. */
+:root {
+  --bg: #000000;
+  --surface-low: #0a0f0d;
+  --surface: #111a16;
+  --surface-high: #17241e;
+  --surface-highest: #1c2e26;
+  --surface-bright: #22382e;
+  --on-surface: #e8f0ec;
+  --on-surface-variant: #a5b8b0;
+  --outline: #6f8a7e;
+  --outline-variant: #3d5248;
+  --primary: #10b981;
+  --primary-dim: #0d9b6a;
+  --primary-container: #00cea6;
+  --secondary: #00cea6;
+  --tertiary: #00dcfd;
+  --success: #10b981;
+
+  /* Viva Voice additions for the exam-room display. */
+  --fault: #ef4444;
+  --warn: #f59e0b;
+  --hidden-slot: #1c2e26;
+
+  /* Student colours. A is always primary, B is always tertiary. */
+  --student-a: var(--primary);
+  --student-b: var(--tertiary);
+
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--on-surface);
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+}

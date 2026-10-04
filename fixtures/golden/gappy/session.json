@@ -1,0 +1,73 @@
+{
+  "id": "fixture-gappy",
+  "examId": "fixture-exam",
+  "state": "closing",
+  "participantIds": {
+    "A": "FIX-A",
+    "B": "FIX-B"
+  },
+  "channelMap": {
+    "0": "A",
+    "1": "B"
+  },
+  "config": {
+    "gainDb": 0,
+    "pauseThresholdsMs": [
+      200,
+      350
+    ],
+    "turnThresholdMs": 1500,
+    "gatingMarginDb": 6,
+    "speechFloorDbfs": -60,
+    "compositeWeights": {
+      "silent_pause_rate": 0.5,
+      "speech_rate_wpm": 0.25,
+      "mean_length_of_run": 0.25
+    },
+    "weightsVersion": "1.0",
+    "baselineMinSessions": 10,
+    "fillerTokens": [
+      "uh",
+      "um"
+    ],
+    "backchannelTokens": [
+      "mhmm",
+      "mm-mm",
+      "uh-huh",
+      "uh-uh",
+      "nuh-uh",
+      "yeah",
+      "right",
+      "okay",
+      "really"
+    ],
+    "targetPatterns": [
+      "you should"
+    ],
+    "keyterms": [],
+    "durationMs": 38000
+  },
+  "markers": {
+    "startMs": 1000,
+    "stopMs": 39000
+  },
+  "events": [
+    {
+      "type": "gap",
+      "atMs": 18960,
+      "detail": {
+        "startMs": 18960,
+        "endMs": 20960
+      }
+    }
+  ],
+  "instructorLiveScore": null,
+  "passes": {},
+  "pipelineVersion": "1.0.0",
+  "deepgramModel": "fixture",
+  "firmware": {
+    "tx": "synthetic",
+    "rx": "synthetic"
+  },
+  "createdAt": "2026-10-04T00:00:00.000Z"
+}

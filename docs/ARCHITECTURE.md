@@ -1,0 +1,29 @@
+# Architecture
+
+Viva Voice is one Next.js application on Vercel with one private Blob store. PLAN.md section 13 gives the summary; this file says where each piece lives in the repository.
+
+## Browser
+
+The browser captures two microphone channels, streams them to Deepgram, runs the pass-one pipeline for the live display, builds the WAV at Stop, and uploads the archive. Screens live under `app/`: `app/(auth)/login`, `app/setup`, `app/session`, `app/review/[id]`, and `app/import`. Shared components live in `lib/ui/` and follow DESIGN.md. The page `/dev/ui` renders each component once.
+
+## Server
+
+Route handlers under `app/api/` run as Vercel Functions: `login`, `asr/grant`, `upload`, `file`, `pass2`, and `export`. The file `proxy.ts` (the Next.js 16 name for middleware) checks the signed session cookie on every route except `/login` and `/api/login`. Each handler that touches data also calls `requireAuth` from `lib/auth/requireAuth.ts` as a second check.
+
+## Shared code
+
+`lib/analysis/` holds the measurement pipeline. It imports nothing from the browser, Node, or Next, so the browser runs it on pass one and the pass-two function runs the same code. `lib/analysis/types.ts` defines the word, config, and session types, which mirror `schemas/words.schema.json` and `schemas/session.schema.json`.
+
+`lib/registry/` loads `lib/registry/features.json`, checks it against `schemas/features.schema.json` when the module loads, and exports `get`, `byTier`, and `byConstruct`. From phase P1 on, `lib/registry/features.json` is the registry of record. The copy of features.json at the repository root stays as the plan document.
+
+`lib/asr/` defines the `Transcriber` interface. `createTranscriber()` returns the mock provider when `VIVA_MOCK_ASR=1`; the Deepgram provider arrives in phase P4.
+
+`lib/validation.ts` checks session records and word lists against their schemas.
+
+## Fixtures
+
+`scripts/make-fixtures.mjs` writes three synthetic sessions to `fixtures/golden/`: balanced, asymmetric, and gappy. Each holds a stereo WAV of sine bursts, the word list, energy frames, a session record, a baseline, and `expected.json` with every tier 1 value. The script computes those values from the authored conversation and never calls the pipeline. docs/OPERATIONAL_DEFINITIONS.md states the rules both sides follow. `scripts/check-fixtures.mjs` confirms each fixture is complete.
+
+## Research
+
+`research/` holds the Python layer for tier 2 and tier 3 features. It reads the archive and never deploys.

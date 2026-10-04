@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://viva.weevillabs.dev/schemas/session.schema.json",
+  "title": "Viva Voice session record",
+  "type": "object",
+  "required": [
+    "id",
+    "examId",
+    "participantIds",
+    "config",
+    "markers",
+    "events",
+    "instructorLiveScore",
+    "passes",
+    "pipelineVersion",
+    "deepgramModel",
+    "firmware",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_-]+$" },
+    "examId": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_-]+$" },
+    "state": { "enum": ["setup", "live", "closing", "done"] },
+    "participantIds": {
+      "type": "object",
+      "required": ["A", "B"],
+      "additionalProperties": false,
+      "properties": {
+        "A": { "type": "string", "minLength": 1 },
+        "B": { "type": "string", "minLength": 1 }
+      }
+    },
+    "channelMap": {
+      "description": "Which capture channel carries which student. Set on the setup screen.",
+      "type": "object",
+      "required": ["0", "1"],
+      "additionalProperties": false,
+      "properties": {
+        "0": { "enum": ["A", "B"] },
+        "1": { "enum": ["A", "B"] }
+      }
+    },
+    "config": { "$ref": "#/$defs/config" },
+    "markers": {
+      "type": "object",
+      "required": ["startMs", "stopMs"],
+      "additionalProperties": false,
+      "properties": {
+        "startMs": { "type": ["number", "null"], "minimum": 0 },
+        "stopMs": { "type": ["number", "null"], "minimum": 0 }
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "atMs"],
+        "additionalProperties": false,
+        "properties": {
+          "type": { "type": "string", "minLength": 1 },
+          "atMs": { "type": "number" },
+          "detail": {}
+        }
+      }
+    },
+    "instructorLiveScore": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["value", "atMs"],
+          "additionalProperties": false,
+          "properties": {
+            "value": { "type": "integer", "minimum": 1, "maximum": 5 },
+            "atMs": { "type": "number", "minimum": 0 }
+          }
+        }
+      ]
+    },
+    "passes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "1": { "$ref": "#/$defs/passRef" },
+        "2": { "$ref": "#/$defs/passRef" }
+      }
+    },
+    "pipelineVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "deepgramModel": { "type": "string" },
+    "firmware": {
+      "type": "object",
+      "required": ["tx", "rx"],
+      "additionalProperties": false,
+      "properties": {
+        "tx": { "type": "string" },
+        "rx": { "type": "string" }
+      }
+    },
+    "createdAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "passRef": {
+      "type": "object",
+      "required": ["transcript", "measurements"],
+      "additionalProperties": false,
+      "properties": {
+        "transcript": { "type": "string" },
+        "measurements": { "type": "string" },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "source": { "enum": ["usb", "onboard"] }
+      }
+    },
+    "config": {
+      "type": "object",
+      "required": [
+        "gainDb",
+        "pauseThresholdsMs",
+        "turnThresholdMs",
+        "gatingMarginDb",
+        "compositeWeights",
+        "weightsVersion",
+        "baselineMinSessions",
+        "fillerTokens",
+        "backchannelTokens",
+        "targetPatterns",
+        "keyterms",
+        "durationMs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "gainDb": { "type": "number", "minimum": -12, "maximum": 12 },
+        "pauseThresholdsMs": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 1 },
+          "minItems": 1
+        },
+        "turnThresholdMs": { "type": "integer", "minimum": 1 },
+        "gatingMarginDb": { "type": "number", "minimum": 0 },
+        "speechFloorDbfs": {
+          "description": "A frame counts as speech when either channel reaches this level. Default -60.",
+          "type": "number",
+          "maximum": 0
+        },
+        "compositeWeights": {
+          "type": "object",
+          "required": ["silent_pause_rate", "speech_rate_wpm", "mean_length_of_run"],
+          "additionalProperties": false,
+          "properties": {
+            "silent_pause_rate": { "type": "number", "minimum": 0 },
+            "speech_rate_wpm": { "type": "number", "minimum": 0 },
+            "mean_length_of_run": { "type": "number", "minimum": 0 }
+          }
+        },
+        "weightsVersion": { "type": "string" },
+        "baselineMinSessions": { "type": "integer", "minimum": 1 },
+        "fillerTokens": { "type": "array", "items": { "type": "string" } },
+        "backchannelTokens": { "type": "array", "items": { "type": "string" } },
+        "targetPatterns": { "type": "array", "items": { "type": "string" } },
+        "keyterms": { "type": "array", "items": { "type": "string" } },
+        "durationMs": { "type": "integer", "minimum": 1000 }
+      }
+    }
+  }
+}
