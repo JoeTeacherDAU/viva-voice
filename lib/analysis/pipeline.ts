@@ -4,7 +4,8 @@ import { rejectCrosstalk } from "./crosstalk";
 import { toTrack } from "./energy";
 import { featureFunctions } from "./features";
 import type { ChannelMap } from "./turns";
-import { gapsFrom, trimWords } from "./window";
+import { tokenOf } from "./tokens";
+import { gapsFrom, overlapsAny } from "./window";
 import type {
   Baseline,
   Config,
@@ -25,7 +26,7 @@ import type {
   Word,
 } from "./types";
 
-export const PIPELINE_VERSION = "1.0.0";
+export const PIPELINE_VERSION = "1.1.0";
 
 export const ROLLING_WINDOW_MS = 10000;
 export const ROLLING_FEATURES = [
@@ -46,14 +47,23 @@ export interface RunOptions {
   rolling?: boolean;
 }
 
+/** A within-turn pause at or above turnThresholdMs (work order 01, section 1). */
+export interface LongPause {
+  participant: Participant;
+  startMs: number;
+  endMs: number;
+  durationMs: number;
+}
+
 export interface RunResult {
   pipelineVersion: string;
   features: FeatureValue[];
   turns: Turn[];
   transitions: Transition[];
   removedSpans: RemovedSpan[];
-  /** The word list after windowing and cross-talk rejection, with flags set. */
+  /** Every input word, with its labels set. */
   words: Word[];
+  longPauses: LongPause[];
   quality: GatingResult & { gaps: Gap[]; removedWords: number };
 }
 
@@ -75,18 +85,35 @@ export function run(
   const gaps = opts.pass === 1 ? gapsFrom(opts.events, markers) : [];
   const energy = toTrack(frames);
 
+  // Every input word comes back out with labels; no step deletes one
+  // (RESEARCH_PRINCIPLES.md principles 1 and 2). src points back into `out`.
+  const fillerSet = new Set(config.fillerTokens.map(tokenOf));
+  const out: Word[] = words.map((w) => ({
+    ...w,
+    speakerLabel: channelMap[String(w.channel) as "0" | "1"],
+    removedAsCrosstalk: false,
+    inWindow: w.startMs >= markers.startMs && w.endMs <= markers.stopMs,
+    inGap: overlapsAny(gaps, w.startMs, w.endMs),
+    isFiller: fillerSet.has(tokenOf(w.word)),
+    isRepetition: false,
+    isBackchannel: false,
+  }));
   // Pass one measures final words only; interims drive the display elsewhere.
-  const eligible = words.filter((w) => opts.pass === 2 || w.isFinal);
-  const windowed = trimWords(eligible, markers, gaps);
-  const { words: flagged, removed } = rejectCrosstalk(windowed, energy, config.gatingMarginDb);
+  const eligible = out
+    .map((w, src) => ({ ...w, src }))
+    .filter((w) => (opts.pass === 2 || w.isFinal) && w.inWindow && !w.inGap);
+  const { words: flagged, removed } = rejectCrosstalk(eligible, energy, config.gatingMarginDb);
+  for (const w of flagged) out[w.src].removedAsCrosstalk = w.removedAsCrosstalk;
+  const attributedSrc: number[] = [];
   const attributed: IndexedWord[] = flagged
     .filter((w) => !w.removedAsCrosstalk)
     .sort((a, b) => a.startMs - b.startMs || a.channel - b.channel)
-    .map((w, index) => ({
-      ...w,
-      speakerLabel: channelMap[String(w.channel) as "0" | "1"],
-      index,
-    }));
+    .map((w, index) => {
+      attributedSrc[index] = w.src;
+      const { src: _src, ...rest } = w;
+      void _src;
+      return { ...rest, index };
+    });
 
   const base = {
     pass: opts.pass,
@@ -99,6 +126,18 @@ export function run(
   };
   const ctx = buildContext({ ...base, attributed, markers, gaps });
   const features = evaluate(ctx, "full");
+  for (const P of ["A", "B"] as Participant[]) {
+    for (const w of ctx.p[P].backchannels) out[attributedSrc[w.index]].isBackchannel = true;
+    for (const i of ctx.p[P].repeatedIndex) out[attributedSrc[i]].isRepetition = true;
+  }
+  const longPauses: LongPause[] = (["A", "B"] as Participant[]).flatMap((P) =>
+    ctx.pauses(P, config.turnThresholdMs).map((p) => ({
+      participant: P,
+      startMs: p.startMs,
+      endMs: p.endMs,
+      durationMs: p.durationMs,
+    })),
+  );
 
   if (opts.rolling !== false) {
     const span = markers.stopMs - markers.startMs;
@@ -127,7 +166,8 @@ export function run(
     turns: ctx.turns,
     transitions: ctx.transitions,
     removedSpans: removed,
-    words: flagged.map((w) => ({ ...w, speakerLabel: channelMap[String(w.channel) as "0" | "1"] })),
+    words: out.sort((a, b) => a.startMs - b.startMs || a.channel - b.channel),
+    longPauses,
     quality: {
       ...ctx.gating,
       gaps,

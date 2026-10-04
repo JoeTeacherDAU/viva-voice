@@ -19,7 +19,16 @@ export type Construct =
   | "nonverbal"
   | "perceived";
 
-export type FeatureInput = "words" | "energy" | "audio" | "alignment" | "roster" | "instructor";
+export type FeatureInput =
+  | "words"
+  | "energy"
+  | "audio"
+  | "alignment"
+  | "roster"
+  | "instructor"
+  | "rawAsr"
+  | "verbatim"
+  | "phones";
 
 export interface FeatureDef {
   id: string;

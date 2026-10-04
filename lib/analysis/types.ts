@@ -17,6 +17,15 @@ export interface Word {
   pass: PassNumber;
   removedAsCrosstalk: boolean;
   speakerLabel: Participant;
+  /**
+   * Labels the pipeline adds (work order 01, section 2). No step deletes a
+   * word; counts filter on these labels.
+   */
+  inWindow?: boolean;
+  isFiller?: boolean;
+  isRepetition?: boolean;
+  isBackchannel?: boolean;
+  inGap?: boolean;
 }
 
 export interface CompositeWeights {
@@ -81,7 +90,7 @@ export const DEFAULT_CONFIG: Config = {
   gatingMarginDb: 6,
   speechFloorDbfs: -60,
   compositeWeights: { silent_pause_rate: 0.5, speech_rate_wpm: 0.25, mean_length_of_run: 0.25 },
-  weightsVersion: "1.0",
+  weightsVersion: "1.1",
   baselineMinSessions: 10,
   fillerTokens: ["uh", "um"],
   backchannelTokens: [
@@ -196,6 +205,12 @@ export interface Baseline {
   n: number;
   /** Session ids already counted, so a rerun of pass two does not count twice. */
   sessions?: string[];
+  /**
+   * Composite weights version the components were measured under. Version 1.1
+   * stores the mid-clause pause rate in the silent_pause_rate slot; a baseline
+   * without this field dates from 1.0, when that slot held the total pause rate.
+   */
+  weightsVersion?: string;
   components: {
     speech_rate_wpm: BaselineComponent;
     silent_pause_rate: BaselineComponent;

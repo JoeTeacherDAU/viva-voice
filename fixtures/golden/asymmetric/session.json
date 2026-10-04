@@ -24,7 +24,7 @@
       "speech_rate_wpm": 0.25,
       "mean_length_of_run": 0.25
     },
-    "weightsVersion": "1.0",
+    "weightsVersion": "1.1",
     "baselineMinSessions": 10,
     "fillerTokens": [
       "uh",
@@ -46,11 +46,11 @@
       "would like to"
     ],
     "keyterms": [],
-    "durationMs": 46000
+    "durationMs": 48000
   },
   "markers": {
     "startMs": 1000,
-    "stopMs": 47000
+    "stopMs": 49000
   },
   "events": [],
   "instructorLiveScore": null,

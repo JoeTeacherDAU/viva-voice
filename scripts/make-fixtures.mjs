@@ -55,6 +55,7 @@ const SYL = {
   visit: 2, was: 1, water: 2, way: 1, we: 1, week: 1, weekend: 2, welcome: 2, well: 1,
   went: 1, were: 1, what: 1, when: 1, which: 1, who: 1, will: 1, windows: 2, with: 1,
   would: 1, yes: 1, you: 1, your: 1, mhmm: 1, yeah: 1, okay: 2, uh: 1, um: 1, want: 1,
+  "that's": 1, really: 2, right: 1, much: 1, noodles: 2,
 };
 
 const tok = (s) => s.toLowerCase().replace(/[^a-z0-9'-]/g, "");
@@ -73,7 +74,7 @@ const BASE_CONFIG = {
   gatingMarginDb: 6,
   speechFloorDbfs: -60,
   compositeWeights: { silent_pause_rate: 0.5, speech_rate_wpm: 0.25, mean_length_of_run: 0.25 },
-  weightsVersion: "1.0",
+  weightsVersion: "1.1",
   baselineMinSessions: 10,
   fillerTokens: ["uh", "um"],
   backchannelTokens: [
@@ -99,9 +100,10 @@ const FIXTURES = [
     durationMs: 60000,
     baseline: {
       n: 12,
+      weightsVersion: "1.1",
       components: {
         speech_rate_wpm: { mean: 70, sd: 15 },
-        silent_pause_rate: { mean: 30, sd: 8 },
+        silent_pause_rate: { mean: 8, sd: 4 },
         mean_length_of_run: { mean: 5, sd: 1.5 },
       },
     },
@@ -160,17 +162,22 @@ const FIXTURES = [
       { ch: 1, turn: 2, pause: 0, word: "mhmm" },
       { ch: 1, turn: 6, pause: 0, word: "yeah" },
     ],
-    crosstalk: [{ hearing: 1, turn: 4, phrase: "my friends", offsetMs: 40, confidence: 0.42 }],
+    crosstalk: [
+      { hearing: 1, turn: 4, phrase: "my friends", offsetMs: 40, confidence: 0.42 },
+      // Case 5: B's backchannel "yeah" also reaches A's microphone 40 ms later.
+      { hearing: 0, bc: 1, offsetMs: 40, confidence: 0.35 },
+    ],
     gaps: [],
   },
   {
     name: "asymmetric",
-    durationMs: 46000,
+    durationMs: 48000,
     baseline: {
       n: 12,
+      weightsVersion: "1.1",
       components: {
         speech_rate_wpm: { mean: 70, sd: 15 },
-        silent_pause_rate: { mean: 30, sd: 8 },
+        silent_pause_rate: { mean: 8, sd: 4 },
         mean_length_of_run: { mean: 5, sd: 1.5 },
       },
     },
@@ -180,7 +187,11 @@ const FIXTURES = [
         text: "Today we talk about hobbies. {p300} I play the guitar in a small band with my friends. {p420} We practice on Monday and Thursday nights, and we play songs from the nineties. {p260} I used to play the piano, but the guitar is more fun for me. {p520} What about you, do you have a hobby?",
       },
       { ch: 1, after: 900, text: "Um, I like reading." },
-      { ch: 0, after: 300, text: "Reading is great. {p380} What kind of books do you read?" },
+      {
+        ch: 0,
+        after: 300,
+        text: "Reading is {p480} great. {p480} What kind of books do you read?",
+      },
       { ch: 1, after: 1100, text: "Mostly comics." },
       {
         ch: 0,
@@ -191,7 +202,8 @@ const FIXTURES = [
       {
         ch: 0,
         after: 320,
-        text: "That is a good way to relax. {p400} I think we should talk about music now.",
+        // Cases 2 and 3: backchannel tokens inside a floor turn are ordinary words.
+        text: "Yeah, I think that's right. {p300} That is a really good way to relax. {p400} I think we should talk about music now.",
       },
       { ch: 1, after: 1200, text: "Okay." },
       {
@@ -207,13 +219,14 @@ const FIXTURES = [
   },
   {
     name: "gappy",
-    durationMs: 38000,
+    durationMs: 43000,
     config: { targetPatterns: ["you should"] },
     baseline: {
       n: 8,
+      weightsVersion: "1.1",
       components: {
         speech_rate_wpm: { mean: 70, sd: 15 },
-        silent_pause_rate: { mean: 30, sd: 8 },
+        silent_pause_rate: { mean: 8, sd: 4 },
         mean_length_of_run: { mean: 5, sd: 1.5 },
       },
     },
@@ -231,11 +244,18 @@ const FIXTURES = [
       },
       { ch: 1, after: 3000, text: "Not so far. {p540} You can go {p300} by train." },
       { ch: 1, after: 1700, text: "um {p400} You should visit in the spring." },
-      { ch: 0, after: 900, text: "Maybe I will. {p1200} Thank you for {p600} the idea." },
-      { ch: 1, after: 700, text: "You are welcome." },
+      { ch: 0, after: 900, text: "Maybe I will. {p2500} Thank you for {p600} the idea." },
+      {
+        ch: 1,
+        after: 700,
+        // Case 6: "uh" followed by 600 ms of silence, "um" followed by 1,200 ms.
+        text: "You are welcome. I like the food there uh {p600} very much. um {p1200} The noodles are good.",
+      },
       { ch: 0, after: 600, text: "uh {p300} I think {p320} the time is up." },
     ],
-    backchannels: [{ ch: 1, turn: 5, pause: 0, word: "mhmm" }],
+    // The backchannel sits in a 600 ms pause; a partner silence of 1,500 ms or
+    // more (like the 2,500 ms one) leaves the floor open and a token there answers.
+    backchannels: [{ ch: 1, turn: 5, pause: 1, word: "mhmm" }],
     crosstalk: [],
     // A socket gap inside the 3000 ms silence between turn 2 and turn 3.
     gaps: [{ afterTurn: 2, startOffsetMs: 500, endOffsetMs: 2500 }],
@@ -264,7 +284,34 @@ function assert(cond, msg) {
 
 const isFiller = (t) => BASE_CONFIG.fillerTokens.includes(t);
 
+// Lays out each authored segment, then merges consecutive same-channel
+// segments into one turn: a turn closes only when the partner speaks, so the
+// silence between such segments becomes a within-turn pause (work order 01).
 function layout(fx, startMs) {
+  const segments = layoutSegments(fx, startMs);
+  const turns = [];
+  for (const seg of segments) {
+    const cur = turns[turns.length - 1];
+    if (cur && cur.channel === seg.channel) {
+      const gap = seg.startMs - cur.endMs;
+      cur.pauses.push({
+        ms: gap,
+        startMs: cur.endMs,
+        endMs: seg.startMs,
+        afterIndex: cur.words.length - 1,
+      });
+      const offset = cur.words.length;
+      cur.pauses.push(...seg.pauses.map((p) => ({ ...p, afterIndex: p.afterIndex + offset })));
+      cur.words.push(...seg.words);
+      cur.endMs = seg.endMs;
+    } else {
+      turns.push({ ...seg, words: [...seg.words], pauses: [...seg.pauses] });
+    }
+  }
+  return { turns, segments };
+}
+
+function layoutSegments(fx, startMs) {
   const turns = [];
   let prevEnd = null;
   fx.turns.forEach((spec, ti) => {
@@ -320,11 +367,10 @@ function layout(fx, startMs) {
 // ---------------------------------------------------------------- oracle
 
 function prunedTokens(turn) {
-  // Remove fillers, marked repetitions, and backchannel tokens. The markers
-  // come from the authored text; no detection happens here.
-  return turn.words
-    .filter((w) => !isFiller(w.token) && !w.rep && !BASE_CONFIG.backchannelTokens.includes(w.token))
-    .map((w) => w.token);
+  // Remove fillers and marked repetitions. A backchannel-token word inside a
+  // turn is an ordinary word and stays (work order 01, section 2); authored
+  // backchannels never sit in turns. The markers come from the authored text.
+  return turn.words.filter((w) => !isFiller(w.token) && !w.rep).map((w) => w.token);
 }
 
 function repetitionCount(turn) {
@@ -513,6 +559,18 @@ function compute(fx, turns, bcs, crossCopies, config, markers, gaps) {
         }
         const runLens = runs.map((r) => prunedTokens({ words: r }).length).filter((n) => n > 0);
         push("mean_length_of_run", P, pass, T, mean(runLens));
+        // Raw twins and pauses by location (work order 01, sections 2 and 3).
+        push("articulation_rate_raw_wpm", P, pass, T, perMin(raw.length, phon(T)));
+        push("mean_length_of_run_raw", P, pass, T, mean(runs.map((r) => r.length)));
+        const mids = ps.filter((p) => !CLAUSE_FINAL.test(p.turn.words[p.afterIndex].text));
+        const ends = ps.filter((p) => CLAUSE_FINAL.test(p.turn.words[p.afterIndex].text));
+        push("silent_pause_mid_clause_rate", P, pass, T, perMin(mids.length, phon(T)));
+        push("silent_pause_end_clause_rate", P, pass, T, perMin(ends.length, phon(T)));
+        push("silent_pause_mid_clause_mean_ms", P, pass, T, mean(mids.map((p) => p.ms)));
+        push("silent_pause_end_clause_mean_ms", P, pass, T, mean(ends.map((p) => p.ms)));
+        // The synthetic audio is silent exactly in the authored gaps, so the
+        // acoustic pauses inside a turn are the authored pauses.
+        push("acoustic_pause_rate", P, pass, T, perMin(ps.length, effWindow));
       }
 
       const fillers = raw.filter((w) => isFiller(w.token)).length;
@@ -581,6 +639,60 @@ function compute(fx, turns, bcs, crossCopies, config, markers, gaps) {
         crossCopies.filter((c) => c.channel === ch).length,
       );
       push("mean_word_confidence", P, pass, null, mean(raw.map((w) => w.confidence)));
+
+      push(
+        "long_pause_count",
+        P,
+        pass,
+        null,
+        allPauses.filter((p) => p.ms >= config.turnThresholdMs).length,
+      );
+      push("uh_count", P, pass, null, raw.filter((w) => w.token === "uh").length);
+      push("um_count", P, pass, null, raw.filter((w) => w.token === "um").length);
+      // Fillers by location, and the silence that follows each one in its turn.
+      const fillerEvents = [];
+      for (const t of own) {
+        t.words.forEach((w, i) => {
+          if (!isFiller(w.token)) return;
+          const before = t.words.slice(0, i).filter((x) => !isFiller(x.token));
+          const prev = before[before.length - 1];
+          const next = t.words[i + 1];
+          fillerEvents.push({
+            end: !prev || CLAUSE_FINAL.test(prev.text),
+            after: next ? next.startMs - w.endMs : null,
+          });
+        });
+      }
+      push(
+        "filled_pause_mid_clause_count",
+        P,
+        pass,
+        null,
+        fillerEvents.filter((f) => !f.end).length,
+      );
+      push(
+        "filled_pause_end_clause_count",
+        P,
+        pass,
+        null,
+        fillerEvents.filter((f) => f.end).length,
+      );
+      push(
+        "silence_after_filler_mean_ms",
+        P,
+        pass,
+        null,
+        mean(fillerEvents.map((f) => f.after).filter((x) => x !== null)),
+      );
+      push("mattr_raw", P, pass, null, mattr(raw.map((w) => w.token)));
+      const lowest = Math.min(...config.pauseThresholdsMs);
+      push(
+        "asr_acoustic_pause_agreement",
+        P,
+        pass,
+        lowest,
+        allPauses.some((p) => p.ms >= lowest) ? 1 : null,
+      );
     }
   }
 
@@ -593,9 +705,13 @@ function compute(fx, turns, bcs, crossCopies, config, markers, gaps) {
     for (const P of ["A", "B"]) {
       const b = fx.baseline;
       let ci = null;
-      if (b.n >= config.baselineMinSessions) {
+      if (
+        b.n >= config.baselineMinSessions &&
+        (b.weightsVersion ?? "1.0") === config.weightsVersion
+      ) {
         const sr = find("speech_rate_wpm", P, pass);
-        const pr = find("silent_pause_rate", P, pass, 350);
+        // Weights version 1.1: the pause component is the mid-clause rate.
+        const pr = find("silent_pause_mid_clause_rate", P, pass, 350);
         const mlr = find("mean_length_of_run", P, pass, 350);
         if (sr !== null && pr !== null && mlr !== null) {
           const z = (x, c) => (x - b.components[c].mean) / b.components[c].sd;
@@ -622,7 +738,7 @@ function compute(fx, turns, bcs, crossCopies, config, markers, gaps) {
 // ---------------------------------------------------------------- checks
 
 // These checks guard the authoring. They never feed an expected value.
-function validate(fx, turns, bcs, crossCopies, markers, config) {
+function validate(fx, turns, bcs, crossCopies, markers) {
   const all = [...turns.flatMap((t) => t.words), ...bcs, ...crossCopies];
   for (const w of all) {
     assert(
@@ -643,24 +759,13 @@ function validate(fx, turns, bcs, crossCopies, markers, config) {
       );
     }
   }
-  for (const t of turns) {
-    for (const p of t.pauses)
-      assert(p.ms <= config.turnThresholdMs, `${fx.name}: pause ${p.ms} would end the turn`);
-    for (const w of t.words)
-      assert(
-        !config.backchannelTokens.includes(w.token) || t.words.length === 1,
-        `${fx.name}: backchannel token "${w.token}" inside a turn`,
-      );
-  }
+  // Pauses of any length stay inside a turn, and a backchannel-token word in a
+  // turn is an ordinary word, so neither needs an authoring guard (work order 01).
   for (let i = 1; i < turns.length; i++) {
     const a = turns[i - 1];
     const b = turns[i];
-    if (a.channel === b.channel)
-      assert(
-        b.after > config.turnThresholdMs,
-        `${fx.name}: same-channel turns ${i - 1} and ${i} would merge`,
-      );
-    else if (b.after < 0) {
+    assert(a.channel !== b.channel, `${fx.name}: layout left two same-channel turns adjacent`);
+    if (b.after < 0) {
       assert(
         b.startMs > a.words[a.words.length - 1].startMs,
         `${fx.name}: overlap at turn ${i} reorders words`,
@@ -775,15 +880,19 @@ function build(fx) {
   const startMs = 1000;
   const markers = { startMs, stopMs: startMs + fx.durationMs };
   const config = { ...BASE_CONFIG, ...(fx.config ?? {}), durationMs: fx.durationMs };
-  const turns = layout(fx, startMs);
+  const { turns, segments } = layout(fx, startMs);
 
   const bcs = fx.backchannels.map((b) => {
-    const p = turns[b.turn].pauses[b.pause];
+    const p = segments[b.turn].pauses[b.pause];
     const d = dur(b.word);
     const s = p.startMs + Math.round((p.ms - d) / 2 / FRAME_MS) * FRAME_MS;
     assert(
       s - p.startMs >= 60 && p.endMs - (s + d) >= 60,
       `${fx.name}: backchannel does not fit its pause`,
+    );
+    assert(
+      p.ms < BASE_CONFIG.turnThresholdMs,
+      `${fx.name}: a backchannel in a ${p.ms} ms pause would answer rather than backchannel`,
     );
     return {
       kind: "word",
@@ -798,7 +907,21 @@ function build(fx) {
   });
 
   const crossCopies = fx.crosstalk.flatMap((c) => {
-    const t = turns[c.turn];
+    if (c.bc !== undefined) {
+      // A single backchannel word that the other microphone also picked up.
+      const w = bcs[c.bc];
+      return [
+        {
+          ...w,
+          channel: c.hearing,
+          startMs: w.startMs + c.offsetMs,
+          endMs: w.endMs + c.offsetMs,
+          confidence: c.confidence,
+          crosstalk: true,
+        },
+      ];
+    }
+    const t = segments[c.turn];
     const phrase = c.phrase.split(/\s+/);
     const at = t.words.findIndex((_, i) => phrase.every((p, k) => t.words[i + k]?.text === p));
     assert(at >= 0, `${fx.name}: cross-talk phrase "${c.phrase}" not found`);
@@ -816,14 +939,14 @@ function build(fx) {
   });
 
   const gaps = fx.gaps.map((g) => ({
-    startMs: turns[g.afterTurn].endMs + g.startOffsetMs,
-    endMs: turns[g.afterTurn].endMs + g.endOffsetMs,
+    startMs: segments[g.afterTurn].endMs + g.startOffsetMs,
+    endMs: segments[g.afterTurn].endMs + g.endOffsetMs,
+    nextStart: segments[g.afterTurn + 1].startMs,
   }));
-  for (const g of gaps) {
-    assert(g.endMs < turns[fx.gaps[0].afterTurn + 1].startMs, `${fx.name}: gap overlaps speech`);
-  }
+  for (const g of gaps) assert(g.endMs < g.nextStart, `${fx.name}: gap overlaps speech`);
+  for (const g of gaps) delete g.nextStart;
 
-  validate(fx, turns, bcs, crossCopies, markers, config);
+  validate(fx, turns, bcs, crossCopies, markers);
 
   // Confidence by channel order of attributed words.
   const attributed = [...turns.flatMap((t) => t.words), ...bcs].sort(

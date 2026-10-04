@@ -17,13 +17,13 @@ const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
  * them removedAsCrosstalk (PLAN.md section 7). Returns new word objects and
  * the removed spans. docs/OPERATIONAL_DEFINITIONS.md states the rule.
  */
-export function rejectCrosstalk(
-  words: Word[],
+export function rejectCrosstalk<T extends Word>(
+  words: T[],
   energy: EnergyTrack | null,
   gatingMarginDb: number,
-): { words: Word[]; removed: RemovedSpan[] } {
+): { words: T[]; removed: RemovedSpan[] } {
   const out = words.map((w) => ({ ...w, removedAsCrosstalk: false }));
-  const ch: Word[][] = [0, 1].map((c) =>
+  const ch: T[][] = [0, 1].map((c) =>
     out.filter((w) => w.channel === c).sort((a, b) => a.startMs - b.startMs),
   );
   const [a, b] = ch;

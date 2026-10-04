@@ -17,8 +17,11 @@ export function compositeIndex(
   baseline: Baseline | null,
   weights: CompositeWeights,
   baselineMinSessions: number,
+  weightsVersion?: string,
 ): number | null {
   if (!baseline || baseline.n < baselineMinSessions) return null;
+  if (weightsVersion !== undefined && (baseline.weightsVersion ?? "1.0") !== weightsVersion)
+    return null;
   const keys = ["speech_rate_wpm", "silent_pause_rate", "mean_length_of_run"] as const;
   const z: Partial<Record<(typeof keys)[number], number>> = {};
   for (const k of keys) {
@@ -44,12 +47,21 @@ export function updateBaseline(
   baseline: Baseline | null,
   students: CompositeComponents[],
   sessionId?: string,
+  weightsVersion?: string,
 ): Baseline {
   if (sessionId && baseline?.sessions?.includes(sessionId)) return baseline;
+  // A baseline measured under other weights cannot absorb this session; start over.
+  if (
+    weightsVersion !== undefined &&
+    baseline &&
+    (baseline.weightsVersion ?? "1.0") !== weightsVersion
+  )
+    baseline = null;
   const keys = ["speech_rate_wpm", "silent_pause_rate", "mean_length_of_run"] as const;
   const next = {
     n: (baseline?.n ?? 0) + 1,
     sessions: sessionId ? [...(baseline?.sessions ?? []), sessionId] : baseline?.sessions,
+    ...(weightsVersion !== undefined ? { weightsVersion } : {}),
     components: {},
   } as Baseline;
   for (const k of keys) {

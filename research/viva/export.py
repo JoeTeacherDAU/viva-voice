@@ -15,15 +15,17 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import __version__, acoustics, align, asunit, disfluency, interaction, lexis, registry, syntax
+from . import __version__, acoustics, align, asunit, disfluency, interaction, lexis, phones, registry, syntax, verbatim
 from .archive import Archive, contexts
 from .base import Unavailable
 
-MODULES = [asunit, lexis, syntax, disfluency, interaction, align, acoustics]
+MODULES = [asunit, lexis, syntax, disfluency, interaction, verbatim, align, acoustics, phones]
 TIER4_SKIPS = {
     "gaze_and_gesture": "needs video, which this system does not record (decision 3)",
     "l1_utterance_fluency": "needs an L1 recording of the same speaker",
     "interactional_pattern_type": "needs human coding",
+    "listener_intelligibility": "needs a listener study",
+    "stimulated_recall_pause_function": "needs stimulated-recall interviews",
 }
 COLUMNS = ["examId", "sessionId", "participantId", "transcriptSource", "featureId", "tier", "threshold", "value", "unit", "toolVersion"]
 
@@ -56,7 +58,7 @@ def export(archive_dir: str | Path, exam_id: str, tiers: list[int], out_dir: str
     sessions = arc.sessions(exam_id)
     for rec in sessions:
         words, source = arc.transcript(rec["id"])
-        for ctx in contexts(rec, words):
+        for ctx in contexts(rec, words, arc):
             pid = rec["participantIds"][ctx.participant]
             for m in MODULES:
                 ids = [f for f in m.COMPUTES if feats[f]["tier"] in tiers]
@@ -109,6 +111,11 @@ def export(archive_dir: str | Path, exam_id: str, tiers: list[int], out_dir: str
             "contentWords": "function-word list (viva/lexis.py)",
             "modules": {m.__name__.split(".")[-1]: sorted([*m.COMPUTES, *m.SKIPS]) for m in MODULES},
         },
+        # Construct names from the literature live here, never in the CSV rows.
+        "featureMetadata": {
+            fid: {"construct": feats[fid]["construct"], "reference": feats[fid]["reference"], "unit": feats[fid]["unit"]}
+            for fid in sorted({r[4] for r in rows} | set(skipped))
+        },
         "unowned": sorted(fid for fid, f in feats.items() if f["tier"] in (2, 3) and fid not in owner),
     }
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
@@ -141,10 +148,18 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("--tiers", default="2", help="comma-separated, e.g. 2,3")
     e.add_argument("--archive", default="archive-sync", help="local copy of the Blob archive")
     e.add_argument("--out", default="research-export")
+    v = sub.add_parser("verbatim", help="run CrisperWhisper into the verbatim slots, when installed")
+    v.add_argument("--exam", required=True)
+    v.add_argument("--archive", default="archive-sync")
     f = sub.add_parser("fixture-archive", help="write a golden fixture in archive layout")
     f.add_argument("--fixture", default="balanced")
     f.add_argument("--out", default="archive-sync")
     a = ap.parse_args(argv)
+    if a.cmd == "verbatim":
+        for rec in Archive(a.archive).sessions(a.exam):
+            for p in verbatim.run(a.archive, rec):
+                print(p)
+        return 0
     if a.cmd == "fixture-archive":
         print(fixture_archive(a.fixture, a.out))
         return 0

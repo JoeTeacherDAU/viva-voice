@@ -6,21 +6,18 @@ export type ChannelMap = { "0": Participant; "1": Participant };
 
 const byStart = (a: IndexedWord, b: IndexedWord) => a.startMs - b.startMs || a.channel - b.channel;
 
-/** Builds turns from floor words of both channels. */
-export function buildTurns(
-  floor: IndexedWord[],
-  turnThresholdMs: number,
-  channelMap: ChannelMap,
-  gaps: Gap[] = [],
-): Turn[] {
+/**
+ * Builds turns from floor words of both channels. A turn closes only when a
+ * partner floor word starts after its last word, or when a transcriber gap
+ * (pass one) interrupts it. A same-channel silence of any length stays inside
+ * the turn as a pause (RESEARCH_PRINCIPLES.md principle 1; work order 01).
+ */
+export function buildTurns(floor: IndexedWord[], channelMap: ChannelMap, gaps: Gap[] = []): Turn[] {
   const turns: Turn[] = [];
   let cur: Turn | null = null;
   for (const w of [...floor].sort(byStart)) {
     const continues =
-      cur !== null &&
-      w.channel === cur.channel &&
-      w.startMs - cur.endMs <= turnThresholdMs &&
-      !overlapsAny(gaps, cur.endMs, w.startMs);
+      cur !== null && w.channel === cur.channel && !overlapsAny(gaps, cur.endMs, w.startMs);
     if (cur && continues) {
       cur.words.push(w);
       cur.endMs = Math.max(cur.endMs, w.endMs);
@@ -80,21 +77,34 @@ export interface TurnAnalysis {
 export function analyseTurns(
   attributed: IndexedWord[],
   backchannelTokens: Set<string>,
-  turnThresholdMs: number,
   channelMap: ChannelMap,
   gaps: Gap[] = [],
+  floorLapseMs = 1500,
 ): TurnAnalysis {
   const groups = candidateGroups(attributed, backchannelTokens);
   const candidateIdx = new Set(groups.flat().map((w) => w.index));
   const firstFloor = attributed.filter((w) => !candidateIdx.has(w.index));
-  const firstTurns = buildTurns(firstFloor, turnThresholdMs, channelMap, gaps);
+  const firstTurns = buildTurns(firstFloor, channelMap, gaps);
 
-  const inPartnerTurn = (g: IndexedWord[]) =>
-    firstTurns.some(
-      (t) =>
-        t.channel !== g[0].channel && t.startMs <= g[0].startMs && g[g.length - 1].endMs <= t.endMs,
+  // A candidate is a backchannel while the partner holds the floor: it sits
+  // inside a partner turn and either overlaps the partner's speech or falls in
+  // a partner silence shorter than floorLapseMs (turnThresholdMs). A partner
+  // silence that long leaves the floor open, so a token there answers: it
+  // becomes a one-word floor turn (docs/OPERATIONAL_DEFINITIONS.md).
+  const holdsFloor = (g: IndexedWord[]) => {
+    const start = g[0].startMs;
+    const end = g[g.length - 1].endMs;
+    const turn = firstTurns.find(
+      (t) => t.channel !== g[0].channel && t.startMs <= start && end <= t.endMs,
     );
-  const backchannels = groups.filter(inPartnerTurn).flat();
+    if (!turn) return false;
+    const before = turn.words.filter((w) => w.startMs <= start);
+    const prev = before[before.length - 1];
+    const next = turn.words.find((w) => w.startMs >= end);
+    if (!prev || prev.endMs > start || !next) return true;
+    return next.startMs - prev.endMs < floorLapseMs;
+  };
+  const backchannels = groups.filter(holdsFloor).flat();
   const bcIdx = new Set(backchannels.map((w) => w.index));
 
   const turns =
@@ -102,7 +112,6 @@ export function analyseTurns(
       ? firstTurns
       : buildTurns(
           attributed.filter((w) => !bcIdx.has(w.index)),
-          turnThresholdMs,
           channelMap,
           gaps,
         );

@@ -1,3 +1,4 @@
+import { pauseAgreement } from "../acoustic";
 import { defineFeature, mean, perMinute } from "./define";
 
 // The gating ratio describes the session, so both students receive it.
@@ -36,6 +37,17 @@ defineFeature("pass_agreement_speech_rate", (ctx, P) => {
     {
       thresholdMs: null,
       value: p1 === null || p1 === undefined || p2 === null ? null : Math.abs(p1 - p2),
+    },
+  ];
+});
+
+// Word-gap pauses at the lowest configured threshold, checked against acoustic silence.
+defineFeature("asr_acoustic_pause_agreement", (ctx, P) => {
+  const t = Math.min(...ctx.config.pauseThresholdsMs);
+  return [
+    {
+      thresholdMs: t,
+      value: pauseAgreement(ctx.pauses(P, t), ctx.silences(P), ctx.energy !== null),
     },
   ];
 });

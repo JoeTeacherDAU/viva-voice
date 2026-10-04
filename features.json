@@ -1,12 +1,12 @@
 {
   "$schema": "./schemas/features.schema.json",
-  "registryVersion": "1.0.0",
-  "generated": "2026-10-04",
+  "registryVersion": "1.1.0",
+  "generated": "2026-10-05",
   "tiers": {
     "1": "Ships in the TypeScript app. Computed in pass one and pass two. Appears in the student DOCX and the cohort CSV.",
     "2": "Python research layer. Computed from the archived transcript JSON. Appears in the research export only.",
     "3": "Python research layer. Needs the archived 48 kHz audio, forced alignment, or an acoustic toolkit. Appears in the research export only.",
-    "4": "Recorded for completeness. Needs data this system does not capture (video, eye tracking, L1 recordings) or human coding. Listed so the archive keeps what a later study would need."
+    "4": "Needs people: annotation of a validation subset, stimulated recall, listener studies, or an extra task such as an L1 recording. Listed so the archive keeps what those studies need."
   },
   "inputs": {
     "words": "Word-level transcript with start, end, confidence, punctuated_word, channel, isFinal, pass.",
@@ -14,99 +14,1927 @@
     "audio": "Archived 48 kHz 16-bit stereo WAV.",
     "alignment": "Phone- and syllable-level timings from a forced aligner run on the archive.",
     "roster": "Pseudonymous participant IDs, consent status, course and unit metadata.",
-    "instructor": "Instructor live score and later rubric scores, stored apart from student outputs."
+    "instructor": "Instructor live score and later rubric scores, stored apart from student outputs.",
+    "rawAsr": "Every Deepgram message, interim and final, both passes, stored verbatim.",
+    "verbatim": "CrisperWhisper verbatim transcript per channel with word timestamps (research layer).",
+    "phones": "Free phone recognition per channel (wav2vec2 eSpeak phone model) aligned to dictionary forms."
   },
   "features": [
-    {"id": "speech_rate_wpm", "tier": 1, "construct": "speed", "unit": "pruned words per minute of window time", "inputs": ["words"], "formula": "prunedWordCount / (windowMs / 60000)", "params": {}, "reference": "Kormos & Dénes 2004; Suzuki et al. 2021", "caveats": ["counts words; tier 3 gives syllables"]},
-    {"id": "speech_rate_raw_wpm", "tier": 1, "construct": "speed", "unit": "raw words per minute of window time", "inputs": ["words"], "formula": "rawWordCount / (windowMs / 60000)", "params": {}, "reference": "Kormos & Dénes 2004", "caveats": []},
-    {"id": "articulation_rate_wpm", "tier": 1, "construct": "speed", "unit": "pruned words per minute of phonation time", "inputs": ["words"], "formula": "prunedWordCount / (phonationMs / 60000)", "params": {"pauseThresholdMs": [200, 350]}, "reference": "Préfontaine et al. 2016", "caveats": ["counts words; tier 3 gives syllables"]},
-    {"id": "articulation_rate_sps_est", "tier": 1, "construct": "speed", "unit": "estimated syllables per second of phonation time", "inputs": ["words"], "formula": "sum(dictSyllables(word)) / (phonationMs / 1000)", "params": {"dictionary": "cmudict", "fallback": "orthographic vowel-group count"}, "reference": "Préfontaine et al. 2016", "caveats": ["pass two only", "dictionary estimate; tier 3 replaces with aligned syllables"]},
-    {"id": "phonation_time_ratio", "tier": 1, "construct": "speed", "unit": "ratio", "inputs": ["words"], "formula": "phonationMs / windowMs", "params": {"pauseThresholdMs": [200, 350]}, "reference": "Kormos & Dénes 2004", "caveats": []},
-    {"id": "silent_pause_rate", "tier": 1, "construct": "breakdown", "unit": "pauses per minute of phonation time", "inputs": ["words"], "formula": "pauseCount(threshold) / (phonationMs / 60000)", "params": {"pauseThresholdMs": [200, 350]}, "reference": "Gao, Sun & Li 2025; Gao & Sun 2025", "caveats": ["within-turn gaps only"]},
-    {"id": "silent_pause_mean_ms", "tier": 1, "construct": "breakdown", "unit": "ms", "inputs": ["words"], "formula": "mean(pauseDurations(threshold))", "params": {"pauseThresholdMs": [200, 350]}, "reference": "Suzuki et al. 2021", "caveats": []},
-    {"id": "silent_pause_max_ms", "tier": 1, "construct": "breakdown", "unit": "ms", "inputs": ["words"], "formula": "max(pauseDurations(threshold))", "params": {"pauseThresholdMs": [200, 350]}, "reference": "Suzuki et al. 2021", "caveats": []},
-    {"id": "silent_pause_mid_clause_count", "tier": 1, "construct": "breakdown", "unit": "count", "inputs": ["words"], "formula": "count(pauses where previous punctuated_word has no clause-final punctuation)", "params": {"pauseThresholdMs": [200, 350], "boundaryMethod": "punctuation"}, "reference": "Gao, Sun & Li 2025; Matsuura et al. 2022", "caveats": ["punctuation boundary is a proxy for AS-unit boundary"]},
-    {"id": "silent_pause_end_clause_count", "tier": 1, "construct": "breakdown", "unit": "count", "inputs": ["words"], "formula": "count(pauses where previous punctuated_word ends with . ? ! , ;)", "params": {"pauseThresholdMs": [200, 350], "boundaryMethod": "punctuation"}, "reference": "Gao, Sun & Li 2025", "caveats": ["punctuation boundary is a proxy for AS-unit boundary"]},
-    {"id": "mean_length_of_run", "tier": 1, "construct": "breakdown", "unit": "pruned words between pauses", "inputs": ["words"], "formula": "mean(prunedWordsPerRun(threshold))", "params": {"pauseThresholdMs": [200, 350]}, "reference": "Kormos & Dénes 2004; Préfontaine et al. 2016", "caveats": []},
-    {"id": "filled_pause_count", "tier": 1, "construct": "repair", "unit": "count", "inputs": ["words"], "formula": "count(word in fillerTokens)", "params": {"fillerTokens": ["uh", "um"], "deepgramFlag": "filler_words=true"}, "reference": "Suzuki et al. 2021", "caveats": ["Deepgram transcribes uh and um only; add Korean fillers to fillerTokens if they appear as words"]},
-    {"id": "filled_pause_rate", "tier": 1, "construct": "repair", "unit": "per minute of phonation time", "inputs": ["words"], "formula": "filled_pause_count / (phonationMs / 60000)", "params": {}, "reference": "Gao & Sun 2025", "caveats": []},
-    {"id": "repetition_count", "tier": 1, "construct": "repair", "unit": "count", "inputs": ["words"], "formula": "count(word[i] == word[i-1]) + count(bigram[i] == bigram[i-1])", "params": {}, "reference": "Suzuki et al. 2021", "caveats": ["final words only"]},
-    {"id": "false_start_count", "tier": 1, "construct": "repair", "unit": "count", "inputs": ["words"], "formula": "count(1-3 word fragment followed by restart sharing no token, before a boundary)", "params": {"maxFragmentWords": 3}, "reference": "Gao & Sun 2025", "caveats": ["pass two only", "heuristic; tier 2 adds a parsed version"]},
-    {"id": "turn_count", "tier": 1, "construct": "interaction", "unit": "count", "inputs": ["words"], "formula": "count(turns on this channel)", "params": {"turnThresholdMs": 1500}, "reference": "Galaczi 2014; Gao & Sun 2025", "caveats": ["participation measure; stays out of the index"]},
-    {"id": "mean_turn_length_words", "tier": 1, "construct": "interaction", "unit": "pruned words", "inputs": ["words"], "formula": "mean(prunedWordsPerTurn)", "params": {}, "reference": "Galaczi 2014", "caveats": []},
-    {"id": "talk_time_share", "tier": 1, "construct": "interaction", "unit": "ratio", "inputs": ["words", "energy"], "formula": "thisPhonationMs / (thisPhonationMs + partnerPhonationMs)", "params": {}, "reference": "Ortaçtepe Hart 2020", "caveats": ["pair-level; depends on cross-talk rejection"]},
-    {"id": "response_latency_mean_ms", "tier": 1, "construct": "interaction", "unit": "ms", "inputs": ["words"], "formula": "mean(thisFirstWordStart - partnerLastWordEnd) over transitions", "params": {}, "reference": "Eskin 2026", "caveats": ["negative values are overlaps; reported separately"]},
-    {"id": "response_latency_median_ms", "tier": 1, "construct": "interaction", "unit": "ms", "inputs": ["words"], "formula": "median(...)", "params": {}, "reference": "Eskin 2026", "caveats": []},
-    {"id": "overlap_count", "tier": 1, "construct": "interaction", "unit": "count", "inputs": ["words"], "formula": "count(intervals where both channels carry attributed words)", "params": {}, "reference": "Galaczi 2014", "caveats": []},
-    {"id": "overlap_duration_ms", "tier": 1, "construct": "interaction", "unit": "ms", "inputs": ["words"], "formula": "sum(overlapIntervals)", "params": {}, "reference": "Galaczi 2014", "caveats": []},
-    {"id": "backchannel_count", "tier": 1, "construct": "interaction", "unit": "count", "inputs": ["words"], "formula": "count(token in backchannelTokens inside partner's turn)", "params": {"backchannelTokens": ["mhmm", "mm-mm", "uh-huh", "uh-uh", "nuh-uh", "yeah", "right", "okay", "really"]}, "reference": "Galaczi 2014; Borger 2019", "caveats": ["interactive listening proxy"]},
-    {"id": "question_count", "tier": 1, "construct": "interaction", "unit": "count", "inputs": ["words"], "formula": "count(turns whose last punctuated_word ends with ?)", "params": {}, "reference": "Galaczi 2014", "caveats": ["punctuation proxy"]},
-    {"id": "mattr", "tier": 1, "construct": "lexical", "unit": "ratio", "inputs": ["words"], "formula": "mean(types/tokens over sliding window of 50 tokens)", "params": {"window": 50}, "reference": "Kyle et al. 2023", "caveats": ["needs 50 or more pruned tokens; else null"]},
-    {"id": "mtld", "tier": 1, "construct": "lexical", "unit": "factor length", "inputs": ["words"], "formula": "MTLD at TTR threshold 0.72, forward and backward mean", "params": {"ttrThreshold": 0.72}, "reference": "Kyle et al. 2023", "caveats": []},
-    {"id": "target_structure_hits", "tier": 1, "construct": "lexical", "unit": "count and spans", "inputs": ["words"], "formula": "matches of targetPatterns (word-boundary anchored) over final words", "params": {"targetPatterns": "per unit"}, "reference": "course design", "caveats": ["live counter uses finals only"]},
-    {"id": "composite_fluency_index", "tier": 1, "construct": "composite", "unit": "z-score mean", "inputs": ["words"], "formula": "0.5*(-z(silent_pause_rate@350)) + 0.25*z(speech_rate_wpm) + 0.25*z(mean_length_of_run@350)", "params": {"baselineMinSessions": 10, "weightsVersion": "1.0"}, "reference": "Suzuki et al. 2021; Gao & Sun 2025", "caveats": ["null below baselineMinSessions", "hidden on display until instructor tap"]},
-    {"id": "unattributed_frame_ratio", "tier": 1, "construct": "quality", "unit": "ratio", "inputs": ["energy"], "formula": "unattributedFrames / totalFramesWithSpeech", "params": {}, "reference": "system", "caveats": ["capture quality flag"]},
-    {"id": "crosstalk_removed_words", "tier": 1, "construct": "quality", "unit": "count", "inputs": ["words"], "formula": "count(words removed as cross-talk from this channel)", "params": {}, "reference": "system", "caveats": []},
-    {"id": "mean_word_confidence", "tier": 1, "construct": "quality", "unit": "0-1", "inputs": ["words"], "formula": "mean(confidence) over final words", "params": {}, "reference": "Yu 2026", "caveats": ["pass two includes per-word confidence"]},
-    {"id": "pass_agreement_speech_rate", "tier": 1, "construct": "quality", "unit": "absolute difference", "inputs": ["words"], "formula": "abs(speech_rate_wpm.pass1 - speech_rate_wpm.pass2)", "params": {}, "reference": "system", "caveats": []},
-
-    {"id": "bigram_proportion", "tier": 2, "construct": "lexical", "unit": "ratio", "inputs": ["words"], "formula": "share of adjacent word pairs found in a reference bigram list", "params": {"referenceCorpus": "COCA spoken, or BNC spoken"}, "reference": "Takizawa et al. 2025", "caveats": ["needs a licensed or open reference list"]},
-    {"id": "trigram_mutual_information", "tier": 2, "construct": "lexical", "unit": "mean MI", "inputs": ["words"], "formula": "mean association strength of trigrams against a reference corpus", "params": {}, "reference": "Takizawa et al. 2025", "caveats": []},
-    {"id": "word_frequency_mean_log", "tier": 2, "construct": "lexical", "unit": "log frequency", "inputs": ["words"], "formula": "mean log frequency of content words", "params": {"tool": "TAALES or equivalent"}, "reference": "Kyle & Crossley 2015", "caveats": []},
-    {"id": "academic_word_ratio", "tier": 2, "construct": "lexical", "unit": "ratio", "inputs": ["words"], "formula": "AWL tokens / pruned tokens", "params": {}, "reference": "Kyle & Crossley 2015", "caveats": []},
-    {"id": "content_word_ratio", "tier": 2, "construct": "lexical", "unit": "ratio", "inputs": ["words"], "formula": "content tokens / pruned tokens", "params": {"tagger": "spaCy en_core_web_trf"}, "reference": "Kyle & Crossley 2015", "caveats": []},
-    {"id": "mean_length_as_unit", "tier": 2, "construct": "syntax", "unit": "words", "inputs": ["words"], "formula": "pruned words / AS-units", "params": {"segmenter": "rule-based AS-unit over dependency parse"}, "reference": "Kim et al. 2024", "caveats": ["AS-unit segmentation of ASR output needs validation"]},
-    {"id": "mean_length_clause", "tier": 2, "construct": "syntax", "unit": "words", "inputs": ["words"], "formula": "pruned words / clauses", "params": {}, "reference": "Kim et al. 2024; Lu 2017", "caveats": []},
-    {"id": "clauses_per_as_unit", "tier": 2, "construct": "syntax", "unit": "ratio", "inputs": ["words"], "formula": "clauses / AS-units", "params": {}, "reference": "Kim et al. 2024", "caveats": []},
-    {"id": "dependent_clauses_per_clause", "tier": 2, "construct": "syntax", "unit": "ratio", "inputs": ["words"], "formula": "dependent clauses / clauses", "params": {}, "reference": "Kim et al. 2024", "caveats": []},
-    {"id": "complex_nominals_per_clause", "tier": 2, "construct": "syntax", "unit": "ratio", "inputs": ["words"], "formula": "complex nominals / clauses", "params": {}, "reference": "Kim et al. 2024; Lu 2017", "caveats": []},
-    {"id": "coordinate_phrases_per_clause", "tier": 2, "construct": "syntax", "unit": "ratio", "inputs": ["words"], "formula": "coordinate phrases / clauses", "params": {}, "reference": "Lu 2017", "caveats": []},
-    {"id": "verb_phrases_per_as_unit", "tier": 2, "construct": "syntax", "unit": "ratio", "inputs": ["words"], "formula": "verb phrases / AS-units", "params": {}, "reference": "Lu 2017", "caveats": []},
-    {"id": "mean_dependency_distance", "tier": 2, "construct": "syntax", "unit": "tokens", "inputs": ["words"], "formula": "mean |head index - dependent index| over tokens", "params": {}, "reference": "general dependency-complexity practice", "caveats": ["no L2 speech citation verified in this session"]},
-    {"id": "kolmogorov_complexity_syntax", "tier": 2, "construct": "syntax", "unit": "compression ratio", "inputs": ["words"], "formula": "compressed size of POS sequence / compressed size of shuffled POS sequence", "params": {}, "reference": "Alzahrani 2024", "caveats": ["language-general, no parser needed"]},
-    {"id": "kolmogorov_complexity_morphology", "tier": 2, "construct": "morphology", "unit": "compression ratio", "inputs": ["words"], "formula": "compressed size of token stream / compressed size of lemma stream", "params": {}, "reference": "Alzahrani 2024", "caveats": []},
-    {"id": "inflectional_morpheme_rate", "tier": 2, "construct": "morphology", "unit": "per 100 words", "inputs": ["words"], "formula": "count(-s, -ed, -ing, -er, -est, 's) / pruned words * 100", "params": {"tagger": "spaCy morphology"}, "reference": "general L2 morphology practice", "caveats": ["no L2 speech citation verified in this session"]},
-    {"id": "third_person_s_supplied_ratio", "tier": 2, "construct": "morphology", "unit": "ratio", "inputs": ["words"], "formula": "supplied / obligatory contexts, from parse", "params": {}, "reference": "suppliance-in-obligatory-contexts tradition", "caveats": ["obligatory-context detection from ASR text is error-prone"]},
-    {"id": "past_tense_supplied_ratio", "tier": 2, "construct": "morphology", "unit": "ratio", "inputs": ["words"], "formula": "supplied / obligatory contexts, from parse and temporal adverbs", "params": {}, "reference": "suppliance-in-obligatory-contexts tradition", "caveats": ["heuristic"]},
-    {"id": "article_omission_rate", "tier": 2, "construct": "morphology", "unit": "per noun phrase", "inputs": ["words"], "formula": "singular count nouns with no determiner / singular count noun phrases", "params": {}, "reference": "Korean L1 interference literature, unverified here", "caveats": ["heuristic"]},
-    {"id": "silent_pause_mid_as_unit_count", "tier": 2, "construct": "breakdown", "unit": "count", "inputs": ["words"], "formula": "pauses inside an AS-unit", "params": {"boundaryMethod": "as-unit"}, "reference": "Gao, Sun & Li 2025", "caveats": ["replaces the punctuation proxy"]},
-    {"id": "silent_pause_end_as_unit_count", "tier": 2, "construct": "breakdown", "unit": "count", "inputs": ["words"], "formula": "pauses at an AS-unit boundary", "params": {"boundaryMethod": "as-unit"}, "reference": "Gao, Sun & Li 2025", "caveats": []},
-    {"id": "false_start_count_parsed", "tier": 2, "construct": "repair", "unit": "count", "inputs": ["words"], "formula": "abandoned constituents from a disfluency-aware parse", "params": {}, "reference": "Matsuura et al. 2022", "caveats": []},
-    {"id": "self_repair_count", "tier": 2, "construct": "repair", "unit": "count", "inputs": ["words"], "formula": "reparandum-editing-repair patterns (same-turn correction)", "params": {}, "reference": "Matsuura et al. 2022", "caveats": ["heuristic"]},
-    {"id": "topic_initiation_count", "tier": 2, "construct": "interaction", "unit": "count", "inputs": ["words"], "formula": "turns that introduce a new noun-phrase topic absent from the previous five turns", "params": {}, "reference": "Galaczi 2014; Borger 2019", "caveats": ["lexical proxy for topic development; human coding is the standard"]},
-    {"id": "follow_up_question_count", "tier": 2, "construct": "interaction", "unit": "count", "inputs": ["words"], "formula": "questions whose content words overlap the partner's previous turn", "params": {}, "reference": "Study 2 Plan A", "caveats": ["shares a definition with Joe's Study 2"]},
-    {"id": "new_topic_question_count", "tier": 2, "construct": "interaction", "unit": "count", "inputs": ["words"], "formula": "questions with no content-word overlap with the partner's previous turn", "params": {}, "reference": "Study 2 Plan A", "caveats": []},
-    {"id": "partner_answer_length_after_question", "tier": 2, "construct": "interaction", "unit": "pruned words", "inputs": ["words"], "formula": "length of the partner's turn following each question, by question type", "params": {}, "reference": "Study 2 Plan A", "caveats": ["pair-level"]},
-    {"id": "discourse_marker_rate", "tier": 2, "construct": "pragmatics", "unit": "per 100 words", "inputs": ["words"], "formula": "count(discourseMarkers) / pruned words * 100", "params": {"discourseMarkers": ["so", "well", "actually", "I mean", "you know", "like", "anyway"]}, "reference": "general discourse-marker practice", "caveats": ["no L2 speech citation verified in this session"]},
-    {"id": "hedge_rate", "tier": 2, "construct": "pragmatics", "unit": "per 100 words", "inputs": ["words"], "formula": "count(hedges) / pruned words * 100", "params": {"hedges": ["maybe", "I think", "kind of", "sort of", "probably", "a little"]}, "reference": "general pragmatics practice", "caveats": []},
-    {"id": "agreement_token_rate", "tier": 2, "construct": "pragmatics", "unit": "per turn", "inputs": ["words"], "formula": "count(agreement tokens at turn start) / turns", "params": {}, "reference": "Galaczi 2014", "caveats": []},
-    {"id": "korean_token_count", "tier": 2, "construct": "code-switching", "unit": "count", "inputs": ["words"], "formula": "words Deepgram returns outside the English lexicon that match a Korean romanisation list, or words from a Korean-language second pass", "params": {}, "reference": "none verified", "caveats": ["Deepgram English model will mis-transcribe Korean; a Korean batch pass on flagged spans is the honest method"]},
-    {"id": "word_error_rate_vs_human", "tier": 2, "construct": "quality", "unit": "ratio", "inputs": ["words"], "formula": "WER against a hand-corrected transcript for a validation subset", "params": {}, "reference": "Yu 2026; Qiao et al. 2021", "caveats": ["needs human transcription of a sample"]},
-
-    {"id": "articulation_rate_syllables_aligned", "tier": 3, "construct": "speed", "unit": "syllables per second of phonation time", "inputs": ["audio", "alignment"], "formula": "aligned syllable count / phonation seconds", "params": {"aligner": "Montreal Forced Aligner or WhisperX"}, "reference": "Kallio et al. 2023", "caveats": ["replaces the dictionary estimate"]},
-    {"id": "syllable_duration_sd_normalised", "tier": 3, "construct": "rhythm", "unit": "ratio", "inputs": ["alignment"], "formula": "sd(syllable durations) / mean(syllable durations)", "params": {}, "reference": "Kallio et al. 2023", "caveats": []},
-    {"id": "npvi_vocalic", "tier": 3, "construct": "rhythm", "unit": "index", "inputs": ["alignment"], "formula": "normalised pairwise variability index over vocalic intervals", "params": {}, "reference": "Zhou et al. 2018; Fraser et al. 2026", "caveats": []},
-    {"id": "percent_v", "tier": 3, "construct": "rhythm", "unit": "percent", "inputs": ["alignment"], "formula": "vocalic interval duration / total speech duration", "params": {}, "reference": "Fraser et al. 2026", "caveats": []},
-    {"id": "varco_v", "tier": 3, "construct": "rhythm", "unit": "index", "inputs": ["alignment"], "formula": "100 * sd(vocalic intervals) / mean(vocalic intervals)", "params": {}, "reference": "Fraser et al. 2026", "caveats": []},
-    {"id": "vowel_reduction_ratio", "tier": 3, "construct": "rhythm", "unit": "ratio", "inputs": ["alignment", "audio"], "formula": "duration of unstressed vowels / duration of stressed vowels", "params": {}, "reference": "Fraser et al. 2026", "caveats": ["Fraser found this the strongest rhythm predictor"]},
-    {"id": "f0_range_semitones", "tier": 3, "construct": "prosody", "unit": "semitones", "inputs": ["audio"], "formula": "12*log2(f0_p95 / f0_p05) per speaker", "params": {"tool": "Praat via parselmouth"}, "reference": "Kang 2010", "caveats": ["pitch survives AGC; use per-speaker channel"]},
-    {"id": "f0_sd_semitones", "tier": 3, "construct": "prosody", "unit": "semitones", "inputs": ["audio"], "formula": "sd of f0 in semitones", "params": {}, "reference": "Zhou et al. 2018; Saito et al. 2022", "caveats": []},
-    {"id": "f0_slope_per_utterance", "tier": 3, "construct": "prosody", "unit": "semitones per second", "inputs": ["audio", "words"], "formula": "linear fit of f0 over each AS-unit", "params": {}, "reference": "Kallio et al. 2023", "caveats": []},
-    {"id": "intensity_variation_db", "tier": 3, "construct": "prosody", "unit": "dB", "inputs": ["audio"], "formula": "sd of intensity in voiced frames", "params": {}, "reference": "Saito et al. 2022", "caveats": ["transmitter AGC distorts this; prefer onboard 32-bit recording if V2b shows it bypasses AGC"]},
-    {"id": "stressed_words_per_minute", "tier": 3, "construct": "prosody", "unit": "per minute", "inputs": ["audio", "alignment"], "formula": "count of syllables above pitch and intensity prominence thresholds / minutes", "params": {}, "reference": "Kormos & Dénes 2004; Kang 2010", "caveats": ["prominence detection needs validation"]},
-    {"id": "egemaps_feature_set", "tier": 3, "construct": "prosody", "unit": "88 features", "inputs": ["audio"], "formula": "openSMILE eGeMAPS v02 per speaker", "params": {"tool": "openSMILE"}, "reference": "Dong et al. 2024; Dong et al. 2025", "caveats": ["loudness features inherit the AGC caveat"]},
-    {"id": "vowel_space_area", "tier": 3, "construct": "segmental", "unit": "Hz^2 or Bark^2", "inputs": ["audio", "alignment"], "formula": "area of the F1-F2 polygon over corner vowels", "params": {}, "reference": "Mairano et al. 2019", "caveats": []},
-    {"id": "vowel_pair_pillai_score", "tier": 3, "construct": "segmental", "unit": "0-1", "inputs": ["audio", "alignment"], "formula": "Pillai score separating F1-F2 distributions of a vowel pair (e.g. /i/-/ɪ/)", "params": {"pairs": ["i-ɪ", "ɛ-æ", "u-ʊ"]}, "reference": "Mairano et al. 2019", "caveats": ["intrinsic contrast measure; no native reference needed"]},
-    {"id": "vot_voiceless_stops_ms", "tier": 3, "construct": "segmental", "unit": "ms", "inputs": ["audio", "alignment"], "formula": "voice onset time for /p t k/ in stressed onsets", "params": {}, "reference": "Mairano et al. 2019", "caveats": ["Korean has a three-way stop contrast; VOT patterns are a known L1 transfer site"]},
-    {"id": "f1_derivative_sd", "tier": 3, "construct": "segmental", "unit": "Hz per second", "inputs": ["audio"], "formula": "sd of the first derivative of the F1 track", "params": {}, "reference": "Fontan et al. 2018", "caveats": ["coarticulation fluidity proxy"]},
-    {"id": "gop_phone_scores", "tier": 3, "construct": "segmental", "unit": "log posterior", "inputs": ["audio", "alignment"], "formula": "goodness-of-pronunciation per phone from an acoustic model", "params": {"tool": "Kaldi GOP or wav2vec2-based scorer"}, "reference": "Saito et al. 2022; Dong et al. 2025", "caveats": ["heaviest tooling in the inventory"]},
-    {"id": "voice_quality_hnr_jitter_shimmer", "tier": 3, "construct": "voice", "unit": "dB, percent", "inputs": ["audio"], "formula": "Praat HNR, jitter, shimmer on sustained voiced frames", "params": {}, "reference": "none verified for L2 assessment", "caveats": ["unrelated to fluency; useful for speaker-state or clinical questions"]},
-    {"id": "speaking_f0_mean", "tier": 3, "construct": "voice", "unit": "Hz", "inputs": ["audio"], "formula": "mean f0", "params": {}, "reference": "none needed", "caveats": ["speaker characteristic; covariate"]},
-    {"id": "pause_acoustic_vs_asr_agreement", "tier": 3, "construct": "quality", "unit": "ratio", "inputs": ["audio", "words"], "formula": "overlap between energy-detected silences and ASR-timestamp gaps", "params": {}, "reference": "system", "caveats": ["validates the word-timestamp pause method"]},
-
-    {"id": "gaze_and_gesture", "tier": 4, "construct": "nonverbal", "unit": "coded events", "inputs": [], "formula": "human coding from video", "params": {}, "reference": "Vo 2024; Eskin 2026", "caveats": ["no video in this system by decision 3"]},
-    {"id": "l1_utterance_fluency", "tier": 4, "construct": "speed", "unit": "same as tier 1", "inputs": [], "formula": "tier 1 measures on a Korean L1 recording of the same speaker", "params": {}, "reference": "Suzuki et al. 2024", "caveats": ["needs an L1 task; the archive format already supports it"]},
-    {"id": "rater_perceived_fluency", "tier": 4, "construct": "perceived", "unit": "scale", "inputs": ["instructor"], "formula": "Joe's live score and any later rater panel", "params": {}, "reference": "Suzuki et al. 2021", "caveats": ["stored apart from student outputs; RULING NEEDED B1"]},
-    {"id": "interactional_pattern_type", "tier": 4, "construct": "interaction", "unit": "category", "inputs": ["words"], "formula": "human coding: collaborative, parallel, asymmetric, blended", "params": {}, "reference": "Ortaçtepe Hart 2020", "caveats": ["talk_time_share and latency give a quantitative hint"]}
+    {
+      "id": "speech_rate_wpm",
+      "tier": 1,
+      "construct": "speed",
+      "unit": "pruned words per minute of window time",
+      "inputs": [
+        "words"
+      ],
+      "formula": "prunedWordCount / (windowMs / 60000)",
+      "params": {},
+      "reference": "Kormos & Dénes 2004; Suzuki et al. 2021",
+      "caveats": [
+        "counts words; tier 3 gives syllables",
+        "pruned view; a raw twin reports the same measure with every word kept"
+      ]
+    },
+    {
+      "id": "speech_rate_raw_wpm",
+      "tier": 1,
+      "construct": "speed",
+      "unit": "raw words per minute of window time",
+      "inputs": [
+        "words"
+      ],
+      "formula": "rawWordCount / (windowMs / 60000)",
+      "params": {},
+      "reference": "Kormos & Dénes 2004",
+      "caveats": []
+    },
+    {
+      "id": "articulation_rate_wpm",
+      "tier": 1,
+      "construct": "speed",
+      "unit": "pruned words per minute of phonation time",
+      "inputs": [
+        "words"
+      ],
+      "formula": "prunedWordCount / (phonationMs / 60000)",
+      "params": {
+        "pauseThresholdMs": [
+          200,
+          350
+        ]
+      },
+      "reference": "Préfontaine et al. 2016",
+      "caveats": [
+        "counts words; tier 3 gives syllables",
+        "pruned view; a raw twin reports the same measure with every word kept"
+      ]
+    },
+    {
+      "id": "articulation_rate_sps_est",
+      "tier": 1,
+      "construct": "speed",
+      "unit": "estimated syllables per second of phonation time",
+      "inputs": [
+        "words"
+      ],
+      "formula": "sum(dictSyllables(word)) / (phonationMs / 1000)",
+      "params": {
+        "dictionary": "cmudict",
+        "fallback": "orthographic vowel-group count"
+      },
+      "reference": "Préfontaine et al. 2016",
+      "caveats": [
+        "pass two only",
+        "dictionary estimate; tier 3 replaces with aligned syllables"
+      ]
+    },
+    {
+      "id": "phonation_time_ratio",
+      "tier": 1,
+      "construct": "speed",
+      "unit": "ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "phonationMs / windowMs",
+      "params": {
+        "pauseThresholdMs": [
+          200,
+          350
+        ]
+      },
+      "reference": "Kormos & Dénes 2004",
+      "caveats": []
+    },
+    {
+      "id": "silent_pause_rate",
+      "tier": 1,
+      "construct": "breakdown",
+      "unit": "pauses per minute of phonation time",
+      "inputs": [
+        "words"
+      ],
+      "formula": "pauseCount(threshold) / (phonationMs / 60000)",
+      "params": {
+        "pauseThresholdMs": [
+          200,
+          350
+        ]
+      },
+      "reference": "Gao, Sun & Li 2025; Gao & Sun 2025",
+      "caveats": [
+        "within-turn gaps only"
+      ]
+    },
+    {
+      "id": "silent_pause_mean_ms",
+      "tier": 1,
+      "construct": "breakdown",
+      "unit": "ms",
+      "inputs": [
+        "words"
+      ],
+      "formula": "mean(pauseDurations(threshold))",
+      "params": {
+        "pauseThresholdMs": [
+          200,
+          350
+        ]
+      },
+      "reference": "Suzuki et al. 2021",
+      "caveats": []
+    },
+    {
+      "id": "silent_pause_max_ms",
+      "tier": 1,
+      "construct": "breakdown",
+      "unit": "ms",
+      "inputs": [
+        "words"
+      ],
+      "formula": "max(pauseDurations(threshold))",
+      "params": {
+        "pauseThresholdMs": [
+          200,
+          350
+        ]
+      },
+      "reference": "Suzuki et al. 2021",
+      "caveats": []
+    },
+    {
+      "id": "silent_pause_mid_clause_count",
+      "tier": 1,
+      "construct": "breakdown",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(pauses where previous punctuated_word has no clause-final punctuation)",
+      "params": {
+        "pauseThresholdMs": [
+          200,
+          350
+        ],
+        "boundaryMethod": "punctuation"
+      },
+      "reference": "Gao, Sun & Li 2025; Matsuura et al. 2022",
+      "caveats": [
+        "punctuation boundary is a proxy for AS-unit boundary"
+      ]
+    },
+    {
+      "id": "silent_pause_end_clause_count",
+      "tier": 1,
+      "construct": "breakdown",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(pauses where previous punctuated_word ends with . ? ! , ;)",
+      "params": {
+        "pauseThresholdMs": [
+          200,
+          350
+        ],
+        "boundaryMethod": "punctuation"
+      },
+      "reference": "Gao, Sun & Li 2025",
+      "caveats": [
+        "punctuation boundary is a proxy for AS-unit boundary"
+      ]
+    },
+    {
+      "id": "mean_length_of_run",
+      "tier": 1,
+      "construct": "breakdown",
+      "unit": "pruned words between pauses",
+      "inputs": [
+        "words"
+      ],
+      "formula": "mean(prunedWordsPerRun(threshold))",
+      "params": {
+        "pauseThresholdMs": [
+          200,
+          350
+        ]
+      },
+      "reference": "Kormos & Dénes 2004; Préfontaine et al. 2016",
+      "caveats": [
+        "pruned view; a raw twin reports the same measure with every word kept"
+      ]
+    },
+    {
+      "id": "filled_pause_count",
+      "tier": 1,
+      "construct": "repair",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(word in fillerTokens)",
+      "params": {
+        "fillerTokens": [
+          "uh",
+          "um"
+        ],
+        "deepgramFlag": "filler_words=true"
+      },
+      "reference": "Suzuki et al. 2021",
+      "caveats": [
+        "Deepgram transcribes uh and um only; add Korean fillers to fillerTokens if they appear as words"
+      ]
+    },
+    {
+      "id": "filled_pause_rate",
+      "tier": 1,
+      "construct": "repair",
+      "unit": "per minute of phonation time",
+      "inputs": [
+        "words"
+      ],
+      "formula": "filled_pause_count / (phonationMs / 60000)",
+      "params": {},
+      "reference": "Gao & Sun 2025",
+      "caveats": []
+    },
+    {
+      "id": "repetition_count",
+      "tier": 1,
+      "construct": "repair",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(word[i] == word[i-1]) + count(bigram[i] == bigram[i-1])",
+      "params": {},
+      "reference": "Suzuki et al. 2021",
+      "caveats": [
+        "final words only"
+      ]
+    },
+    {
+      "id": "false_start_count",
+      "tier": 1,
+      "construct": "repair",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(1-3 word fragment followed by restart sharing no token, before a boundary)",
+      "params": {
+        "maxFragmentWords": 3
+      },
+      "reference": "Gao & Sun 2025",
+      "caveats": [
+        "pass two only",
+        "heuristic; tier 2 adds a parsed version"
+      ]
+    },
+    {
+      "id": "turn_count",
+      "tier": 1,
+      "construct": "interaction",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(turns on this channel)",
+      "params": {
+        "turnThresholdMs": 1500
+      },
+      "reference": "Galaczi 2014; Gao & Sun 2025",
+      "caveats": [
+        "participation measure; stays out of the index"
+      ]
+    },
+    {
+      "id": "mean_turn_length_words",
+      "tier": 1,
+      "construct": "interaction",
+      "unit": "pruned words",
+      "inputs": [
+        "words"
+      ],
+      "formula": "mean(prunedWordsPerTurn)",
+      "params": {},
+      "reference": "Galaczi 2014",
+      "caveats": []
+    },
+    {
+      "id": "talk_time_share",
+      "tier": 1,
+      "construct": "interaction",
+      "unit": "ratio",
+      "inputs": [
+        "words",
+        "energy"
+      ],
+      "formula": "thisPhonationMs / (thisPhonationMs + partnerPhonationMs)",
+      "params": {},
+      "reference": "Ortaçtepe Hart 2020",
+      "caveats": [
+        "pair-level; depends on cross-talk rejection"
+      ]
+    },
+    {
+      "id": "response_latency_mean_ms",
+      "tier": 1,
+      "construct": "interaction",
+      "unit": "ms",
+      "inputs": [
+        "words"
+      ],
+      "formula": "mean(thisFirstWordStart - partnerLastWordEnd) over transitions",
+      "params": {},
+      "reference": "Eskin 2026",
+      "caveats": [
+        "negative values are overlaps; reported separately"
+      ]
+    },
+    {
+      "id": "response_latency_median_ms",
+      "tier": 1,
+      "construct": "interaction",
+      "unit": "ms",
+      "inputs": [
+        "words"
+      ],
+      "formula": "median(...)",
+      "params": {},
+      "reference": "Eskin 2026",
+      "caveats": []
+    },
+    {
+      "id": "overlap_count",
+      "tier": 1,
+      "construct": "interaction",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(intervals where both channels carry attributed words)",
+      "params": {},
+      "reference": "Galaczi 2014",
+      "caveats": []
+    },
+    {
+      "id": "overlap_duration_ms",
+      "tier": 1,
+      "construct": "interaction",
+      "unit": "ms",
+      "inputs": [
+        "words"
+      ],
+      "formula": "sum(overlapIntervals)",
+      "params": {},
+      "reference": "Galaczi 2014",
+      "caveats": []
+    },
+    {
+      "id": "backchannel_count",
+      "tier": 1,
+      "construct": "interaction",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(token in backchannelTokens inside partner's turn)",
+      "params": {
+        "backchannelTokens": [
+          "mhmm",
+          "mm-mm",
+          "uh-huh",
+          "uh-uh",
+          "nuh-uh",
+          "yeah",
+          "right",
+          "okay",
+          "really"
+        ]
+      },
+      "reference": "Galaczi 2014; Borger 2019",
+      "caveats": [
+        "interactive listening proxy",
+        "a token counts as a backchannel only inside a partner turn; elsewhere it is an ordinary word"
+      ]
+    },
+    {
+      "id": "question_count",
+      "tier": 1,
+      "construct": "interaction",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(turns whose last punctuated_word ends with ?)",
+      "params": {},
+      "reference": "Galaczi 2014",
+      "caveats": [
+        "punctuation proxy"
+      ]
+    },
+    {
+      "id": "mattr",
+      "tier": 1,
+      "construct": "lexical",
+      "unit": "ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "mean(types/tokens over sliding window of 50 tokens)",
+      "params": {
+        "window": 50
+      },
+      "reference": "Kyle et al. 2023",
+      "caveats": [
+        "needs 50 or more pruned tokens; else null",
+        "pruned view; a raw twin reports the same measure with every word kept"
+      ]
+    },
+    {
+      "id": "mtld",
+      "tier": 1,
+      "construct": "lexical",
+      "unit": "factor length",
+      "inputs": [
+        "words"
+      ],
+      "formula": "MTLD at TTR threshold 0.72, forward and backward mean",
+      "params": {
+        "ttrThreshold": 0.72
+      },
+      "reference": "Kyle et al. 2023",
+      "caveats": []
+    },
+    {
+      "id": "target_structure_hits",
+      "tier": 1,
+      "construct": "lexical",
+      "unit": "count and spans",
+      "inputs": [
+        "words"
+      ],
+      "formula": "matches of targetPatterns (word-boundary anchored) over final words",
+      "params": {
+        "targetPatterns": "per unit"
+      },
+      "reference": "course design",
+      "caveats": [
+        "live counter uses finals only"
+      ]
+    },
+    {
+      "id": "composite_fluency_index",
+      "tier": 1,
+      "construct": "composite",
+      "unit": "z-score mean",
+      "inputs": [
+        "words"
+      ],
+      "formula": "0.5*(-z(silent_pause_mid_clause_rate@350)) + 0.25*z(speech_rate_wpm) + 0.25*z(mean_length_of_run@350)",
+      "params": {
+        "baselineMinSessions": 10,
+        "weightsVersion": "1.1"
+      },
+      "reference": "Suzuki et al. 2021; Gao & Sun 2025; Kahng 2014; de Jong 2016",
+      "caveats": [
+        "null below baselineMinSessions",
+        "hidden on display until instructor tap",
+        "uses mid-clause pauses only; end-clause pauses look alike in L1 and L2 speech (Kahng 2014; de Jong 2016)",
+        "student document label: speed and pausing index, relative to this class"
+      ]
+    },
+    {
+      "id": "unattributed_frame_ratio",
+      "tier": 1,
+      "construct": "quality",
+      "unit": "ratio",
+      "inputs": [
+        "energy"
+      ],
+      "formula": "unattributedFrames / totalFramesWithSpeech",
+      "params": {},
+      "reference": "system",
+      "caveats": [
+        "capture quality flag"
+      ]
+    },
+    {
+      "id": "crosstalk_removed_words",
+      "tier": 1,
+      "construct": "quality",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(words removed as cross-talk from this channel)",
+      "params": {},
+      "reference": "system",
+      "caveats": []
+    },
+    {
+      "id": "mean_word_confidence",
+      "tier": 1,
+      "construct": "quality",
+      "unit": "0-1",
+      "inputs": [
+        "words"
+      ],
+      "formula": "mean(confidence) over final words",
+      "params": {},
+      "reference": "Yu 2026",
+      "caveats": [
+        "pass two includes per-word confidence"
+      ]
+    },
+    {
+      "id": "pass_agreement_speech_rate",
+      "tier": 1,
+      "construct": "quality",
+      "unit": "absolute difference",
+      "inputs": [
+        "words"
+      ],
+      "formula": "abs(speech_rate_wpm.pass1 - speech_rate_wpm.pass2)",
+      "params": {},
+      "reference": "system",
+      "caveats": []
+    },
+    {
+      "id": "bigram_proportion",
+      "tier": 2,
+      "construct": "lexical",
+      "unit": "ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "share of adjacent word pairs found in a reference bigram list",
+      "params": {
+        "referenceCorpus": "COCA spoken, or BNC spoken"
+      },
+      "reference": "Takizawa et al. 2025",
+      "caveats": [
+        "needs a licensed or open reference list"
+      ]
+    },
+    {
+      "id": "trigram_mutual_information",
+      "tier": 2,
+      "construct": "lexical",
+      "unit": "mean MI",
+      "inputs": [
+        "words"
+      ],
+      "formula": "mean association strength of trigrams against a reference corpus",
+      "params": {},
+      "reference": "Takizawa et al. 2025",
+      "caveats": []
+    },
+    {
+      "id": "word_frequency_mean_log",
+      "tier": 2,
+      "construct": "lexical",
+      "unit": "log frequency",
+      "inputs": [
+        "words"
+      ],
+      "formula": "mean log frequency of content words",
+      "params": {
+        "tool": "TAALES or equivalent"
+      },
+      "reference": "Kyle & Crossley 2015",
+      "caveats": []
+    },
+    {
+      "id": "academic_word_ratio",
+      "tier": 2,
+      "construct": "lexical",
+      "unit": "ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "AWL tokens / pruned tokens",
+      "params": {},
+      "reference": "Kyle & Crossley 2015",
+      "caveats": []
+    },
+    {
+      "id": "content_word_ratio",
+      "tier": 2,
+      "construct": "lexical",
+      "unit": "ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "content tokens / pruned tokens",
+      "params": {
+        "tagger": "spaCy en_core_web_trf"
+      },
+      "reference": "Kyle & Crossley 2015",
+      "caveats": []
+    },
+    {
+      "id": "mean_length_as_unit",
+      "tier": 2,
+      "construct": "syntax",
+      "unit": "words",
+      "inputs": [
+        "words"
+      ],
+      "formula": "pruned words / AS-units",
+      "params": {
+        "segmenter": "rule-based AS-unit over dependency parse"
+      },
+      "reference": "Kim et al. 2024",
+      "caveats": [
+        "AS-unit segmentation of ASR output needs validation"
+      ]
+    },
+    {
+      "id": "mean_length_clause",
+      "tier": 2,
+      "construct": "syntax",
+      "unit": "words",
+      "inputs": [
+        "words"
+      ],
+      "formula": "pruned words / clauses",
+      "params": {},
+      "reference": "Kim et al. 2024; Lu 2017",
+      "caveats": []
+    },
+    {
+      "id": "clauses_per_as_unit",
+      "tier": 2,
+      "construct": "syntax",
+      "unit": "ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "clauses / AS-units",
+      "params": {},
+      "reference": "Kim et al. 2024",
+      "caveats": []
+    },
+    {
+      "id": "dependent_clauses_per_clause",
+      "tier": 2,
+      "construct": "syntax",
+      "unit": "ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "dependent clauses / clauses",
+      "params": {},
+      "reference": "Kim et al. 2024",
+      "caveats": []
+    },
+    {
+      "id": "complex_nominals_per_clause",
+      "tier": 2,
+      "construct": "syntax",
+      "unit": "ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "complex nominals / clauses",
+      "params": {},
+      "reference": "Kim et al. 2024; Lu 2017",
+      "caveats": []
+    },
+    {
+      "id": "coordinate_phrases_per_clause",
+      "tier": 2,
+      "construct": "syntax",
+      "unit": "ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "coordinate phrases / clauses",
+      "params": {},
+      "reference": "Lu 2017",
+      "caveats": []
+    },
+    {
+      "id": "verb_phrases_per_as_unit",
+      "tier": 2,
+      "construct": "syntax",
+      "unit": "ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "verb phrases / AS-units",
+      "params": {},
+      "reference": "Lu 2017",
+      "caveats": []
+    },
+    {
+      "id": "mean_dependency_distance",
+      "tier": 2,
+      "construct": "syntax",
+      "unit": "tokens",
+      "inputs": [
+        "words"
+      ],
+      "formula": "mean |head index - dependent index| over tokens",
+      "params": {},
+      "reference": "general dependency-complexity practice",
+      "caveats": [
+        "no L2 speech citation verified in this session"
+      ]
+    },
+    {
+      "id": "kolmogorov_complexity_syntax",
+      "tier": 2,
+      "construct": "syntax",
+      "unit": "compression ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "compressed size of POS sequence / compressed size of shuffled POS sequence",
+      "params": {},
+      "reference": "Alzahrani 2024",
+      "caveats": [
+        "language-general, no parser needed"
+      ]
+    },
+    {
+      "id": "kolmogorov_complexity_morphology",
+      "tier": 2,
+      "construct": "morphology",
+      "unit": "compression ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "compressed size of token stream / compressed size of lemma stream",
+      "params": {},
+      "reference": "Alzahrani 2024",
+      "caveats": []
+    },
+    {
+      "id": "inflectional_morpheme_rate",
+      "tier": 2,
+      "construct": "morphology",
+      "unit": "per 100 words",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(-s, -ed, -ing, -er, -est, 's) / pruned words * 100",
+      "params": {
+        "tagger": "spaCy morphology"
+      },
+      "reference": "general L2 morphology practice",
+      "caveats": [
+        "no L2 speech citation verified in this session"
+      ]
+    },
+    {
+      "id": "third_person_s_supplied_ratio",
+      "tier": 2,
+      "construct": "morphology",
+      "unit": "ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "supplied / obligatory contexts, from parse",
+      "params": {},
+      "reference": "suppliance-in-obligatory-contexts tradition",
+      "caveats": [
+        "obligatory-context detection from ASR text is error-prone"
+      ]
+    },
+    {
+      "id": "past_tense_supplied_ratio",
+      "tier": 2,
+      "construct": "morphology",
+      "unit": "ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "supplied / obligatory contexts, from parse and temporal adverbs",
+      "params": {},
+      "reference": "suppliance-in-obligatory-contexts tradition",
+      "caveats": [
+        "heuristic"
+      ]
+    },
+    {
+      "id": "article_omission_rate",
+      "tier": 2,
+      "construct": "morphology",
+      "unit": "per noun phrase",
+      "inputs": [
+        "words"
+      ],
+      "formula": "singular count nouns with no determiner / singular count noun phrases",
+      "params": {},
+      "reference": "Korean L1 interference literature, unverified here",
+      "caveats": [
+        "heuristic"
+      ]
+    },
+    {
+      "id": "silent_pause_mid_as_unit_count",
+      "tier": 2,
+      "construct": "breakdown",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "pauses inside an AS-unit",
+      "params": {
+        "boundaryMethod": "as-unit"
+      },
+      "reference": "Gao, Sun & Li 2025",
+      "caveats": [
+        "replaces the punctuation proxy"
+      ]
+    },
+    {
+      "id": "silent_pause_end_as_unit_count",
+      "tier": 2,
+      "construct": "breakdown",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "pauses at an AS-unit boundary",
+      "params": {
+        "boundaryMethod": "as-unit"
+      },
+      "reference": "Gao, Sun & Li 2025",
+      "caveats": []
+    },
+    {
+      "id": "false_start_count_parsed",
+      "tier": 2,
+      "construct": "repair",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "abandoned constituents from a disfluency-aware parse",
+      "params": {},
+      "reference": "Matsuura et al. 2022",
+      "caveats": []
+    },
+    {
+      "id": "self_repair_count",
+      "tier": 2,
+      "construct": "repair",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "reparandum-editing-repair patterns (same-turn correction)",
+      "params": {},
+      "reference": "Matsuura et al. 2022",
+      "caveats": [
+        "heuristic"
+      ]
+    },
+    {
+      "id": "topic_initiation_count",
+      "tier": 2,
+      "construct": "interaction",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "turns that introduce a new noun-phrase topic absent from the previous five turns",
+      "params": {},
+      "reference": "Galaczi 2014; Borger 2019",
+      "caveats": [
+        "lexical proxy for topic development; human coding is the standard"
+      ]
+    },
+    {
+      "id": "follow_up_question_count",
+      "tier": 2,
+      "construct": "interaction",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "questions whose content words overlap the partner's previous turn",
+      "params": {},
+      "reference": "Study 2 Plan A",
+      "caveats": [
+        "shares a definition with Joe's Study 2"
+      ]
+    },
+    {
+      "id": "new_topic_question_count",
+      "tier": 2,
+      "construct": "interaction",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "questions with no content-word overlap with the partner's previous turn",
+      "params": {},
+      "reference": "Study 2 Plan A",
+      "caveats": []
+    },
+    {
+      "id": "partner_answer_length_after_question",
+      "tier": 2,
+      "construct": "interaction",
+      "unit": "pruned words",
+      "inputs": [
+        "words"
+      ],
+      "formula": "length of the partner's turn following each question, by question type",
+      "params": {},
+      "reference": "Study 2 Plan A",
+      "caveats": [
+        "pair-level"
+      ]
+    },
+    {
+      "id": "discourse_marker_rate",
+      "tier": 2,
+      "construct": "pragmatics",
+      "unit": "per 100 words",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(discourseMarkers) / pruned words * 100",
+      "params": {
+        "discourseMarkers": [
+          "so",
+          "well",
+          "actually",
+          "I mean",
+          "you know",
+          "like",
+          "anyway"
+        ]
+      },
+      "reference": "general discourse-marker practice",
+      "caveats": [
+        "no L2 speech citation verified in this session"
+      ]
+    },
+    {
+      "id": "hedge_rate",
+      "tier": 2,
+      "construct": "pragmatics",
+      "unit": "per 100 words",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(hedges) / pruned words * 100",
+      "params": {
+        "hedges": [
+          "maybe",
+          "I think",
+          "kind of",
+          "sort of",
+          "probably",
+          "a little"
+        ]
+      },
+      "reference": "general pragmatics practice",
+      "caveats": []
+    },
+    {
+      "id": "agreement_token_rate",
+      "tier": 2,
+      "construct": "pragmatics",
+      "unit": "per turn",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(agreement tokens at turn start) / turns",
+      "params": {},
+      "reference": "Galaczi 2014",
+      "caveats": []
+    },
+    {
+      "id": "korean_token_count",
+      "tier": 2,
+      "construct": "code-switching",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "words Deepgram returns outside the English lexicon that match a Korean romanisation list, or words from a Korean-language second pass",
+      "params": {},
+      "reference": "none verified",
+      "caveats": [
+        "Deepgram English model will mis-transcribe Korean; a Korean batch pass on flagged spans is the honest method"
+      ]
+    },
+    {
+      "id": "word_error_rate_vs_human",
+      "tier": 2,
+      "construct": "quality",
+      "unit": "ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "WER against a hand-corrected transcript for a validation subset",
+      "params": {},
+      "reference": "Yu 2026; Qiao et al. 2021",
+      "caveats": [
+        "needs human transcription of a sample"
+      ]
+    },
+    {
+      "id": "articulation_rate_syllables_aligned",
+      "tier": 3,
+      "construct": "speed",
+      "unit": "syllables per second of phonation time",
+      "inputs": [
+        "audio",
+        "alignment"
+      ],
+      "formula": "aligned syllable count / phonation seconds",
+      "params": {
+        "aligner": "Montreal Forced Aligner or WhisperX"
+      },
+      "reference": "Kallio et al. 2023",
+      "caveats": [
+        "replaces the dictionary estimate"
+      ]
+    },
+    {
+      "id": "syllable_duration_sd_normalised",
+      "tier": 3,
+      "construct": "rhythm",
+      "unit": "ratio",
+      "inputs": [
+        "alignment"
+      ],
+      "formula": "sd(syllable durations) / mean(syllable durations)",
+      "params": {},
+      "reference": "Kallio et al. 2023",
+      "caveats": []
+    },
+    {
+      "id": "npvi_vocalic",
+      "tier": 3,
+      "construct": "rhythm",
+      "unit": "index",
+      "inputs": [
+        "alignment"
+      ],
+      "formula": "normalised pairwise variability index over vocalic intervals",
+      "params": {},
+      "reference": "Zhou et al. 2018; Fraser et al. 2026",
+      "caveats": []
+    },
+    {
+      "id": "percent_v",
+      "tier": 3,
+      "construct": "rhythm",
+      "unit": "percent",
+      "inputs": [
+        "alignment"
+      ],
+      "formula": "vocalic interval duration / total speech duration",
+      "params": {},
+      "reference": "Fraser et al. 2026",
+      "caveats": []
+    },
+    {
+      "id": "varco_v",
+      "tier": 3,
+      "construct": "rhythm",
+      "unit": "index",
+      "inputs": [
+        "alignment"
+      ],
+      "formula": "100 * sd(vocalic intervals) / mean(vocalic intervals)",
+      "params": {},
+      "reference": "Fraser et al. 2026",
+      "caveats": []
+    },
+    {
+      "id": "vowel_reduction_ratio",
+      "tier": 3,
+      "construct": "rhythm",
+      "unit": "ratio",
+      "inputs": [
+        "alignment",
+        "audio"
+      ],
+      "formula": "duration of unstressed vowels / duration of stressed vowels",
+      "params": {},
+      "reference": "Fraser et al. 2026",
+      "caveats": [
+        "Fraser found this the strongest rhythm predictor"
+      ]
+    },
+    {
+      "id": "f0_range_semitones",
+      "tier": 3,
+      "construct": "prosody",
+      "unit": "semitones",
+      "inputs": [
+        "audio"
+      ],
+      "formula": "12*log2(f0_p95 / f0_p05) per speaker",
+      "params": {
+        "tool": "Praat via parselmouth"
+      },
+      "reference": "Kang 2010",
+      "caveats": [
+        "pitch survives AGC; use per-speaker channel"
+      ]
+    },
+    {
+      "id": "f0_sd_semitones",
+      "tier": 3,
+      "construct": "prosody",
+      "unit": "semitones",
+      "inputs": [
+        "audio"
+      ],
+      "formula": "sd of f0 in semitones",
+      "params": {},
+      "reference": "Zhou et al. 2018; Saito et al. 2022",
+      "caveats": []
+    },
+    {
+      "id": "f0_slope_per_utterance",
+      "tier": 3,
+      "construct": "prosody",
+      "unit": "semitones per second",
+      "inputs": [
+        "audio",
+        "words"
+      ],
+      "formula": "linear fit of f0 over each AS-unit",
+      "params": {},
+      "reference": "Kallio et al. 2023",
+      "caveats": []
+    },
+    {
+      "id": "intensity_variation_db",
+      "tier": 3,
+      "construct": "prosody",
+      "unit": "dB",
+      "inputs": [
+        "audio"
+      ],
+      "formula": "sd of intensity in voiced frames",
+      "params": {},
+      "reference": "Saito et al. 2022",
+      "caveats": [
+        "transmitter AGC distorts this; prefer onboard 32-bit recording if V2b shows it bypasses AGC"
+      ]
+    },
+    {
+      "id": "stressed_words_per_minute",
+      "tier": 3,
+      "construct": "prosody",
+      "unit": "per minute",
+      "inputs": [
+        "audio",
+        "alignment"
+      ],
+      "formula": "count of syllables above pitch and intensity prominence thresholds / minutes",
+      "params": {},
+      "reference": "Kormos & Dénes 2004; Kang 2010",
+      "caveats": [
+        "prominence detection needs validation"
+      ]
+    },
+    {
+      "id": "egemaps_feature_set",
+      "tier": 3,
+      "construct": "prosody",
+      "unit": "88 features",
+      "inputs": [
+        "audio"
+      ],
+      "formula": "openSMILE eGeMAPS v02 per speaker",
+      "params": {
+        "tool": "openSMILE"
+      },
+      "reference": "Dong et al. 2024; Dong et al. 2025",
+      "caveats": [
+        "loudness features inherit the AGC caveat"
+      ]
+    },
+    {
+      "id": "vowel_space_area",
+      "tier": 3,
+      "construct": "segmental",
+      "unit": "Hz^2 or Bark^2",
+      "inputs": [
+        "audio",
+        "alignment"
+      ],
+      "formula": "area of the F1-F2 polygon over corner vowels",
+      "params": {},
+      "reference": "Mairano et al. 2019",
+      "caveats": []
+    },
+    {
+      "id": "vowel_pair_pillai_score",
+      "tier": 3,
+      "construct": "segmental",
+      "unit": "0-1",
+      "inputs": [
+        "audio",
+        "alignment"
+      ],
+      "formula": "Pillai score separating F1-F2 distributions of a vowel pair (e.g. /i/-/ɪ/)",
+      "params": {
+        "pairs": [
+          "i-ɪ",
+          "ɛ-æ",
+          "u-ʊ"
+        ]
+      },
+      "reference": "Mairano et al. 2019",
+      "caveats": [
+        "intrinsic contrast measure; no native reference needed"
+      ]
+    },
+    {
+      "id": "vot_voiceless_stops_ms",
+      "tier": 3,
+      "construct": "segmental",
+      "unit": "ms",
+      "inputs": [
+        "audio",
+        "alignment"
+      ],
+      "formula": "voice onset time for /p t k/ in stressed onsets",
+      "params": {},
+      "reference": "Mairano et al. 2019",
+      "caveats": [
+        "Korean has a three-way stop contrast; VOT patterns are a known L1 transfer site"
+      ]
+    },
+    {
+      "id": "f1_derivative_sd",
+      "tier": 3,
+      "construct": "segmental",
+      "unit": "Hz per second",
+      "inputs": [
+        "audio"
+      ],
+      "formula": "sd of the first derivative of the F1 track",
+      "params": {},
+      "reference": "Fontan et al. 2018",
+      "caveats": [
+        "coarticulation fluidity proxy"
+      ]
+    },
+    {
+      "id": "gop_phone_scores",
+      "tier": 3,
+      "construct": "segmental",
+      "unit": "log posterior",
+      "inputs": [
+        "audio",
+        "alignment"
+      ],
+      "formula": "goodness-of-pronunciation per phone from an acoustic model",
+      "params": {
+        "tool": "Kaldi GOP or wav2vec2-based scorer"
+      },
+      "reference": "Saito et al. 2022; Dong et al. 2025",
+      "caveats": [
+        "heaviest tooling in the inventory"
+      ]
+    },
+    {
+      "id": "voice_quality_hnr_jitter_shimmer",
+      "tier": 3,
+      "construct": "voice",
+      "unit": "dB, percent",
+      "inputs": [
+        "audio"
+      ],
+      "formula": "Praat HNR, jitter, shimmer on sustained voiced frames",
+      "params": {},
+      "reference": "none verified for L2 assessment",
+      "caveats": [
+        "unrelated to fluency; useful for speaker-state or clinical questions"
+      ]
+    },
+    {
+      "id": "speaking_f0_mean",
+      "tier": 3,
+      "construct": "voice",
+      "unit": "Hz",
+      "inputs": [
+        "audio"
+      ],
+      "formula": "mean f0",
+      "params": {},
+      "reference": "none needed",
+      "caveats": [
+        "speaker characteristic; covariate"
+      ]
+    },
+    {
+      "id": "pause_acoustic_vs_asr_agreement",
+      "tier": 3,
+      "construct": "quality",
+      "unit": "ratio",
+      "inputs": [
+        "audio",
+        "words"
+      ],
+      "formula": "overlap between energy-detected silences and ASR-timestamp gaps",
+      "params": {},
+      "reference": "system",
+      "caveats": [
+        "validates the word-timestamp pause method",
+        "superseded by tier 1 asr_acoustic_pause_agreement; kept for audio-level validation"
+      ]
+    },
+    {
+      "id": "gaze_and_gesture",
+      "tier": 4,
+      "construct": "nonverbal",
+      "unit": "coded events",
+      "inputs": [],
+      "formula": "human coding from video",
+      "params": {},
+      "reference": "Vo 2024; Eskin 2026",
+      "caveats": [
+        "no video in this system by decision 3"
+      ]
+    },
+    {
+      "id": "l1_utterance_fluency",
+      "tier": 4,
+      "construct": "speed",
+      "unit": "same as tier 1",
+      "inputs": [],
+      "formula": "tier 1 measures on a Korean L1 recording of the same speaker",
+      "params": {},
+      "reference": "Suzuki et al. 2024",
+      "caveats": [
+        "needs an L1 task; the archive format already supports it"
+      ]
+    },
+    {
+      "id": "rater_perceived_fluency",
+      "tier": 4,
+      "construct": "perceived",
+      "unit": "scale",
+      "inputs": [
+        "instructor"
+      ],
+      "formula": "Joe's live score and any later rater panel",
+      "params": {},
+      "reference": "Suzuki et al. 2021",
+      "caveats": [
+        "stored apart from student outputs; RULING NEEDED B1"
+      ]
+    },
+    {
+      "id": "interactional_pattern_type",
+      "tier": 4,
+      "construct": "interaction",
+      "unit": "category",
+      "inputs": [
+        "words"
+      ],
+      "formula": "human coding: collaborative, parallel, asymmetric, blended",
+      "params": {},
+      "reference": "Ortaçtepe Hart 2020",
+      "caveats": [
+        "talk_time_share and latency give a quantitative hint"
+      ]
+    },
+    {
+      "id": "articulation_rate_raw_wpm",
+      "tier": 1,
+      "construct": "speed",
+      "unit": "raw words per minute of phonation time",
+      "inputs": [
+        "words"
+      ],
+      "formula": "rawWordCount / (phonationMs / 60000)",
+      "params": {
+        "pauseThresholdMs": [
+          200,
+          350
+        ]
+      },
+      "reference": "RESEARCH_PRINCIPLES.md principle 2",
+      "caveats": [
+        "raw twin of articulation_rate_wpm"
+      ]
+    },
+    {
+      "id": "mean_length_of_run_raw",
+      "tier": 1,
+      "construct": "breakdown",
+      "unit": "raw words between pauses",
+      "inputs": [
+        "words"
+      ],
+      "formula": "mean(rawWordsPerRun(threshold))",
+      "params": {
+        "pauseThresholdMs": [
+          200,
+          350
+        ]
+      },
+      "reference": "RESEARCH_PRINCIPLES.md principle 2",
+      "caveats": [
+        "raw twin of mean_length_of_run"
+      ]
+    },
+    {
+      "id": "mattr_raw",
+      "tier": 1,
+      "construct": "lexical",
+      "unit": "ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "MATTR over every attributed token, window 50",
+      "params": {
+        "window": 50
+      },
+      "reference": "Kyle et al. 2023",
+      "caveats": [
+        "raw twin of mattr"
+      ]
+    },
+    {
+      "id": "silent_pause_mid_clause_rate",
+      "tier": 1,
+      "construct": "breakdown",
+      "unit": "mid-clause pauses per minute of phonation time",
+      "inputs": [
+        "words"
+      ],
+      "formula": "silent_pause_mid_clause_count / (phonationMs / 60000)",
+      "params": {
+        "pauseThresholdMs": [
+          200,
+          350
+        ],
+        "boundaryMethod": "punctuation"
+      },
+      "reference": "Kahng 2014; de Jong 2016; Révész et al. 2026",
+      "caveats": [
+        "punctuation proxy for clause boundary"
+      ]
+    },
+    {
+      "id": "silent_pause_end_clause_rate",
+      "tier": 1,
+      "construct": "breakdown",
+      "unit": "end-clause pauses per minute of phonation time",
+      "inputs": [
+        "words"
+      ],
+      "formula": "silent_pause_end_clause_count / (phonationMs / 60000)",
+      "params": {
+        "pauseThresholdMs": [
+          200,
+          350
+        ],
+        "boundaryMethod": "punctuation"
+      },
+      "reference": "Kahng 2014; de Jong 2016",
+      "caveats": [
+        "planning pauses; similar in L1 and L2 speech in both studies"
+      ]
+    },
+    {
+      "id": "silent_pause_mid_clause_mean_ms",
+      "tier": 1,
+      "construct": "breakdown",
+      "unit": "ms",
+      "inputs": [
+        "words"
+      ],
+      "formula": "mean(mid-clause pause durations)",
+      "params": {
+        "pauseThresholdMs": [
+          200,
+          350
+        ]
+      },
+      "reference": "de Jong 2016",
+      "caveats": []
+    },
+    {
+      "id": "silent_pause_end_clause_mean_ms",
+      "tier": 1,
+      "construct": "breakdown",
+      "unit": "ms",
+      "inputs": [
+        "words"
+      ],
+      "formula": "mean(end-clause pause durations)",
+      "params": {
+        "pauseThresholdMs": [
+          200,
+          350
+        ]
+      },
+      "reference": "de Jong 2016",
+      "caveats": []
+    },
+    {
+      "id": "long_pause_count",
+      "tier": 1,
+      "construct": "breakdown",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(within-turn pauses >= turnThresholdMs)",
+      "params": {
+        "turnThresholdMs": 1500
+      },
+      "reference": "RED_TEAM fix 2026-10-05",
+      "caveats": [
+        "each one also logged as a long_pause event"
+      ]
+    },
+    {
+      "id": "uh_count",
+      "tier": 1,
+      "construct": "repair",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(token == 'uh')",
+      "params": {},
+      "reference": "Clark & Fox Tree 2002",
+      "caveats": [
+        "recognizer coverage only; tier 2 verbatim pass adds more"
+      ]
+    },
+    {
+      "id": "um_count",
+      "tier": 1,
+      "construct": "repair",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "count(token == 'um')",
+      "params": {},
+      "reference": "Clark & Fox Tree 2002",
+      "caveats": [
+        "um and uh signal different expected delays in Clark & Fox Tree"
+      ]
+    },
+    {
+      "id": "filled_pause_mid_clause_count",
+      "tier": 1,
+      "construct": "repair",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "fillers whose previous non-filler word has no clause-final punctuation",
+      "params": {
+        "boundaryMethod": "punctuation"
+      },
+      "reference": "de Jong 2016",
+      "caveats": []
+    },
+    {
+      "id": "filled_pause_end_clause_count",
+      "tier": 1,
+      "construct": "repair",
+      "unit": "count",
+      "inputs": [
+        "words"
+      ],
+      "formula": "fillers after clause-final punctuation or at turn start",
+      "params": {
+        "boundaryMethod": "punctuation"
+      },
+      "reference": "de Jong 2016",
+      "caveats": []
+    },
+    {
+      "id": "silence_after_filler_mean_ms",
+      "tier": 1,
+      "construct": "repair",
+      "unit": "ms",
+      "inputs": [
+        "words"
+      ],
+      "formula": "mean gap from each filler's end to the next word's start, within turn",
+      "params": {},
+      "reference": "Clark & Fox Tree 2002",
+      "caveats": [
+        "tests the delay-signal reading of uh and um"
+      ]
+    },
+    {
+      "id": "acoustic_pause_rate",
+      "tier": 1,
+      "construct": "breakdown",
+      "unit": "per minute of window time",
+      "inputs": [
+        "energy"
+      ],
+      "formula": "count of own-channel silent runs >= threshold inside own speech regions, from energy frames",
+      "params": {
+        "pauseThresholdMs": [
+          200,
+          350
+        ],
+        "speechFloorDbfs": -60
+      },
+      "reference": "RESEARCH_PRINCIPLES.md principle 5",
+      "caveats": [
+        "independent of the recognizer; AGC can raise bleed above the floor"
+      ]
+    },
+    {
+      "id": "asr_acoustic_pause_agreement",
+      "tier": 1,
+      "construct": "quality",
+      "unit": "ratio",
+      "inputs": [
+        "words",
+        "energy"
+      ],
+      "formula": "share of word-gap pauses that overlap an acoustic silent run by at least 50 percent",
+      "params": {},
+      "reference": "RESEARCH_PRINCIPLES.md principle 5",
+      "caveats": [
+        "promoted from tier 3 pause_acoustic_vs_asr_agreement"
+      ]
+    },
+    {
+      "id": "verbatim_filler_count",
+      "tier": 2,
+      "construct": "repair",
+      "unit": "count",
+      "inputs": [
+        "verbatim"
+      ],
+      "formula": "fillers in the CrisperWhisper transcript",
+      "params": {
+        "model": "CrisperWhisper"
+      },
+      "reference": "Wagner et al. 2024",
+      "caveats": [
+        "English model; Korean fillers may appear as uh/um or drop"
+      ]
+    },
+    {
+      "id": "verbatim_partial_word_count",
+      "tier": 2,
+      "construct": "repair",
+      "unit": "count",
+      "inputs": [
+        "verbatim"
+      ],
+      "formula": "word fragments in the verbatim transcript",
+      "params": {},
+      "reference": "Wagner et al. 2024",
+      "caveats": []
+    },
+    {
+      "id": "verbatim_repetition_count",
+      "tier": 2,
+      "construct": "repair",
+      "unit": "count",
+      "inputs": [
+        "verbatim"
+      ],
+      "formula": "repetitions in the verbatim transcript",
+      "params": {},
+      "reference": "Wagner et al. 2024",
+      "caveats": []
+    },
+    {
+      "id": "asr_verbatim_word_disagreement",
+      "tier": 2,
+      "construct": "quality",
+      "unit": "ratio",
+      "inputs": [
+        "words",
+        "verbatim"
+      ],
+      "formula": "word-level edit distance between Deepgram pass two and the verbatim pass / verbatim word count",
+      "params": {},
+      "reference": "Principle 5",
+      "caveats": [
+        "measures what the main recognizer normalised away"
+      ]
+    },
+    {
+      "id": "pause_before_low_frequency_word_ratio",
+      "tier": 2,
+      "construct": "breakdown",
+      "unit": "ratio",
+      "inputs": [
+        "words"
+      ],
+      "formula": "share of mid-clause pauses followed by a word below a frequency cutoff",
+      "params": {
+        "frequencyList": "SUBTLEX-US or COCA spoken"
+      },
+      "reference": "de Jong 2016",
+      "caveats": [
+        "lexical-retrieval reading of a pause"
+      ]
+    },
+    {
+      "id": "pause_function_profile",
+      "tier": 2,
+      "construct": "breakdown",
+      "unit": "proportions",
+      "inputs": [
+        "words"
+      ],
+      "formula": "each pause classed as AS-unit boundary, pre-content-word, pre-low-frequency-word, after filler, or other; report proportions",
+      "params": {},
+      "reference": "de Jong 2016; Kahng 2014",
+      "caveats": [
+        "descriptive categories; stimulated recall (tier 4) validates function"
+      ]
+    },
+    {
+      "id": "korean_filler_candidates",
+      "tier": 3,
+      "construct": "code-switching",
+      "unit": "count and spans",
+      "inputs": [
+        "audio",
+        "phones"
+      ],
+      "formula": "voiced non-word segments whose phone string matches a Korean filler list (eo, eum, geu, jeo, mwo)",
+      "params": {
+        "fillers": [
+          "eo",
+          "eum",
+          "geu",
+          "jeo",
+          "mwo",
+          "geunikka"
+        ]
+      },
+      "reference": "none verified",
+      "caveats": [
+        "candidates for human confirmation"
+      ]
+    },
+    {
+      "id": "filled_pause_acoustic",
+      "tier": 3,
+      "construct": "repair",
+      "unit": "count",
+      "inputs": [
+        "audio"
+      ],
+      "formula": "voiced segments with flat f0 and stable formants longer than 200 ms outside any word",
+      "params": {},
+      "reference": "none verified",
+      "caveats": [
+        "candidate detector; validate on annotated subset"
+      ]
+    },
+    {
+      "id": "word_final_elongation_count",
+      "tier": 3,
+      "construct": "repair",
+      "unit": "count",
+      "inputs": [
+        "alignment"
+      ],
+      "formula": "word-final segments longer than speaker mean + 2 sd for that phone",
+      "params": {},
+      "reference": "none verified",
+      "caveats": [
+        "elongation can act as a filled pause"
+      ]
+    },
+    {
+      "id": "laughter_and_nonspeech_events",
+      "tier": 3,
+      "construct": "interaction",
+      "unit": "count and spans",
+      "inputs": [
+        "audio"
+      ],
+      "formula": "audio event detection for laughter, breath, coughs",
+      "params": {},
+      "reference": "none verified",
+      "caveats": [
+        "no tool validated in this session"
+      ]
+    },
+    {
+      "id": "realized_phone_sequence",
+      "tier": 3,
+      "construct": "segmental",
+      "unit": "phone strings",
+      "inputs": [
+        "phones"
+      ],
+      "formula": "free phone recognition per word, aligned to the CMU dictionary form",
+      "params": {
+        "model": "facebook/wav2vec2-xlsr-53-espeak-cv-ft"
+      },
+      "reference": "Principle 4",
+      "caveats": [
+        "dictionary form is a coordinate, not a norm"
+      ]
+    },
+    {
+      "id": "vowel_epenthesis_rate",
+      "tier": 3,
+      "construct": "segmental",
+      "unit": "per eligible context",
+      "inputs": [
+        "phones"
+      ],
+      "formula": "inserted vowels after final stops or inside clusters / eligible contexts",
+      "params": {},
+      "reference": "Barrass et al. 2020; de Jong et al. 2012",
+      "caveats": [
+        "variant, not error"
+      ]
+    },
+    {
+      "id": "nasalization_variant_rate",
+      "tier": 3,
+      "construct": "segmental",
+      "unit": "per eligible context",
+      "inputs": [
+        "phones"
+      ],
+      "formula": "nasal realisations of stops before nasals / eligible contexts",
+      "params": {},
+      "reference": "Ha 2022; Barrass et al. 2020",
+      "caveats": [
+        "variant, not error"
+      ]
+    },
+    {
+      "id": "coda_stop_release_rate",
+      "tier": 3,
+      "construct": "segmental",
+      "unit": "per eligible context",
+      "inputs": [
+        "audio",
+        "alignment"
+      ],
+      "formula": "released word-final stops / word-final stops",
+      "params": {},
+      "reference": "Ha 2022",
+      "caveats": []
+    },
+    {
+      "id": "consonant_variant_inventory",
+      "tier": 3,
+      "construct": "segmental",
+      "unit": "counts by type",
+      "inputs": [
+        "phones"
+      ],
+      "formula": "counts of realisations for /f/, /v/, /θ/, /ð/, /r/, /l/, /z/ by realised phone",
+      "params": {},
+      "reference": "Principle 4",
+      "caveats": [
+        "descriptive inventory per speaker"
+      ]
+    },
+    {
+      "id": "listener_intelligibility",
+      "tier": 4,
+      "construct": "perceived",
+      "unit": "transcription accuracy by listeners",
+      "inputs": [],
+      "formula": "listener transcription task on excerpts",
+      "params": {},
+      "reference": "Barrass et al. 2020",
+      "caveats": [
+        "needs a listener study"
+      ]
+    },
+    {
+      "id": "stimulated_recall_pause_function",
+      "tier": 4,
+      "construct": "breakdown",
+      "unit": "coded reasons",
+      "inputs": [],
+      "formula": "students explain selected pauses while replaying audio",
+      "params": {},
+      "reference": "Kahng 2014",
+      "caveats": [
+        "validates pause_function_profile"
+      ]
+    }
   ]
 }

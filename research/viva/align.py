@@ -24,6 +24,8 @@ COMPUTES = [
     "vowel_pair_pillai_score",
     "vot_voiceless_stops_ms",
     "gop_phone_scores",
+    "coda_stop_release_rate",
+    "word_final_elongation_count",
 ]
 SKIPS: dict[str, str] = {}
 

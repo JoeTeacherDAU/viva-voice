@@ -22,6 +22,8 @@ COMPUTES = [
     "voice_quality_hnr_jitter_shimmer",
     "speaking_f0_mean",
     "pause_acoustic_vs_asr_agreement",
+    "filled_pause_acoustic",
+    "laughter_and_nonspeech_events",
 ]
 SKIPS: dict[str, str] = {}
 

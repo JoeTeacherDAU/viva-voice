@@ -1,7 +1,7 @@
 import type { AnalysisContext } from "../context";
 import { hasPunctuation, isClauseFinal, tokenOf } from "../tokens";
 import type { IndexedWord, Turn } from "../types";
-import { defineFeature, perMinute, PHONATION_DEFAULT_MS } from "./define";
+import { defineFeature, mean, perMinute, PHONATION_DEFAULT_MS } from "./define";
 
 const MAX_FRAGMENT_WORDS = 3;
 
@@ -23,6 +23,58 @@ defineFeature("false_start_count", (ctx, P) => [
       ctx.pass === 2
         ? ctx.p[P].turns.reduce((a, t) => a + falseStartsInTurn(t, ctx.fillerTokens), 0)
         : null,
+  },
+]);
+
+const tokenCount = (ctx: AnalysisContext, P: "A" | "B", tok: string) =>
+  ctx.p[P].attributed.filter((w) => tokenOf(w.word) === tok).length;
+
+defineFeature("uh_count", (ctx, P) => [{ thresholdMs: null, value: tokenCount(ctx, P, "uh") }]);
+defineFeature("um_count", (ctx, P) => [{ thresholdMs: null, value: tokenCount(ctx, P, "um") }]);
+
+/**
+ * Each filler in a turn, with where it sits: "end" when no non-filler word
+ * precedes it in the turn or the previous non-filler word carries
+ * clause-final punctuation, "mid" otherwise; and the silence that follows it
+ * up to the next word in the same turn (null when it ends the turn).
+ */
+export function fillerEvents(
+  ctx: AnalysisContext,
+  P: "A" | "B",
+): { boundary: "mid" | "end"; silenceAfterMs: number | null }[] {
+  const out: { boundary: "mid" | "end"; silenceAfterMs: number | null }[] = [];
+  for (const t of ctx.p[P].turns) {
+    let prev: IndexedWord | null = null;
+    t.words.forEach((w, i) => {
+      if (!ctx.fillerTokens.has(tokenOf(w.word))) {
+        prev = w;
+        return;
+      }
+      const boundary =
+        prev === null || isClauseFinal((prev as IndexedWord).punctuatedWord) ? "end" : "mid";
+      const next = t.words[i + 1];
+      out.push({ boundary, silenceAfterMs: next ? next.startMs - w.endMs : null });
+    });
+  }
+  return out;
+}
+
+defineFeature("filled_pause_mid_clause_count", (ctx, P) => [
+  { thresholdMs: null, value: fillerEvents(ctx, P).filter((f) => f.boundary === "mid").length },
+]);
+
+defineFeature("filled_pause_end_clause_count", (ctx, P) => [
+  { thresholdMs: null, value: fillerEvents(ctx, P).filter((f) => f.boundary === "end").length },
+]);
+
+defineFeature("silence_after_filler_mean_ms", (ctx, P) => [
+  {
+    thresholdMs: null,
+    value: mean(
+      fillerEvents(ctx, P)
+        .map((f) => f.silenceAfterMs)
+        .filter((x): x is number => x !== null),
+    ),
   },
 ]);
 

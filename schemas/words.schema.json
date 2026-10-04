@@ -30,6 +30,11 @@
         "isFinal": { "type": "boolean" },
         "pass": { "enum": [1, 2] },
         "removedAsCrosstalk": { "type": "boolean" },
+        "inWindow": { "type": "boolean" },
+        "isFiller": { "type": "boolean" },
+        "isRepetition": { "type": "boolean" },
+        "isBackchannel": { "type": "boolean" },
+        "inGap": { "type": "boolean" },
         "speakerLabel": { "enum": ["A", "B"] }
       }
     }

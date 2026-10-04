@@ -8,6 +8,7 @@ Viva Voice records a two-student timed conversation on two microphone channels, 
 
 ## Read before you write
 
+0. RESEARCH_PRINCIPLES.md. It governs every other file; where anything disagrees with it, it wins.
 1. build-plan.json. Find the first phase whose acceptance has not passed. Work on that phase only.
 2. PLAN.md sections 5 to 11 for whatever the phase touches.
 3. DESIGN.md before any screen. features.json for any feature you implement. The id in the registry is the id in the code, the DOCX, the CSV, and the tests.

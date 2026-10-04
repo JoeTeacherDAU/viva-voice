@@ -1440,6 +1440,18 @@
   "speakerLabel": "B"
  },
  {
+  "word": "yeah",
+  "punctuatedWord": "yeah",
+  "startMs": 33600,
+  "endMs": 33780,
+  "confidence": 0.35,
+  "channel": 0,
+  "isFinal": true,
+  "pass": 2,
+  "removedAsCrosstalk": false,
+  "speakerLabel": "A"
+ },
+ {
   "word": "it",
   "punctuatedWord": "It",
   "startMs": 33940,

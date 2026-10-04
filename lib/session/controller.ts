@@ -163,7 +163,8 @@ export class LiveSession {
       this.index[P] = {
         composite: value(result.features, "composite_fluency_index", P),
         speechRate: value(result.features, "speech_rate_wpm", P),
-        pauseRate: value(result.features, "silent_pause_rate", P, 350),
+        // The index uses mid-clause pauses (weights version 1.1).
+        pauseRate: value(result.features, "silent_pause_mid_clause_rate", P, 350),
         meanLengthOfRun: value(result.features, "mean_length_of_run", P, 350),
       };
     }
@@ -188,8 +189,15 @@ export class LiveSession {
         });
       }
     }
+    for (const lp of result.longPauses) {
+      rec = reduce(rec, {
+        type: "event",
+        event: { type: "long_pause", atMs: lp.startMs, detail: { pass: 1, ...lp } },
+      });
+    }
     this.update(rec);
-    return { record: this.rec, words: this.words(), result };
+    // The stored transcript is every final word with its labels; none is dropped.
+    return { record: this.rec, words: result.words, result };
   }
 
   dispose(): void {
