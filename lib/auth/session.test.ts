@@ -39,11 +39,14 @@ describe("session cookie", () => {
 });
 
 describe("isPublicPath", () => {
-  it("opens only the login page and login route", () => {
+  it("opens the login routes and the two self-checking routes", () => {
     expect(isPublicPath("/login")).toBe(true);
     expect(isPublicPath("/api/login")).toBe(true);
     expect(isPublicPath("/session")).toBe(false);
     expect(isPublicPath("/api/file")).toBe(false);
+    expect(isPublicPath("/api/pass2")).toBe(false);
+    expect(isPublicPath("/api/upload")).toBe(true);
+    expect(isPublicPath("/api/retention")).toBe(true);
   });
 });
 

@@ -13,6 +13,12 @@ export interface DoneMessage {
   frames: number;
 }
 
+/** Sent once: AudioContext time (ms) of the first raw sample frame. */
+export interface StartMessage {
+  type: "start";
+  atMs: number;
+}
+
 interface Options {
   /** Stop the raw tee after this many 48 kHz frames. */
   maxFrames?: number;
@@ -35,6 +41,7 @@ class DownsampleProcessor extends AudioWorkletProcessor {
   private readonly lowChunk = this.rawChunk / 3;
   private readonly maxFrames: number;
   private done = false;
+  private started = false;
 
   constructor(options?: { processorOptions?: unknown }) {
     super(options);
@@ -46,6 +53,13 @@ class DownsampleProcessor extends AudioWorkletProcessor {
     if (!input || input.length === 0 || this.done) return !this.done;
     const left = input[0];
     const right = input[1] ?? input[0];
+    if (!this.started) {
+      this.started = true;
+      this.port.postMessage({
+        type: "start",
+        atMs: (currentFrame / sampleRate) * 1000,
+      } satisfies StartMessage);
+    }
 
     for (let i = 0; i < left.length; i++) {
       this.raw[0].push(left[i]);

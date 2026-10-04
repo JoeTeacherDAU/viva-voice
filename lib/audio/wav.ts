@@ -90,6 +90,21 @@ export function parseWav(buf: ArrayBuffer): WavInfo {
   throw new Error("no data chunk");
 }
 
+/** Drops the first skipFrames stereo frames from interleaved 16-bit chunks. */
+export function trimChunks(chunks: ArrayBuffer[], skipFrames: number): ArrayBuffer[] {
+  let skip = Math.max(0, Math.floor(skipFrames)) * 4;
+  const out: ArrayBuffer[] = [];
+  for (const c of chunks) {
+    if (skip >= c.byteLength) {
+      skip -= c.byteLength;
+      continue;
+    }
+    out.push(skip > 0 ? c.slice(skip) : c);
+    skip = 0;
+  }
+  return out;
+}
+
 /** Builds the session's stereo WAV from the IndexedDB PCM store. */
 export async function wavFromStore(sessionId: string): Promise<Blob> {
   return buildStereoWav(await readPcm(sessionId));

@@ -187,10 +187,15 @@ export interface FeatureValue {
 export interface BaselineComponent {
   mean: number;
   sd: number;
+  /** Student observations behind mean and sd. */
+  count?: number;
 }
 
 export interface Baseline {
+  /** Sessions in the baseline; baselineMinSessions compares against this. */
   n: number;
+  /** Session ids already counted, so a rerun of pass two does not count twice. */
+  sessions?: string[];
   components: {
     speech_rate_wpm: BaselineComponent;
     silent_pause_rate: BaselineComponent;

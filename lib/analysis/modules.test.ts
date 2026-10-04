@@ -374,21 +374,39 @@ describe("composite", () => {
     };
     expect(compositeIndex(c, flat, weights, 10)).toBeNull();
   });
-  it("updates a baseline to the sample mean and SD", () => {
-    const xs = [100, 120, 80, 110];
+  it("updates a baseline to the sample mean and SD over student observations", () => {
+    const xs = [100, 120, 80, 110, 95, 105];
     let b: Baseline | null = null;
-    for (const x of xs)
-      b = updateBaseline(b, {
-        speech_rate_wpm: x,
-        silent_pause_rate: x / 10,
-        mean_length_of_run: null,
-      });
+    for (let i = 0; i < xs.length; i += 2) {
+      b = updateBaseline(
+        b,
+        [xs[i], xs[i + 1]].map((x) => ({
+          speech_rate_wpm: x,
+          silent_pause_rate: x / 10,
+          mean_length_of_run: null,
+        })),
+        `s${i}`,
+      );
+    }
     const m = xs.reduce((a, x) => a + x, 0) / xs.length;
     const sd = Math.sqrt(xs.reduce((a, x) => a + (x - m) ** 2, 0) / (xs.length - 1));
-    expect(b!.n).toBe(4);
+    expect(b!.n).toBe(3);
     expect(b!.components.speech_rate_wpm.mean).toBeCloseTo(m);
     expect(b!.components.speech_rate_wpm.sd).toBeCloseTo(sd);
-    expect(b!.components.mean_length_of_run).toEqual({ mean: 0, sd: 0 });
+    expect(b!.components.speech_rate_wpm.count).toBe(6);
+    expect(b!.components.mean_length_of_run).toEqual({ mean: 0, sd: 0, count: 0 });
+    expect(updateBaseline(b, [], "s0")).toBe(b);
+    // A stored baseline without counts assumes two students per session.
+    const legacy: Baseline = {
+      n: 3,
+      components: { ...b!.components, speech_rate_wpm: { mean: m, sd } },
+    };
+    const more = updateBaseline(legacy, [
+      { speech_rate_wpm: 101, silent_pause_rate: 1, mean_length_of_run: null },
+    ]);
+    const all = [...xs, 101];
+    const m2 = all.reduce((a, x) => a + x, 0) / all.length;
+    expect(more.components.speech_rate_wpm.mean).toBeCloseTo(m2);
   });
 });
 

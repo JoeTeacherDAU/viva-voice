@@ -35,26 +35,37 @@ export function compositeIndex(
 }
 
 /**
- * Adds one session's components to a baseline that stores n, mean, and sample
- * SD per component (Welford's update, recovering the sum of squares from SD).
- * A null component leaves that component's statistics unchanged.
+ * Adds one session to a course baseline. n counts sessions; each component's
+ * mean and sample SD run over student observations (two per session), with
+ * Welford's update recovering the sum of squares from the stored SD and count.
+ * A null value leaves that component unchanged.
  */
-export function updateBaseline(baseline: Baseline | null, c: CompositeComponents): Baseline {
+export function updateBaseline(
+  baseline: Baseline | null,
+  students: CompositeComponents[],
+  sessionId?: string,
+): Baseline {
+  if (sessionId && baseline?.sessions?.includes(sessionId)) return baseline;
   const keys = ["speech_rate_wpm", "silent_pause_rate", "mean_length_of_run"] as const;
-  const prevN = baseline?.n ?? 0;
-  const n = prevN + 1;
-  const next = { n, components: {} } as Baseline;
+  const next = {
+    n: (baseline?.n ?? 0) + 1,
+    sessions: sessionId ? [...(baseline?.sessions ?? []), sessionId] : baseline?.sessions,
+    components: {},
+  } as Baseline;
   for (const k of keys) {
-    const prev = baseline?.components[k] ?? { mean: 0, sd: 0 };
-    const x = c[k];
-    if (x === null) {
-      next.components[k] = { ...prev };
-      continue;
+    const prev = baseline?.components[k];
+    let mean = prev?.mean ?? 0;
+    let count = prev ? (prev.count ?? 2 * (baseline?.n ?? 0)) : 0;
+    let m2 = (prev?.sd ?? 0) ** 2 * Math.max(count - 1, 0);
+    for (const s of students) {
+      const x = s[k];
+      if (x === null) continue;
+      count++;
+      const delta = x - mean;
+      mean += delta / count;
+      m2 += delta * (x - mean);
     }
-    const m2 = prev.sd ** 2 * Math.max(prevN - 1, 0);
-    const mean = prev.mean + (x - prev.mean) / n;
-    const nextM2 = m2 + (x - prev.mean) * (x - mean);
-    next.components[k] = { mean, sd: n > 1 ? Math.sqrt(nextM2 / (n - 1)) : 0 };
+    next.components[k] = { mean, sd: count > 1 ? Math.sqrt(m2 / (count - 1)) : 0, count };
   }
   return next;
 }

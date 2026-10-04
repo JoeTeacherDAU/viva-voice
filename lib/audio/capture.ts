@@ -2,7 +2,7 @@ import { PcmWriter, requestPersistence } from "@/lib/storage/local";
 import type { EnergyTrack } from "@/lib/analysis/types";
 import { CAPTURE_RATE, FRAME_MS } from "./dsp";
 import type { EnergyMessage } from "./worklets/energy.worklet";
-import type { DoneMessage, PcmMessage } from "./worklets/downsample.worklet";
+import type { DoneMessage, PcmMessage, StartMessage } from "./worklets/downsample.worklet";
 
 export interface CaptureOptions {
   /** When set, raw 48 kHz PCM goes to IndexedDB under this session id. */
@@ -26,6 +26,8 @@ export class Capture {
   private energyStartMs: number | null = null;
   private nodes: AudioNode[] = [];
   framesRecorded = 0;
+  /** AudioContext time (ms) of raw PCM frame 0, the first sample of the WAV. */
+  rawStartMs: number | null = null;
 
   private constructor(ctx: AudioContext) {
     this.ctx = ctx;
@@ -73,9 +75,10 @@ export class Capture {
     });
     source.connect(down);
     down.connect(sink);
-    down.port.onmessage = (e: MessageEvent<PcmMessage | DoneMessage>) => {
+    down.port.onmessage = (e: MessageEvent<PcmMessage | DoneMessage | StartMessage>) => {
       const m = e.data;
-      if (m.type === "pcm16k") opts.onPcm16k?.(m.buf);
+      if (m.type === "start") cap.rawStartMs = m.atMs;
+      else if (m.type === "pcm16k") opts.onPcm16k?.(m.buf);
       else if (m.type === "raw48k") {
         cap.framesRecorded += m.buf.byteLength / 4;
         cap.writer?.push(m.buf);

@@ -72,7 +72,7 @@ export async function deleteSession(id: string): Promise<void> {
   await tx("artifacts", "readwrite", (s) => s.delete(IDBKeyRange.bound([id, ""], [id, "\uffff"])));
 }
 
-export type ArtifactName = "transcript-pass1" | "energy" | "measurements-pass1";
+export type ArtifactName = "transcript-pass1" | "energy" | "measurements-pass1" | "capture-meta";
 
 export async function putArtifact(
   sessionId: string,

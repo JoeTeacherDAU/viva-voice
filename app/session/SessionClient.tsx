@@ -11,6 +11,7 @@ import { openDevice } from "@/lib/audio/devices";
 import { createSyntheticStereo } from "@/lib/audio/synthetic";
 import { demoMode } from "@/lib/exams";
 import { LiveSession, type LiveView } from "@/lib/session/controller";
+import { archiveSession, type ArchiveProgress } from "@/lib/storage/archive";
 import { getSession, putArtifact, putSession } from "@/lib/storage/local";
 import { Button, FaultStrip } from "@/lib/ui";
 
@@ -46,6 +47,15 @@ export function SessionClient() {
   const [error, setError] = useState<string | null>(null);
   const [record, setRecord] = useState<SessionRecord | null>(null);
   const [saved, setSaved] = useState(false);
+  const [archive, setArchive] = useState<{
+    progress: ArchiveProgress | null;
+    error: string | null;
+    done: boolean;
+  }>({
+    progress: null,
+    error: null,
+    done: false,
+  });
   const live = useRef<LiveSession | null>(null);
   const capture = useRef<Capture | null>(null);
 
@@ -94,7 +104,10 @@ export function SessionClient() {
     if (!res) return;
     await putArtifact(res.record.id, "transcript-pass1", res.words);
     await putArtifact(res.record.id, "measurements-pass1", res.result.features);
-    if (capture.current) await putArtifact(res.record.id, "energy", capture.current.energyTrack());
+    if (capture.current) {
+      await putArtifact(res.record.id, "energy", capture.current.energyTrack());
+      await putArtifact(res.record.id, "capture-meta", { rawStartMs: capture.current.rawStartMs });
+    }
     await putSession(res.record);
     await capture.current?.stop();
     capture.current = null;
@@ -103,6 +116,17 @@ export function SessionClient() {
       .forEach((t) => t.stop());
     setActiveDevice(null);
     setSaved(true);
+    await upload(res.record.id);
+  }
+
+  async function upload(sessionId: string) {
+    setArchive({ progress: null, error: null, done: false });
+    try {
+      await archiveSession(sessionId, (progress) => setArchive((a) => ({ ...a, progress })));
+      setArchive((a) => ({ ...a, done: true }));
+    } catch (e) {
+      setArchive((a) => ({ ...a, error: (e as Error).message }));
+    }
   }
 
   if (error) {
@@ -161,12 +185,30 @@ export function SessionClient() {
               Stop
             </Button>
           ) : saved ? (
-            <Link
-              href={`/review/${encodeURIComponent(id)}`}
-              className="text-primary underline text-[20px]"
-            >
-              Review session
-            </Link>
+            <div className="flex flex-col items-end gap-2" data-testid="archive-status">
+              {archive.done ? (
+                <Link
+                  href={`/review/${encodeURIComponent(id)}`}
+                  className="text-primary underline text-[20px]"
+                >
+                  Archived. Review session
+                </Link>
+              ) : archive.error ? (
+                <>
+                  <p className="text-fault text-[16px]">
+                    Upload failed: {archive.error}. The recording stays in this browser.
+                  </p>
+                  <Button onClick={() => void upload(id)}>Retry upload</Button>
+                </>
+              ) : (
+                <p className="text-[16px] text-on-surface-variant">
+                  Uploading{" "}
+                  {archive.progress
+                    ? `${archive.progress.label} (${archive.progress.step + 1} of ${archive.progress.total})`
+                    : ""}
+                </p>
+              )}
+            </div>
           ) : null}
           {v?.faultReason ? <p className="text-[16px] text-warn">{v.faultReason}</p> : null}
         </div>

@@ -151,4 +151,43 @@ Places where I departed from the plan, and why:
 
 Deferred: nothing.
 
+Commit: 11561df.
+
+## 2026-10-04, P6: Archive, pass two, documents, exports, bundle
+
+Tasks done: P6.1, P6.2, P6.3, P6.4, P6.5, P6.6, P6.7, P6.8, P6.9, P6.10.
+
+Acceptance: `npm run test && npm run test:e2e` passed on the first attempt, together with lint, build, and the contrast check. Vitest ran 607 tests with 1 skipped. Playwright ran 6 tests with 1 skipped on this Mac. The new end-to-end test runs a mock session for 12 seconds, stops it, waits for the browser to archive it to the in-memory store, opens the review page, runs pass two, and then confirms that both DOCX files open as Word documents, that /api/export returns long.csv rows for both passes, that the bundle zip holds all seven files, and that the stored session record reads "done".
+
+What I built:
+
+- lib/storage/store.ts with one interface and two implementations: VercelBlobStore for the private Blob store, and MemoryStore, the in-memory fake that runs when VIVA_STORE=memory or when no Blob token exists and VIVA_MOCK_ASR=1. lib/storage/paths.ts holds every archive path from PLAN.md section 10.
+- POST /api/upload, which hands Vercel Blob client-upload tokens to a signed-in browser for the allowed session paths only (audio/wav and application/json, 120 MB, private), plus a PUT route that writes straight into the in-memory fake for local runs and CI.
+- lib/storage/archive.ts, which runs automatically after Stop: it trims the WAV to 5 seconds before the Start marker, uploads the WAV, energy, pass-one transcript, pass-one measurements, and finally the session record, retries each upload three times, shows progress, and deletes the IndexedDB copy only after all five uploads succeed. If an upload fails, the session screen keeps the recording and offers a retry.
+- GET /api/file for authenticated reads with Cache-Control private, no-store.
+- POST /api/pass2 and lib/output/pass2.ts: a presigned 10-minute URL for the WAV, Deepgram's pre-recorded API with the PLAN.md 6.2 query, the pipeline with pass 2 and the course baseline, then the pass-two transcript and measurements, the session record in state "done", the course baseline, instructor/{examId}.json for ruling R1, both student documents, and the cohort CSVs. A unit test feeds the route a mocked Deepgram response built from the balanced fixture and gets back every golden pass-two value. A second run of pass two replaces the session's CSV rows and leaves the baseline count alone.
+- lib/output/studentDoc.ts, one DOCX per student following PLAN.md 11.1. A unit test confirms that every tier 1 label appears exactly once, that the student's own values appear, that none of the partner's distinctive values appear (it checks more than ten of them), that the partner's participant id is absent, and that the words "instructor" and "live score" never appear.
+- lib/output/csv.ts for wide.csv and long.csv, appended per session and regenerated on demand by GET /api/export?examId=.
+- lib/output/bundle.ts and GET /api/bundle?sessionId=, which zips both documents, the WAV, both transcripts, the energy file, and the session record, and stores the zip at bundles/{id}/bundle.zip.
+- The review page at /review/[id], which shows pass one and pass two side by side for both students, marks any pass-two value more than 10 percent away from pass one, and offers A.docx, B.docx, bundle.zip, and a "Run pass two" button.
+- GET /api/retention and lib/output/retention.ts. vercel.json schedules it for 18:00 UTC on the 1st of each month (03:00 on the 2nd in Seoul). It deletes audio, transcripts, documents, bundles, and the roster for each exam whose termEnd lies more than 24 months back, keeps session records, measurements, and CSVs, and appends a line to retention/log.json.
+
+Places where I departed from the plan, and why:
+
+- Vercel Functions may cap response bodies at about 4.5 MB, and the documentation I could reach did not settle whether streaming lifts that cap. A five-minute WAV runs about 58 MB. So /api/file streams files up to 4 MB and answers larger ones with a redirect to a 10-minute presigned URL, which the browser follows straight to Blob. /api/bundle does the same with the zip. The in-memory fake cannot presign, so it streams everything.
+- P6.1 lists the paths a browser may upload, but P6.2 also uploads measurements/{id}/pass1.json. The upload rule allows that path too.
+- proxy.ts now lets /api/upload and /api/retention through without the cookie. Vercel Blob's upload callback carries a signature rather than a cookie, and Vercel Cron carries CRON_SECRET. Both routes check auth themselves, and the token step of /api/upload still requires the cookie.
+- Because the WAV trims its pre-roll, it no longer starts at the moment the capture began. The archive step records wavOffsetMs (the capture time of the first WAV sample) in the session record, and pass two adds it to Deepgram's timestamps so both passes share one time base.
+- The baseline file counts sessions in n, which baselineMinSessions compares against, while each component's mean and SD run over student observations, two per session. It also lists the session ids it already holds, so rerunning pass two never counts a session twice.
+- Each row in wide.csv uses the 350 ms value for features measured at two thresholds, so the columns stay exactly the tier 1 ids plus metadata. long.csv carries both thresholds and the rolling windows.
+- PLAN.md 11.1 asks for Sukhumvit Set, falling back to Calibri. A DOCX names one font, and Word picks its own substitute when that font is missing. The documents name Sukhumvit Set, which ships with macOS. Setting VIVA_DOCX_FONT=Calibri in Vercel switches every document to Calibri.
+- I added GET /api/bundle, which P6.7 implies but does not name.
+
+Requests for Joe:
+
+- In Vercel, add an environment variable named CRON_SECRET holding any long random string. Vercel Cron sends it to /api/retention, and without it the monthly job gets a 401.
+- Each exams/{examId}.json needs a termEnd date (for example "2027-02-28") for the retention job to act on that exam. The demo exam in fixtures/exams shows the shape.
+
+Deferred: nothing.
+
 Commit: recorded in the next entry.
