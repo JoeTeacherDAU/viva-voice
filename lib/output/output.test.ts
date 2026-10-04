@@ -181,17 +181,21 @@ describe("bundle and paths", () => {
 
 describe("routes with the in-memory store", () => {
   let store: MemoryStore;
+  // CI sets VIVA_MOCK_ASR=1 for the whole job; each test here decides for itself.
+  const savedMock = process.env.VIVA_MOCK_ASR;
   beforeEach(() => {
     store = new MemoryStore();
     setStore(store);
     process.env.VIVA_SESSION_SECRET = SECRET;
+    delete process.env.VIVA_MOCK_ASR;
   });
   afterEach(() => {
     setStore(undefined);
     vi.unstubAllGlobals();
     delete process.env.DEEPGRAM_API_KEY;
-    delete process.env.VIVA_MOCK_ASR;
     delete process.env.CRON_SECRET;
+    if (savedMock === undefined) delete process.env.VIVA_MOCK_ASR;
+    else process.env.VIVA_MOCK_ASR = savedMock;
   });
 
   async function seed() {

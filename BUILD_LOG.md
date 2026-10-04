@@ -220,3 +220,9 @@ Places where I departed from the plan, and why:
 Deferred: nothing within P7. Phase P8 is the rehearsal, which needs Joe, the hardware, and the live services, so the agent build stops here.
 
 Commit: e8bad93. A follow-up commit records this hash, updates one stale line in docs/ARCHITECTURE.md, and clears one lint warning in lib/audio/align.ts.
+
+## 2026-10-04, CI fix after P7
+
+GitHub Actions failed on the P6 and P7 commits, which I had not checked before moving on. One unit test, the pass-two route test with a mocked Deepgram response, passed on this Mac and failed in CI. The CI job sets VIVA_MOCK_ASR=1 for every step, so the route picked the mock transcriber and never called the mocked fetch. The test now clears that variable for itself and restores it afterwards, and the createTranscriber test does the same. I ran the whole Vitest suite both with and without VIVA_MOCK_ASR=1, and all 617 tests pass both ways. Because the unit-test step failed first, the P6 and P7 end-to-end tests and the Python tests had not yet run on GitHub; this commit is their first CI run.
+
+The previous commit message claimed to clear a lint warning in lib/audio/align.ts, but that edit had not applied. This commit clears it.

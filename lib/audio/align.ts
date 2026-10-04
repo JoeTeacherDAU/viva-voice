@@ -45,7 +45,12 @@ function fft(re: Float64Array, im: Float64Array, inverse: boolean) {
       }
     }
   }
-  if (inverse) for (let i = 0; i < n; i++) ((re[i] /= n), (im[i] /= n));
+  if (inverse) {
+    for (let i = 0; i < n; i++) {
+      re[i] /= n;
+      im[i] /= n;
+    }
+  }
 }
 
 const prep = (env: number[]) => {
