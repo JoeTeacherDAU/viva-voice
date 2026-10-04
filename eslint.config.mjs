@@ -19,7 +19,15 @@ const eslintConfig = defineConfig([
       "no-restricted-globals": ["error", "window", "document", "navigator", "localStorage"],
     },
   },
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "coverage/**", "research/**"]),
+  globalIgnores([
+    "public/worklets/**",
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "coverage/**",
+    "research/**",
+  ]),
 ]);
 
 export default eslintConfig;

@@ -65,4 +65,37 @@ Places where I departed from the plan, and why:
 
 Deferred: nothing.
 
+Commit: b24be2a.
+
+## 2026-10-04, P3: Device setup, capture, worklets, buffer, WAV
+
+Tasks done: P3.1, P3.2, P3.3, P3.4, P3.5, P3.6, P3.7.
+
+Acceptance: `npm run test && npm run test:e2e` passed. On this Mac the e2e run reported 4 passed and 1 skipped; on the GitHub Linux runner the same suite reported 5 passed with nothing skipped. The 60-second capture test records exactly 2,880,000 frames from the synthetic stereo source into IndexedDB, builds the WAV, downloads it, and the independent `wavefile` parser in Node reads it as 48 kHz, 16-bit, 2-channel PCM with 2,880,000 samples per channel and signal on both channels.
+
+Attempts: the first local run failed on housekeeping (a leftover probe script, one unformatted file, and ESLint reading the generated worklet bundles). The second local run passed. Two CI runs on the side branch p3 then failed on the test of Chrome's fake microphone, which skips on macOS: the first exposed a race in the test, which read the device list before the lookup finished, and the second showed that the fake microphone is not mono (details below). The third CI run passed, and a final local run passed on the same code.
+
+What I built:
+
+- lib/audio/dsp.ts with 20 ms RMS-to-dBFS framing and a Blackman-windowed sinc decimator from 48 kHz to 16 kHz. A unit test feeds it a 1 kHz tone, which passes at full level, and a 12 kHz tone, which comes out more than 60 dB down.
+- Two AudioWorklets, energy and downsample, written in TypeScript under lib/audio/worklets. scripts/build-worklets.mjs bundles them into public/worklets before every dev and build run, because a worklet loads from its own script URL.
+- lib/audio/capture.ts, which builds the graph from PLAN.md section 5 and tees raw 48 kHz PCM into IndexedDB through lib/storage/local.ts with a two-second flush and a persistence request.
+- lib/audio/wav.ts, which builds the stereo WAV from the IndexedDB store and two mono WAVs on demand.
+- lib/audio/devices.ts with the exact constraint set, the settings readback, the blocking rules, and the Chrome-only check from ruling R5.
+- The setup screen at /setup: device list, settings readback, two meters, A/B swap, calibration with a proposed gating margin, exam and roster loading, receiver gain and firmware fields, blocking warnings, and a Continue button that writes the session record in state "setup" to IndexedDB. A student whose consent is not "granted" blocks the session, per ruling R2.
+- A dev harness at /dev/capture-test, a synthetic stereo source in lib/audio/synthetic.ts, and Playwright tests under tests/e2e. CI now installs Chromium and runs them.
+- A demo exam and a demo roster with invented names in fixtures/exams, which the setup screen uses when VIVA_MOCK_ASR=1.
+
+Places where I departed from the plan, and why:
+
+- P3.7 asks for a test in which "a mono fake device shows the channel-count block". Chrome's fake microphone is not mono: on the GitHub Linux runner it reports 2 channels at 44100 Hz. The suite now covers the rule two ways. A "Synthetic mono (test)" device, built like the synthetic stereo one, checks the channel-count block. A second test opens Chrome's real fake microphone through getUserMedia and confirms that the settings come back and that the session blocks, which on Linux happens through the 48000 Hz rule.
+- On macOS, headless Chromium cannot open even the fake microphone, because Chrome asks the operating system for permission and nobody can answer the prompt. The test of the real fake microphone therefore skips on macOS with that reason in the code, and CI on Linux runs it. The same finding led me to change the setup screen so it skips the permission prompt when device labels already show, and gives up after 10 seconds instead of waiting forever.
+- Playwright uses the full Chromium build in headless mode rather than the stripped headless shell.
+- Until P6 adds /api/file, the setup screen can load only the demo exam. A real exam id fails with a clear message.
+- The setup screen hands the open stream to the session screen in memory, so the browser does not ask for the microphone twice. /session is a placeholder until P5.
+
+Note for Joe: the branch p3 still exists on GitHub. It holds the three CI check commits that this squashed P3 commit replaces. You can delete it whenever you like; nothing depends on it.
+
+Deferred: nothing.
+
 Commit: recorded in the next entry.

@@ -1,0 +1,10 @@
+{
+  "id": "demo-exam",
+  "course": "Demo Conversation 101",
+  "unit": "Unit 3: Weekends and travel",
+  "prompt": "Talk with your partner about what you did last weekend and what you would like to do next weekend.",
+  "targetPatterns": ["used to", "would like to"],
+  "keyterms": ["Busan", "weekend"],
+  "durationMs": 300000,
+  "termEnd": "2026-12-31"
+}
