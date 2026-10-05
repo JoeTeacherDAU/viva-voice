@@ -340,4 +340,6 @@ Joe authorized the Vercel CLI setup that CLAUDE.md otherwise forbids, for this t
 - I generated VIVA_SESSION_SECRET and CRON_SECRET (32 random bytes each) and a four-word VIVA_PASSWORD, and added all three to the three environments as encrypted config variables, since Vercel keeps its sensitive type out of Development. DEEPGRAM_API_KEY stays for Joe.
 - `vercel env pull .env.local` wrote the variables. The file is gitignored by `.env*`, and its three generated values match Vercel's.
 
-No secret value appears in this log, in the verification file, or in any commit. The first production build starts when this commit reaches main; the next entry records its result.
+No secret value appears in this log, in the verification file, or in any commit.
+
+First production build: the push of 000dd1c to main started it through the Git integration. Deployment dpl_AYHNJgnBQMwP1bJprpRrXiGLnbc6 built in 25 seconds and reached Ready. Production URL https://viva-voice.vercel.app; deployment URL https://viva-voice-3darop8ny-joeteacherdonga-6540s-projects.vercel.app. A smoke test without credentials passed: login page 200, home redirects to login, API 401, wrong password 401, served from icn1. Two settings await Joe's decision: the turbo build machine, and DEEPGRAM_API_KEY, which live transcription needs.

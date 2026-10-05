@@ -25,4 +25,14 @@ VIVA_SESSION_SECRET and CRON_SECRET each hold 32 random bytes from `openssl rand
 
 ## First production build
 
-The project had no deployments before the commit that adds this file. The push of that commit to main starts the first production build through the Git integration; the next commit records its result here.
+The project had no deployments before commit 000dd1c. The push of that commit to main started the first production build through the Git integration, with no `vercel deploy`. Deployment dpl_AYHNJgnBQMwP1bJprpRrXiGLnbc6 built in 25 seconds and reached Ready.
+
+- Production URL: https://viva-voice.vercel.app (aliases viva-voice-joeteacherdonga-6540s-projects.vercel.app and viva-voice-git-main-joeteacherdonga-6540s-projects.vercel.app).
+- Deployment URL: https://viva-voice-3darop8ny-joeteacherdonga-6540s-projects.vercel.app
+- Smoke test without credentials: /login returns 200, / redirects (307) to /login, /api/file returns 401, and a wrong password at /api/login returns 401 rather than 500, which shows VIVA_PASSWORD and VIVA_SESSION_SECRET reach the functions. Responses carry x-vercel-id icn1.
+- Deployment protection is Vercel's default, "all except custom domains". The production URL is public and guarded by the app's own password; the per-deployment URL redirects to Vercel's login.
+
+Two settings for Joe, which I left unchanged because the task did not cover them:
+
+- The build ran on the "turbo" build machine (30 vCPU), selected by a project setting. It is Vercel's fastest and most expensive build tier; `vercel project update viva-voice --build-machine standard` would lower it.
+- The app runs in live mode, because VIVA_MOCK_ASR is unset. Until DEEPGRAM_API_KEY is added, a live session cannot start transcription; setup, login, review, and the archive routes work.
