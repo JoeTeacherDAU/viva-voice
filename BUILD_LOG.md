@@ -329,3 +329,15 @@ Joe approved the merge. Before merging I ran git fetch origin and confirmed that
 On main, after npm ci, the full acceptance sequence passed: lint; vitest without VIVA_MOCK_ASR and with it (908 passed, 1 skipped, both ways); coverage; build; contrast (11 pairings); feature-coverage (48 tier 1 features); check-fixtures; Playwright (7 passed, 1 skipped on macOS); and pytest (14 passed). I pushed main only after every check passed. GitHub Actions passed on 17a1bdb: 908 unit tests, 14 Python tests, and 8 browser tests.
 
 Main now carries pipeline version 1.1.0 and registry version 1.2.0. The branch fix/lossless-descriptive stays on GitHub, as Joe asked.
+
+## 2026-10-05, P0 Vercel setup (Joe's authorization, this task only)
+
+Joe authorized the Vercel CLI setup that CLAUDE.md otherwise forbids, for this task only. docs/verification/P0-vercel.md records every step. In short:
+
+- I updated the Vercel CLI from 50.37.3 to 62.2.0. The account is joeteacherdonga-6540, and the team (team_8vfs2QbstUiFmFKdeDSdbPZu) is on the Pro plan.
+- I created the project viva-voice (prj_BOPdR6fdLvs7KT0Ud8hm1ThO9Wxj), linked this folder, and connected JoeTeacherDAU/viva-voice with production branch main. I set the framework to Next.js and Node to 22.x, because the project came up as "Other" on Node 24.x, which contradicts build-plan P0.3 and the Node 22 stack. The default function region is icn1, set through the API.
+- I created the Blob store viva-voice-archive (store_h0h2NLXBxDk0D0Z1), private, in icn1, connected for Production, Preview, and Development.
+- I generated VIVA_SESSION_SECRET and CRON_SECRET (32 random bytes each) and a four-word VIVA_PASSWORD, and added all three to the three environments as encrypted config variables, since Vercel keeps its sensitive type out of Development. DEEPGRAM_API_KEY stays for Joe.
+- `vercel env pull .env.local` wrote the variables. The file is gitignored by `.env*`, and its three generated values match Vercel's.
+
+No secret value appears in this log, in the verification file, or in any commit. The first production build starts when this commit reaches main; the next entry records its result.
