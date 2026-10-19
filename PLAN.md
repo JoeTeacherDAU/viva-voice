@@ -258,4 +258,6 @@ Work order 04 adds two commands that import without a browser. Both read VIVA_PA
 - A re-run reads each pair's session record first. A pair whose record names the same file SHA-256 is skipped and reported as skipped; a different SHA-256 stops the run before anything uploads. The import record goes last, only when every pair arrived, and an existing one stays as it was.
 - After the uploads, the command runs pass two for each pair through POST /api/pass2 on the deployment, so the Deepgram key stays in Vercel. It skips excluded pairs and pairs whose record already holds pass two.
 
-The command prints one line per pair with the file, the left and right participant IDs, the upload status, and the pass-two status.
+After pass two, the command saves the outputs into <session folder>/outputs/. It fetches the same zip as the page's "Download all" button through /api/session-download, saves it as {sessionLabel}.zip, and saves each file in it beside the zip: every pair's two DOCX files and the session's wide, long, and pairs CSV files. Excluded pairs have no DOCX. A re-run replaces the files, and a run with a failed upload saves none.
+
+The command prints one line per pair with the file, the left and right participant IDs, the upload status, and the pass-two status, then one line with the counts of saved files.

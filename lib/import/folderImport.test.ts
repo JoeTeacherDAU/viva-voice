@@ -33,6 +33,7 @@ const ROUTES: Record<string, () => Promise<Record<string, unknown>>> = {
   "/api/exam": () => import("@/app/api/exam/route"),
   "/api/roster": () => import("@/app/api/roster/route"),
   "/api/pass2": () => import("@/app/api/pass2/route"),
+  "/api/session-download": () => import("@/app/api/session-download/route"),
 };
 
 /** An AppFetch that calls the route handlers in process, with a valid session cookie. */
@@ -50,6 +51,7 @@ describe("command-line session import", () => {
   let store: MemoryStore;
   let uploads: string[];
   let logs: string[];
+  let saved: Map<string, Uint8Array>;
   const savedMock = process.env.VIVA_MOCK_ASR;
 
   beforeEach(() => {
@@ -59,6 +61,7 @@ describe("command-line session import", () => {
     process.env.VIVA_MOCK_ASR = "1";
     uploads = [];
     logs = [];
+    saved = new Map();
   });
   afterEach(() => {
     setStore(undefined);
@@ -75,6 +78,9 @@ describe("command-line session import", () => {
         await store.put(pathname, body, contentType);
       },
       uploaderHas: async (p) => (await store.get(p)) !== null,
+      saveOutput: async (name, bytes) => {
+        saved.set(name, bytes);
+      },
       log: (l) => logs.push(l),
       retryDelaysMs: [],
       ...over,
@@ -136,6 +142,27 @@ describe("command-line session import", () => {
       `${LABEL}.02.Audio 1.wav | left S04 | right S03 | upload: uploaded | pass two: skipped, excluded: consent`,
       `${LABEL}.03.Audio 3.wav | left S05 | right S06 | upload: uploaded | pass two: done`,
     ]);
+    // The outputs: the page's "Download all" zip, and every file in it beside it.
+    const zip = (await getBytes(store, paths.sessionDownload(LABEL)))!;
+    expect(saved.get(`${LABEL}.zip`)).toEqual(zip);
+    expect([...saved.keys()].sort()).toEqual(
+      [
+        `${LABEL}.zip`,
+        `${LABEL}-P01-A-S01.docx`,
+        `${LABEL}-P01-B-S02.docx`,
+        `${LABEL}-P03-A-S05.docx`,
+        `${LABEL}-P03-B-S06.docx`,
+        `${LABEL}-wide.csv`,
+        `${LABEL}-long.csv`,
+        `${LABEL}-pairs.csv`,
+      ].sort(),
+    );
+    expect(saved.get(`${LABEL}-P01-A-S01.docx`)).toEqual(
+      await getBytes(store, paths.document(`${LABEL}-P01`, "A")),
+    );
+    const wide = new TextDecoder().decode(saved.get(`${LABEL}-wide.csv`));
+    expect(wide.trim().split("\n")).toHaveLength(5);
+
     // Names never reach the output.
     expect([...logs, ...lines.map(formatPairLine)].join("\n")).not.toContain("Secret Name");
   });
@@ -175,6 +202,8 @@ describe("command-line session import", () => {
       pass2: "not run, the upload failed",
     });
     expect(await store.get(paths.sessionImport(LABEL))).toBeNull();
+    expect(first.outputsError).toBe("not saved, because an upload failed");
+    expect(saved.size).toBe(0);
 
     uploads = [];
     const second = await importSessionFolder(args(fx), deps());
