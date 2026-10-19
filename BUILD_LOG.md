@@ -387,3 +387,5 @@ Speed: a scan of 97 MB of 24-bit stereo took 483 ms of computing in Node, about 
 Acceptance on this Mac, all passing before the push: lint; vitest without VIVA_MOCK_ASR and with it (938 passed, 1 skipped, both ways); coverage; build; contrast (12 pairings, with warn on surface added for the exclusion text); feature-coverage (48 tier 1 features); check-fixtures; pytest (14 passed); Playwright (9 passed, 1 skipped on macOS), including the two new session-import tests.
 
 The work order's eight tests live in lib/import/import.test.ts (tests 1 to 7, plus segment edits, manifest parsing, the recompute, and the download zip) and tests/e2e/session-import.spec.ts (test 8, and a second test for the mono rejection). The fixture is generated in code by lib/import/synthetic.ts: 3 s of zeros, then three tone "pairs" separated by 2 s of zeros, each with a 200 ms stretch of zeros inside it that must not split it, and a different tone for each participant so the tests can check which participant each channel carries. No audio file enters the repository.
+
+GitHub Actions passed on a858ab2: 938 unit tests, 14 Python tests, and 10 browser tests.
