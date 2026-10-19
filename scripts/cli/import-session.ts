@@ -2,9 +2,10 @@
 //   [--title <text> --duration-min <n>] [--base-url <url>]
 // Imports one session folder (one manifest CSV and its pair WAVs) through
 // lib/import/folderImport.ts, then runs pass two through the app's route, so
-// the Deepgram key stays in Vercel. The session label is the folder name.
+// the Deepgram key stays in Vercel, and saves the outputs into <folder>/outputs/.
+// The session label is the folder name.
 
-import { openAsBlob, readdirSync, readFileSync } from "node:fs";
+import { mkdirSync, openAsBlob, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { formatPairLine, FolderImportStop, importSessionFolder } from "@/lib/import/folderImport";
@@ -45,7 +46,8 @@ async function main(): Promise<number> {
 
   const app = await connect(values["base-url"] ?? process.env.VIVA_BASE_URL ?? PRODUCTION_URL);
   console.error(`Connected to ${app.baseUrl} (${app.mode} store).`);
-  const { lines, ok } = await importSessionFolder(
+  const outDir = join(folder, "outputs");
+  const { lines, ok, outputs, outputsError } = await importSessionFolder(
     {
       sessionLabel: basename(folder),
       examId: values.exam,
@@ -59,10 +61,21 @@ async function main(): Promise<number> {
       fetch: app.fetch,
       upload: app.upload,
       uploaderHas: app.uploaderHas,
+      saveOutput: async (name, bytes) => {
+        mkdirSync(outDir, { recursive: true });
+        writeFileSync(join(outDir, basename(name)), bytes);
+      },
       log: (l) => console.error(l),
     },
   );
   for (const l of lines) console.log(formatPairLine(l));
+  const docx = outputs.filter((n) => n.endsWith(".docx")).length;
+  const csv = outputs.filter((n) => n.endsWith(".csv")).length;
+  console.log(
+    outputsError
+      ? `Outputs: ${outputsError}`
+      : `Outputs: saved ${docx} DOCX, ${csv} CSV, and ${basename(folder)}.zip in ${outDir}`,
+  );
   return ok ? 0 : 1;
 }
 

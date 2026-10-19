@@ -490,3 +490,14 @@ Tests, all synthetic: lib/import/folderImport.test.ts runs the core against the 
 PLAN.md gains section 20.
 
 Acceptance on this Mac before the push: lint, vitest plain and with VIVA_MOCK_ASR=1 (955 passed, 1 skipped, both ways), build, check-fixtures, contrast (12 pairings), Playwright (11 passed, 1 skipped on macOS) with VIVA_STORE=memory, and pytest (14 passed). GitHub Actions passed on 4eb6764: 955 unit tests, 14 Python tests, and 12 browser tests. I merged feat/cli-import into main with --no-ff. Main stood at 8a39b08, so the merge met no conflicts. This paragraph rides in the merge commit, so main gets one push and one production deploy.
+
+## 2026-10-19, Work order 04 addition: outputs into the session folder
+
+Branch: feat/cli-outputs, from main at 0de4523.
+
+Before step b, Joe asked whether import:session saves every output into <session folder>/outputs/ after pass two. It did not, so I added it first.
+
+- lib/import/folderImport.ts gains saveSessionOutputs. After pass two it fetches /api/session-download for the label, the route behind the page's "Download all" button, saves the zip as {label}.zip, and unpacks every file in it beside the zip with fflate: each student's DOCX, named {sessionId}-{A or B}-{participantId}.docx, and the session's {label}-wide.csv, {label}-long.csv, and {label}-pairs.csv. The command writes no second copy of the zip's contents; the route builds them as it does for the page.
+- The command saves the outputs whenever every upload arrived, even when pass two failed for a pair, so the folder holds whatever the archive holds. A run with a failed upload saves none and says so. A re-run replaces the files.
+- The command prints one more line at the end with the counts of saved DOCX and CSV files and the folder. The file names carry participant IDs and no names.
+- The unit test checks the saved names, that the zip equals the stored "Download all" zip, that a saved DOCX equals the stored document, and that a failed upload saves nothing. The browser test checks the files in the synthetic folder's outputs/ folder.

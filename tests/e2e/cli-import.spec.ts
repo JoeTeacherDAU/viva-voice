@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -77,10 +77,25 @@ test("command-line import: roster, session folder, pass two, and a safe re-run",
   const first = await cli("scripts/cli/import-session.ts", withTitle, baseURL!);
   expect(first.code, first.stderr).toBe(0);
   expect(first.stdout.trim().split("\n")).toEqual([
-    `${label}.01.Audio 2.wav | left S01 | right S02 | upload: uploaded | pass two: done`,
-    `${label}.02.Audio 1.wav | left S04 | right S03 | upload: uploaded | pass two: skipped, excluded: consent`,
-    `${label}.03.Audio 3.wav | left S05 | right S06 | upload: uploaded | pass two: done`,
+    ...[
+      `${label}.01.Audio 2.wav | left S01 | right S02 | upload: uploaded | pass two: done`,
+      `${label}.02.Audio 1.wav | left S04 | right S03 | upload: uploaded | pass two: skipped, excluded: consent`,
+      `${label}.03.Audio 3.wav | left S05 | right S06 | upload: uploaded | pass two: done`,
+    ],
+    `Outputs: saved 4 DOCX, 3 CSV, and ${label}.zip in ${join(folder, "outputs")}`,
   ]);
+  expect(readdirSync(join(folder, "outputs")).sort()).toEqual(
+    [
+      `${label}.zip`,
+      `${label}-P01-A-S01.docx`,
+      `${label}-P01-B-S02.docx`,
+      `${label}-P03-A-S05.docx`,
+      `${label}-P03-B-S06.docx`,
+      `${label}-wide.csv`,
+      `${label}-long.csv`,
+      `${label}-pairs.csv`,
+    ].sort(),
+  );
   expect(first.stdout + first.stderr).not.toContain("Hidden Name");
   expect(first.stdout + first.stderr).not.toContain(E2E_PASSWORD);
 

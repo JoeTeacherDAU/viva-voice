@@ -4,6 +4,7 @@
 // file source and the uploader differ. Nothing here touches the file system,
 // so the tests drive it with synthetic blobs.
 
+import { unzipSync } from "fflate";
 import type { PairFileSource, SessionRecord } from "@/lib/analysis/types";
 import type { ExamRecord, RosterEntry } from "@/lib/exams";
 import { paths } from "@/lib/storage/paths";
@@ -46,6 +47,8 @@ export interface FolderImportDeps {
   upload: (pathname: string, body: Blob, contentType: string) => Promise<void>;
   /** Whether the uploader's store holds a path, to prove it is the app's store. */
   uploaderHas: (pathname: string) => Promise<boolean>;
+  /** Writes one output file into the session folder's outputs/ folder. */
+  saveOutput: (name: string, bytes: Uint8Array) => Promise<void>;
   /** Progress lines. They carry no names. */
   log: (line: string) => void;
   retryDelaysMs?: number[];
@@ -92,10 +95,31 @@ async function ensureExam(args: FolderImportArgs, deps: FolderImportDeps): Promi
   return exam;
 }
 
+/**
+ * Fetches the page's "Download all" zip for the label through
+ * /api/session-download, saves it, and saves each file in it (every pair's two
+ * documents and the session's CSV rows) beside it. Returns the saved names.
+ */
+export async function saveSessionOutputs(
+  label: string,
+  deps: Pick<FolderImportDeps, "fetch" | "saveOutput">,
+): Promise<string[]> {
+  const res = await deps.fetch(`/api/session-download?label=${encodeURIComponent(label)}`);
+  if (!res.ok) throw new Error(`the session download returned HTTP ${res.status}`);
+  const zip = new Uint8Array(await res.arrayBuffer());
+  const saved = [`${label}.zip`];
+  await deps.saveOutput(saved[0], zip);
+  for (const [name, bytes] of Object.entries(unzipSync(zip))) {
+    await deps.saveOutput(name, bytes);
+    saved.push(name);
+  }
+  return saved;
+}
+
 export async function importSessionFolder(
   args: FolderImportArgs,
   deps: FolderImportDeps,
-): Promise<{ lines: PairLine[]; ok: boolean }> {
+): Promise<{ lines: PairLine[]; ok: boolean; outputs: string[]; outputsError?: string }> {
   const delays = deps.retryDelaysMs ?? [1000, 2000, 4000];
   const { sessionLabel, sessionDate } = args;
 
@@ -262,11 +286,25 @@ export async function importSessionFolder(
     }
   }
 
+  // 7. The outputs, saved into the session folder even when a pair failed, so
+  // Joe has whatever the archive holds; a re-run replaces them.
+  let outputs: string[] = [];
+  let outputsError: string | undefined;
+  if (allArrived) {
+    deps.log("Saving the outputs");
+    try {
+      outputs = await saveSessionOutputs(sessionLabel, deps);
+    } catch (e) {
+      outputsError = (e as Error).message;
+    }
+  } else outputsError = "not saved, because an upload failed";
+
   const result = [...lines.values()].sort((a, b) => a.order - b.order);
   const ok =
     allArrived &&
+    !outputsError &&
     result.every((l) => !l.upload.startsWith("failed") && !/^(failed|not run)/.test(l.pass2));
-  return { lines: result, ok };
+  return { lines: result, ok, outputs, outputsError };
 }
 
 /** One printed line per pair: file, IDs, upload status, pass-two status. No names. */
