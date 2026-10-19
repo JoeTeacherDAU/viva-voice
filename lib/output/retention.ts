@@ -51,6 +51,17 @@ export async function runRetention(
         doomed.push(...(await store.list(prefix)).map((x) => x.pathname));
       }
     }
+    // File imports also keep the untouched session file and its download zip (work order 02).
+    const labels = new Set(
+      sessions
+        .filter((s) => s.examId === examId && s.source?.sessionLabel)
+        .map((s) => s.source!.sessionLabel),
+    );
+    for (const label of labels) {
+      const raw = paths.sessionRaw(label);
+      if ((await store.list(raw)).some((x) => x.pathname === raw)) doomed.push(raw);
+      doomed.push(...(await store.list(`bundles/${label}/`)).map((x) => x.pathname));
+    }
     const roster = paths.roster(examId);
     if ((await store.list(roster)).some((x) => x.pathname === roster)) doomed.push(roster);
     if (doomed.length === 0) continue;

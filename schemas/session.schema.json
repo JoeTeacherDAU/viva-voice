@@ -97,7 +97,55 @@
         "rx": { "type": "string" }
       }
     },
-    "createdAt": { "type": "string", "format": "date-time" }
+    "createdAt": { "type": "string", "format": "date-time" },
+    "captureMode": {
+      "description": "live: recorded on the session screen. file-import: cut from a session file on /import/session. Absent means live.",
+      "enum": ["live", "file-import"]
+    },
+    "source": {
+      "description": "File-import pairs only: the session file and this pair's frame offsets in it. endFrame is exclusive.",
+      "type": "object",
+      "required": [
+        "sessionLabel",
+        "sessionDate",
+        "order",
+        "rawPath",
+        "rawSha256",
+        "sliceSha256",
+        "startFrame",
+        "endFrame",
+        "sampleRate",
+        "bitsPerSample",
+        "encoding"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sessionLabel": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$" },
+        "sessionDate": { "type": "string", "format": "date" },
+        "order": { "type": "integer", "minimum": 1 },
+        "rawPath": { "type": "string" },
+        "rawSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "sliceSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "startFrame": { "type": "integer", "minimum": 0 },
+        "endFrame": { "type": "integer", "minimum": 1 },
+        "sampleRate": { "type": "integer", "minimum": 1 },
+        "bitsPerSample": { "enum": [16, 24, 32] },
+        "encoding": { "enum": ["pcm16", "pcm24", "float32"] }
+      }
+    },
+    "excluded": {
+      "description": "The archive keeps this pair's audio, and pass two, documents, and CSV rows skip it.",
+      "type": "object",
+      "required": ["reason", "consent"],
+      "additionalProperties": false,
+      "properties": {
+        "reason": { "enum": ["consent"] },
+        "consent": {
+          "type": "object",
+          "additionalProperties": { "enum": ["granted", "declined", "pending", "unknown"] }
+        }
+      }
+    }
   },
   "$defs": {
     "passRef": {
@@ -108,7 +156,7 @@
         "transcript": { "type": "string" },
         "measurements": { "type": "string" },
         "completedAt": { "type": "string", "format": "date-time" },
-        "source": { "enum": ["usb", "onboard"] }
+        "source": { "enum": ["usb", "onboard", "file"] }
       }
     },
     "config": {

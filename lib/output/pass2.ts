@@ -1,6 +1,7 @@
 import { updateBaseline } from "@/lib/analysis/composite";
 import { run, PIPELINE_VERSION } from "@/lib/analysis/pipeline";
 import type {
+  AudioSource,
   Baseline,
   EnergyTrack,
   FeatureValue,
@@ -35,14 +36,17 @@ export interface MeasurementsFile {
 export interface TranscriptFile {
   words: Word[];
   model?: string;
-  source?: "usb" | "onboard";
+  source?: AudioSource;
   raw?: unknown;
   createdAt?: string;
 }
 
 export interface ExamFile {
+  title?: string;
   course?: string;
   unit?: string;
+  targetPatterns?: string[];
+  keyterms?: string[];
 }
 
 export { wavOffsetMs } from "@/lib/session/wavOffset";
@@ -57,7 +61,7 @@ export class Pass2Error extends Error {
 }
 
 export interface Pass2Options {
-  source?: "usb" | "onboard";
+  source?: AudioSource;
   /**
    * A robustness check (build-plan P7.2) re-transcribes and re-measures into
    * separate robustness files and leaves the record of account alone.
@@ -79,10 +83,14 @@ export async function runPass2(
 ): Promise<{ record: SessionRecord; features: FeatureValue[]; measurementsPath: string }> {
   const rec = await getJson<SessionRecord>(store, paths.session(sessionId));
   if (!rec) throw new Pass2Error(`No archived session ${sessionId}`, 404);
+  if (rec.excluded) {
+    throw new Pass2Error(`Session ${sessionId} is excluded: ${rec.excluded.reason}`, 409);
+  }
   if (rec.markers.startMs === null || rec.markers.stopMs === null) {
     throw new Pass2Error(`Session ${sessionId} has no Start and Stop markers`, 409);
   }
-  const source = opts.source ?? "usb";
+  // An imported pair's audio is its slice of the session file, stored where the live WAV goes.
+  const source = rec.captureMode === "file-import" ? "file" : (opts.source ?? "usb");
   const audio = source === "onboard" ? paths.onboardStereo(sessionId) : paths.stereo(sessionId);
   if (!(await store.list(audio)).some((o) => o.pathname === audio)) {
     throw new Pass2Error(`No audio at ${audio}`, 404);
@@ -97,19 +105,43 @@ export async function runPass2(
     startMs: w.startMs + offset,
     endMs: w.endMs + offset,
   }));
+  return measureAndPublish(store, rec, words, { raw, model, source, robustness: opts.robustness });
+}
+
+/**
+ * Runs the pipeline over pass-two words and writes the measurements, the
+ * record, the baseline, the instructor file, both documents, and the CSVs.
+ * Pass two calls it with fresh words; recomputeStored calls it with the
+ * stored transcript and leaves that transcript untouched.
+ */
+async function measureAndPublish(
+  store: ArchiveStore,
+  rec: SessionRecord,
+  words: Word[],
+  t: {
+    raw: unknown;
+    model: string;
+    source: AudioSource;
+    robustness?: boolean;
+    keepTranscript?: boolean;
+    event?: { type: string; detail: unknown };
+  },
+): Promise<{ record: SessionRecord; features: FeatureValue[]; measurementsPath: string }> {
+  const sessionId = rec.id;
+  const { raw, model, source } = t;
   const energy = await getJson<EnergyTrack>(store, paths.energy(sessionId));
   const baseline = await getJson<Baseline>(store, paths.baseline(rec.examId));
   const pass1 = await getJson<MeasurementsFile>(store, paths.measurements(sessionId, 1));
-  const markers = { startMs: rec.markers.startMs, stopMs: rec.markers.stopMs };
+  const markers = { startMs: rec.markers.startMs!, stopMs: rec.markers.stopMs! };
   const result = run(words, energy, rec.config, baseline, {
     pass: 2,
     markers,
-    channelMap: map,
+    channelMap: rec.channelMap ?? { "0": "A", "1": "B" },
     previousPass: pass1?.features ?? null,
   });
   const now = new Date().toISOString();
 
-  if (opts.robustness) {
+  if (t.robustness) {
     const stamp = now.replace(/[:.]/g, "-");
     const tPath = `transcripts/${sessionId}/robustness-${stamp}.json`;
     const mPath = `measurements/${sessionId}/robustness-${stamp}.json`;
@@ -146,13 +178,15 @@ export async function runPass2(
     return { record, features: result.features, measurementsPath: mPath };
   }
 
-  await putJson(store, paths.transcript(sessionId, 2), {
-    words: result.words,
-    model,
-    source,
-    raw,
-    createdAt: now,
-  } satisfies TranscriptFile);
+  if (!t.keepTranscript) {
+    await putJson(store, paths.transcript(sessionId, 2), {
+      words: result.words,
+      model,
+      source,
+      raw,
+      createdAt: now,
+    } satisfies TranscriptFile);
+  }
   await putJson(store, paths.measurements(sessionId, 2), {
     pipelineVersion: PIPELINE_VERSION,
     pass: 2,
@@ -184,11 +218,9 @@ export async function runPass2(
         (e) =>
           !(e.type === "long_pause" && (e.detail as { pass?: number } | undefined)?.pass === 2),
       ),
-      {
-        type: "pass2",
-        atMs: markers.stopMs,
-        detail: { model, source, at: now },
-      },
+      t.event
+        ? { type: t.event.type, atMs: markers.stopMs, detail: t.event.detail }
+        : { type: "pass2", atMs: markers.stopMs, detail: { model, source, at: now } },
       ...result.longPauses.map((lp) => ({
         type: "long_pause",
         atMs: lp.startMs,
@@ -228,8 +260,8 @@ export async function runPass2(
     const doc = await buildStudentDoc({
       record,
       student,
-      course: exam?.course,
-      unit: exam?.unit,
+      course: exam?.course || exam?.title,
+      unit: exam?.unit || undefined,
       words: result.words,
       pass1: pass1?.features ?? null,
       pass2: result.features,
@@ -241,6 +273,50 @@ export async function runPass2(
 
   await appendExports(store, record, pass1?.features ?? [], result.features);
   return { record, features: result.features, measurementsPath: paths.measurements(sessionId, 2) };
+}
+
+/**
+ * Recompute from the stored transcript with the exam's current target
+ * patterns and keyterms (work order 02, item 9). The stored pass-two
+ * transcript stays as it is; the previous measurements move to a dated file
+ * beside the new ones, and the record logs both pattern lists.
+ */
+export async function recomputeStored(
+  store: ArchiveStore,
+  sessionId: string,
+): Promise<{ record: SessionRecord; features: FeatureValue[]; previous: string }> {
+  const rec = await getJson<SessionRecord>(store, paths.session(sessionId));
+  if (!rec) throw new Pass2Error(`No archived session ${sessionId}`, 404);
+  if (rec.excluded)
+    throw new Pass2Error(`Session ${sessionId} is excluded: ${rec.excluded.reason}`, 409);
+  const transcript = await getJson<TranscriptFile>(store, paths.transcript(sessionId, 2));
+  const before = await getBytes(store, paths.measurements(sessionId, 2));
+  if (!transcript || !before) throw new Pass2Error(`Session ${sessionId} has no pass two yet`, 409);
+  const exam = await getJson<ExamFile>(store, paths.exam(rec.examId));
+  const now = new Date().toISOString();
+  const previous = `measurements/${sessionId}/pass2-before-${now.replace(/[:.]/g, "-")}.json`;
+  await store.put(previous, before, "application/json");
+  const config = {
+    ...rec.config,
+    targetPatterns: exam?.targetPatterns ?? rec.config.targetPatterns,
+    keyterms: exam?.keyterms ?? rec.config.keyterms,
+  };
+  const out = await measureAndPublish(store, { ...rec, config }, transcript.words, {
+    raw: null,
+    model: transcript.model ?? rec.deepgramModel,
+    source: transcript.source ?? "usb",
+    keepTranscript: true,
+    event: {
+      type: "recompute",
+      detail: {
+        at: now,
+        previousMeasurements: previous,
+        targetPatterns: { before: rec.config.targetPatterns, after: config.targetPatterns },
+        keyterms: { before: rec.config.keyterms, after: config.keyterms },
+      },
+    },
+  });
+  return { ...out, previous };
 }
 
 async function readText(store: ArchiveStore, pathname: string): Promise<string | null> {
@@ -289,6 +365,7 @@ export async function regenerateExports(
   const wideAll: unknown[][] = [];
   const longAll: unknown[][] = [];
   for (const rec of sessions) {
+    if (rec.excluded) continue;
     const m1 = await getJson<MeasurementsFile>(store, paths.measurements(rec.id, 1));
     const m2 = await getJson<MeasurementsFile>(store, paths.measurements(rec.id, 2));
     if (m2) wideAll.push(...wideRows(rec, m2.features, 2, m2.pipelineVersion));

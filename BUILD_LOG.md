@@ -343,3 +343,49 @@ Joe authorized the Vercel CLI setup that CLAUDE.md otherwise forbids, for this t
 No secret value appears in this log, in the verification file, or in any commit.
 
 First production build: the push of 000dd1c to main started it through the Git integration. Deployment dpl_AYHNJgnBQMwP1bJprpRrXiGLnbc6 built in 25 seconds and reached Ready. Production URL https://viva-voice.vercel.app; deployment URL https://viva-voice-3darop8ny-joeteacherdonga-6540s-projects.vercel.app. A smoke test without credentials passed: login page 200, home redirects to login, API 401, wrong password 401, served from icn1. Two settings await Joe's decision: the turbo build machine, and DEEPGRAM_API_KEY, which live transcription needs.
+
+## 2026-10-19, Work order 02: session file import
+
+Branch: feat/session-file-import, from main at 8eada3d. Not merged.
+
+RESEARCH_PRINCIPLES.md and the work order agree on every point I found. The import keeps the untouched session file, every 20 ms energy frame over it, every slice byte for byte, and every excluded pair's audio, which Principle 1 asks for. The work order's "no pass-one transcript" takes nothing away, because an imported pair never had a live pass. The recompute that now saves new target counts keeps the previous measurements in a dated file, so Principle 1 still holds.
+
+What I built:
+
+- /import/session. It takes an exam id, a session label, a date, the WAV, and a manifest typed into a table or loaded as CSV (order,left_id,right_id). When the exam does not exist, it creates one from an id, a title, and a duration. The page offers that only when the archive answers 404, so a failed request never invites an overwrite.
+- lib/import/. wavfile.ts reads the header through Blob.slice, accepts two channels of 16-bit PCM, 24-bit PCM, or 32-bit float (plain or WAVE_FORMAT_EXTENSIBLE), and names what a rejected file holds, for example "This file contains 1 channel, 48000 Hz, 24-bit PCM." scan.ts reads the file once in 8 MB chunks and computes the SHA-256, the 20 ms energy frames, and the zero runs of at least 500 ms on both channels. segments.ts proposes the segments and handles move, merge, split, and delete. manifest.ts parses and checks the manifest and holds the upload gate. records.ts builds one session record per pair and the upload plan.
+- The review step shows each segment's start, end, duration, two-channel waveform, and matched manifest row, plus any consent exclusion. Joe can drag boundaries on the whole-session strip or on each segment's own strip, type times, play a segment, merge, split, delete, and set a measurement window. The upload stays blocked and shows both numbers while the segment count differs from the row count.
+- The upload goes from the browser straight to the private store through the existing /api/upload route. The session file goes to sessions-raw/{label}.wav, then the session energy, then per pair the slice, its energy, and its record, then the import record. Every file shows its own progress bar and a Retry button.
+- Pass two runs pair by pair from one button, with a status line per pair. GET /api/pass2 reports whether pass two can run, and the page stops with "DEEPGRAM_API_KEY is not set..." before its first request when the key is missing. I did not add the key.
+- /review lists every session, groups imported pairs by session label, and labels each row "file import" or "live". Each label has a "Download all" zip with every pair's two documents, the label's wide and long CSV rows, and a pairs.csv.
+- docs/replay-mode.md holds the replay design, with no code.
+
+Choices I made, each with its reason:
+
+- Each pair's slice goes to audio/{id}/stereo.wav, the path the live WAV uses, so pass two, the bundle, and retention work on imported pairs unchanged. The slice keeps the session file's 24-bit samples. Deepgram reads 24-bit WAV and the energy code decodes it, so no pair needed a converted copy, and the import record says so in derivedCopies.
+- Channel 0 (left) is always student A and channel 1 (right) is always student B in an imported record. The manifest's left and right IDs fill participantIds.A and participantIds.B, so a swapped pair shows up as swapped IDs, and channelMap stays {"0": "A", "1": "B"}.
+- A pair's session id is the label plus the order, for example C1_26_MIDS_S1-P03.
+- A participant with "pending" consent, a participant missing from the roster, and a missing roster all count as unknown consent, so the pair goes in excluded. The page warns before upload when the exam has no roster.
+- The page refuses a session label that already has an import record, because a second import would overwrite the first pair records and their pass-two results. The import record uploads last, so an interrupted upload leaves no import record and the label stays free.
+- The exam schema gains an optional title. A created exam has empty course, unit, and prompt, and the student document shows the title where the course would go. The document also prints the session date from the source block and a line naming the session file and pair.
+- The session schema gains captureMode, source, and excluded, and the pass source enum gains "file". Live records written before this change still validate.
+- In mock mode, pass two on an imported pair transcribes no words, because the mock replays a pass-one transcript and an imported pair has none.
+- "Recompute from stored transcript" now uses the exam's current target patterns and keyterms. When they differ from the session's, it shows both lists and a "Save recomputed values" button. POST /api/recompute reruns the pipeline over the stored pass-two transcript, copies the old measurements to measurements/{id}/pass2-before-{time}.json, rewrites the measurements, record, documents, and CSV rows, and leaves the transcript untouched.
+- Retention now also deletes sessions-raw/{label}.wav and bundles/{label}/ for an exam past its term.
+- I added @noble/hashes (version 2.4) because the browser has no streaming SHA-256 and the session file must never sit in memory whole.
+- The live path stays as it was. Its shared code changed in three places: pass two moved its measuring half into a function that the recompute reuses, the uploader takes an optional progress callback, and /api/file stops declaring a length it does not know. Every live-path test still passes.
+- TEST_GUIDE.md lives only in Viva Voice Dev on iCloud, and it holds the site password, so I added Stage 7 there instead of copying the guide into the repository.
+
+Incident: test files reached the real Blob store. On this Mac, `next start` reads .env.local, which holds the real BLOB_READ_WRITE_TOKEN since the P0 `vercel env pull`. The Playwright config set VIVA_MOCK_ASR but not VIVA_STORE, so the store code chose Vercel Blob. My first run of the new browser test at 01:18 UTC and a debugging run at 01:19 UTC wrote 28 files to the private store viva-voice-archive. Every file is synthetic: two exams (e2e-import-mvekfnf4 and e2e-import-mvekgvi1), their rosters of invented "Tone S0n" names, two session files of sine tones (E2E_S1_mvekfnf4 and E2E_S1_mvekgvi1), and their pair audio, energy, and records. A read-only listing on 2026-10-19 showed these 28 files as the store's entire contents, so no other data shared the store. playwright.config.ts now sets VIVA_STORE=memory and an empty BLOB_READ_WRITE_TOKEN for the test server. After the fix, the full browser suite ran and the store still held 28 files. I have not deleted the 28 files, because CLAUDE.md forbids changes in Vercel without Joe's say.
+
+Request for Joe: decide whether I delete those 28 test files from the Blob store. They show up in the live site's review list until someone removes them.
+
+Finding for Joe: the same incident exposed a bug in production that predates this branch. Vercel Blob serves JSON and CSV compressed and reports their size as 0, and /api/file passed that 0 on as Content-Length, so every JSON file the browser read through /api/file arrived empty. In production that would have broken the review page, loading an exam on the setup screen, and the new exam check. /api/file now omits the length when the store does not know it, and app/api/file/route.test.ts covers that case.
+
+Speed: a scan of 97 MB of 24-bit stereo took 483 ms of computing in Node, about 3.5 seconds for a 700 MB file. Reading the file from disk will take longer than that.
+
+Acceptance on this Mac, all passing before the push: lint; vitest without VIVA_MOCK_ASR and with it (938 passed, 1 skipped, both ways); coverage; build; contrast (12 pairings, with warn on surface added for the exclusion text); feature-coverage (48 tier 1 features); check-fixtures; pytest (14 passed); Playwright (9 passed, 1 skipped on macOS), including the two new session-import tests.
+
+The work order's eight tests live in lib/import/import.test.ts (tests 1 to 7, plus segment edits, manifest parsing, the recompute, and the download zip) and tests/e2e/session-import.spec.ts (test 8, and a second test for the mono rejection). The fixture is generated in code by lib/import/synthetic.ts: 3 s of zeros, then three tone "pairs" separated by 2 s of zeros, each with a 200 ms stretch of zeros inside it that must not split it, and a different tone for each participant so the tests can check which participant each channel carries. No audio file enters the repository.
+
+GitHub Actions passed on a858ab2: 938 unit tests, 14 Python tests, and 10 browser tests.

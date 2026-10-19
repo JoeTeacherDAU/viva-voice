@@ -26,6 +26,7 @@ const PAIRS = [
   ["on-surface", "surface", "text on cards"],
   ["warn", "bg", "fault reason text"],
   ["fault", "surface", "blocking warnings on setup cards"],
+  ["warn", "surface", "excluded: consent on import and review cards"],
 ];
 
 const lin = (c) => {

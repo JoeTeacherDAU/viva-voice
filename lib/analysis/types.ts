@@ -67,11 +67,40 @@ export interface SessionEvent {
   detail?: unknown;
 }
 
+/** Which audio a pass read: the live USB capture, the onboard import, or an imported session file slice. */
+export type AudioSource = "usb" | "onboard" | "file";
+
 export interface PassRef {
   transcript: string;
   measurements: string;
   completedAt?: string;
-  source?: "usb" | "onboard";
+  source?: AudioSource;
+}
+
+/**
+ * Where a file-import pair came from (work order 02): the session file in the
+ * archive and the pair's frame offsets in it. One frame holds one sample per
+ * channel; endFrame is exclusive.
+ */
+export interface FileImportSource {
+  sessionLabel: string;
+  sessionDate: string;
+  order: number;
+  rawPath: string;
+  rawSha256: string;
+  sliceSha256: string;
+  startFrame: number;
+  endFrame: number;
+  sampleRate: number;
+  bitsPerSample: number;
+  encoding: "pcm16" | "pcm24" | "float32";
+}
+
+/** A pair the archive keeps but the pipeline skips. */
+export interface Exclusion {
+  reason: "consent";
+  /** Consent status per participant id, as the roster gave it ("unknown" when absent). */
+  consent: Record<string, "granted" | "declined" | "pending" | "unknown">;
 }
 
 export type SessionState = "setup" | "live" | "closing" | "done";
@@ -91,6 +120,10 @@ export interface SessionRecord {
   deepgramModel: string;
   firmware: { tx: string; rx: string };
   createdAt: string;
+  /** Absent on live records written before work order 02. */
+  captureMode?: "live" | "file-import";
+  source?: FileImportSource;
+  excluded?: Exclusion;
 }
 
 /** Defaults from features.json params and PLAN.md. */
