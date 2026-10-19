@@ -150,3 +150,78 @@ export function tonePower(samples: Float32Array, hz: number, rate = FIXTURE_RATE
   }
   return s1 * s1 + s2 * s2 - c * s1 * s2;
 }
+
+/** A pair manifest in the work order 03 form. Track names follow Audacity, not the order. */
+export function pairManifest(prefix: string, rows = FIXTURE_PAIR_ROWS): string {
+  return (
+    "order,track,file,left_id,right_id\n" +
+    rows
+      .map(([left, right], i) => {
+        const track = FIXTURE_TRACKS[i] ?? `Audio ${i + 1}`;
+        return `${i + 1},${track},${pairFileName(prefix, i + 1, track)},${left},${right}`;
+      })
+      .join("\n") +
+    "\n"
+  );
+}
+
+export const FIXTURE_PAIR_ROWS: [string, string][] = [
+  ["S01", "S02"],
+  ["S04", "S03"],
+  ["S05", "S06"],
+];
+const FIXTURE_TRACKS = ["Audio 2", "Audio 1", "Audio 3"];
+
+/** The Audacity 4 file name for one exported track, e.g. "C1_26_02_S1.01.Audio 2.wav". */
+export const pairFileName = (prefix: string, order: number, track: string) =>
+  `${prefix}.${String(order).padStart(2, "0")}.${track}.wav`;
+
+/** A 44-byte WAV header with a plain 16-byte fmt chunk copied from a fixture. */
+function plainHeader(fmt: Uint8Array, dataBytes: number): Uint8Array {
+  const out = new Uint8Array(44);
+  const v = new DataView(out.buffer);
+  const ascii = (o: number, s: string) => [...s].forEach((c, i) => (out[o + i] = c.charCodeAt(0)));
+  ascii(0, "RIFF");
+  v.setUint32(4, 36 + dataBytes, true);
+  ascii(8, "WAVE");
+  out.set(fmt, 12);
+  ascii(36, "data");
+  v.setUint32(40, dataBytes, true);
+  return out;
+}
+
+export interface PairFixture {
+  /** One WAV per pair, in manifest order. */
+  files: { name: string; bytes: Uint8Array; frames: number }[];
+  /** The session-wide WAV: the pairs back to back, with no lead and no gap. */
+  session: Uint8Array;
+  manifest: string;
+}
+
+/**
+ * Pair files the way Audacity 4 exports them for work order 03: each pair's
+ * file holds exactly the frames that the session-wide WAV holds for that pair,
+ * so the pair durations sum to the session length.
+ */
+export function makePairFixture(
+  prefix = "SYN_S1",
+  spec: Pick<FixtureSpec, "encoding" | "pairFrames"> = {},
+): PairFixture {
+  const fx = makeSessionFixture({ ...spec, leadMs: 0, gapMs: 0, pairs: FIXTURE_PAIR_ROWS });
+  const fmt = fx.bytes.subarray(12, 36);
+  const files = fx.segments.map((seg, i) => {
+    const data = fx.bytes.subarray(
+      fx.dataOffset + seg.start * fx.blockAlign,
+      fx.dataOffset + seg.end * fx.blockAlign,
+    );
+    const bytes = new Uint8Array(44 + data.length);
+    bytes.set(plainHeader(fmt, data.length));
+    bytes.set(data, 44);
+    return {
+      name: pairFileName(prefix, i + 1, FIXTURE_TRACKS[i]),
+      bytes,
+      frames: seg.end - seg.start,
+    };
+  });
+  return { files, session: fx.bytes, manifest: pairManifest(prefix) };
+}

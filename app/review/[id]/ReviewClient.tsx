@@ -199,7 +199,7 @@ export function ReviewClient({ id }: { id: string }) {
             <p data-testid="review-state">State: {rec.state ?? "awaiting pass two"}</p>
             <p className="text-on-surface-variant text-sm" data-testid="review-capture">
               {rec.captureMode === "file-import" && rec.source
-                ? `File import from ${rec.source.sessionLabel}, pair ${rec.source.order}, ${rec.source.sessionDate}. `
+                ? `File import from ${rec.source.sessionLabel}, pair ${rec.source.order}${rec.source.mode === "pair-file" ? ` (${rec.source.fileName})` : ""}, ${rec.source.sessionDate}. `
                 : "Live session. "}
               Exam {rec.examId}. Pipeline {rec.pipelineVersion}. Model{" "}
               {rec.deepgramModel || "none yet"}.

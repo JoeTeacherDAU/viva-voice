@@ -63,7 +63,9 @@ export async function buildStudentDoc(input: StudentDocInput): Promise<Uint8Arra
   if (rec.source) {
     out.push(
       line(
-        `Recording: imported from session file ${rec.source.sessionLabel}, pair ${rec.source.order}`,
+        rec.source.mode === "pair-file"
+          ? `Recording: imported from pair file ${rec.source.fileName} (session ${rec.source.sessionLabel}, pair ${rec.source.order})`
+          : `Recording: imported from session file ${rec.source.sessionLabel}, pair ${rec.source.order}`,
       ),
     );
   }

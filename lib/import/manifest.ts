@@ -7,11 +7,11 @@ export interface ManifestRow {
   rightId: string;
 }
 
-const SAFE_ID = /^[A-Za-z0-9_-]+$/;
+export const SAFE_ID = /^[A-Za-z0-9_-]+$/;
 export const MANIFEST_HEADER = ["order", "left_id", "right_id"] as const;
 
 /** Splits one CSV line, honouring double quotes. */
-function cells(line: string): string[] {
+export function cells(line: string): string[] {
   const out: string[] = [];
   let cur = "";
   let quoted = false;
@@ -91,7 +91,7 @@ export function checkManifest(rows: ManifestRow[]): string[] {
 }
 
 /** Rows in recording order. */
-export function sortedRows(rows: ManifestRow[]): ManifestRow[] {
+export function sortedRows<T extends ManifestRow>(rows: T[]): T[] {
   return [...rows].sort((a, b) => a.order - b.order);
 }
 
@@ -102,6 +102,23 @@ export function manifestToCsv(rows: ManifestRow[]): string {
       ...sortedRows(rows).map((r) => `${r.order},${r.leftId},${r.rightId}`),
     ].join("\n") + "\n"
   );
+}
+
+/** The session details both import modes need before an upload. */
+export function sessionReasons(input: {
+  examReady: boolean;
+  sessionLabel: string;
+  sessionDate: string;
+  labelTaken: boolean;
+}): string[] {
+  const reasons: string[] = [];
+  if (!input.examReady) reasons.push("Choose an exam that exists, or create it.");
+  if (!SAFE_ID.test(input.sessionLabel))
+    reasons.push("Enter a session label made of letters, digits, - and _.");
+  if (input.labelTaken)
+    reasons.push(`The archive already holds session ${input.sessionLabel}. Choose another label.`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.sessionDate)) reasons.push("Enter the session date.");
+  return reasons;
 }
 
 export interface UploadGate {
@@ -124,13 +141,7 @@ export function uploadGate(input: {
   sessionDate: string;
   labelTaken: boolean;
 }): UploadGate {
-  const reasons: string[] = [];
-  if (!input.examReady) reasons.push("Choose an exam that exists, or create it.");
-  if (!SAFE_ID.test(input.sessionLabel))
-    reasons.push("Enter a session label made of letters, digits, - and _.");
-  if (input.labelTaken)
-    reasons.push(`The archive already holds session ${input.sessionLabel}. Choose another label.`);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.sessionDate)) reasons.push("Enter the session date.");
+  const reasons = sessionReasons(input);
   reasons.push(...checkManifest(input.rows));
   if (input.segments !== input.rows.length) {
     reasons.push(
