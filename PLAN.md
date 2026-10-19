@@ -117,6 +117,9 @@ audio/{sessionId}/stereo.wav             48 kHz 16-bit stereo, USB capture
 audio/{sessionId}/onboard-A.wav          optional import
 audio/{sessionId}/onboard-B.wav          optional import
 energy/{sessionId}.json                  20 ms dBFS frames, both channels
+sessions-raw/{sessionLabel}.wav          untouched session file from /import/session (section 18)
+sessions-raw/{sessionLabel}.json         import record: header, SHA-256, zero runs, segments, manifest
+sessions-raw/{sessionLabel}-energy.json  20 ms dBFS frames over the whole session file
 transcripts/{sessionId}/pass1.json       final words, rebased, with channel
 transcripts/{sessionId}/pass2.json       batch words with confidence, utterances, paragraphs
 measurements/{sessionId}/pass1.json      tier 1 features, long format
@@ -187,3 +190,37 @@ Deepgram per-channel-minute rates reported by a third party on 2026-08-24: $0.00
 ## 17. Rulings
 
 docs/rulings.md records the five decisions from RED_TEAM.md section G.
+
+## 18. Session file import
+
+Work order 02 adds a second way into the archive. Joe records a whole class session in Audacity from the BOYAMIC 2 receiver in Stereo mode, pressing Record and Stop once per pair, and exports one stereo WAV per session (48 kHz, signed 24-bit PCM, "Trim blank space before first clip" unchecked). The gaps between recordings are digital silence on both channels. The live session path stays in the code, working and unchanged, and is shelved for the 2026 midterm.
+
+### 18.1 The page
+
+/import/session takes an exam id, a session label (for example C1_26_MIDS_S1), the session date, the WAV, and a pair manifest. The manifest lists the pairs in recording order with the participant ID on the left channel and on the right, typed into a table or loaded as CSV with the columns order,left_id,right_id. When the exam id does not exist, the page creates the exam from an id, a title, and a duration, with empty target patterns and keyterms.
+
+### 18.2 Segmentation
+
+The browser reads the WAV through File.slice in 8 MB chunks and never holds the whole file. It parses the header, accepts two channels of 16-bit PCM, 24-bit PCM, or 32-bit float, and rejects anything else with a message that names what the file holds. One pass over the file computes the SHA-256 of every byte, 20 ms energy frames on both channels, and every run of at least 500 ms where both channels read exactly zero. The page proposes one segment between each pair of runs. docs/OPERATIONAL_DEFINITIONS.md gives the exact rule.
+
+### 18.3 Review
+
+Each segment shows its start, end, and duration, a two-channel waveform, and the manifest row it matches. Joe can play a segment, drag either boundary (on the whole-session strip or on the segment's own strip, which shows two seconds either side), type a time, merge a segment with the next, split one at its longest quiet stretch, delete one, and set a measurement window. The upload stays blocked while the segment count differs from the manifest row count, and the page shows both numbers.
+
+### 18.4 Archive
+
+The upload goes straight from the browser to the private Blob store through client uploads and /api/upload, so no request passes through a function's 4.5 MB body limit. The page uploads, in order: the untouched session file to sessions-raw/{sessionLabel}.wav, the session energy, then for each pair the slice (audio/{id}/stereo.wav), the slice's energy (energy/{id}.json), and the session record (sessions/{id}.json), and last the import record (sessions-raw/{sessionLabel}.json). Each file shows its progress and a Retry button. The import record goes last, so its presence means a complete import, and the page refuses a session label that already has one.
+
+A pair's session id is the session label plus the manifest order, for example C1_26_MIDS_S1-P03. The slice keeps the session file's bytes and format, so an imported pair's stereo.wav holds 24-bit samples where a live one holds 16-bit. Deepgram and the energy code read both, so the import stores no converted copy, and the import record says so in derivedCopies.
+
+### 18.5 Records
+
+Each pair's record has the live record's shape with captureMode "file-import", a source block (session label, date, raw file path, its SHA-256, the slice's SHA-256, the pair's start and end frames in the raw file, sample rate, bit depth, encoding), participant IDs from the manifest with left as A and right as B, no pass one, no live score, no live faults, and markers that span the slice unless Joe set a window. A pair whose participant has declined or unknown consent carries excluded {reason: "consent"} with each participant's status; the archive keeps its audio, and pass two refuses it.
+
+### 18.6 Pass two and outputs
+
+One button runs pass two pair by pair through the existing /api/pass2, with a status line per pair, and stops with a plain message when DEEPGRAM_API_KEY is missing. Pass two marks an imported pair's source as "file". The documents, the CSV rows, and the evidence bundle come from the same code as a live session. The review list at /review groups imported pairs by session label beside the live sessions, and each label has a "Download all" zip with every pair's two documents, the label's wide and long CSV rows, and a pairs.csv.
+
+"Recompute from stored transcript" now reads the exam's current target patterns and keyterms, shows what changed, and offers "Save recomputed values", which reruns the pipeline over the stored pass-two transcript, keeps the old measurements in a dated file, and rewrites the measurements, documents, and CSV rows.
+
+docs/replay-mode.md sketches a later "replay" input that feeds a stored pair WAV through the live pipeline in real time.

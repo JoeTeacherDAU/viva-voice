@@ -31,12 +31,13 @@ export async function GET(request: Request) {
     }
   }
   const name = pathname.split("/").pop() ?? "file";
-  return new Response(obj.body, {
-    headers: {
-      "Content-Type": obj.contentType,
-      "Content-Length": String(obj.size),
-      "Cache-Control": "private, no-store",
-      "Content-Disposition": `inline; filename="${name}"`,
-    },
-  });
+  const headers: Record<string, string> = {
+    "Content-Type": obj.contentType,
+    "Cache-Control": "private, no-store",
+    "Content-Disposition": `inline; filename="${name}"`,
+  };
+  // Vercel Blob compresses JSON and CSV and then reports size 0 with no length,
+  // so a declared length of 0 would cut the body off; the response streams instead.
+  if (obj.size > 0) headers["Content-Length"] = String(obj.size);
+  return new Response(obj.body, { headers });
 }

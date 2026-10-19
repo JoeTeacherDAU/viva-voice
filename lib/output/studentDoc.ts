@@ -58,8 +58,15 @@ export async function buildStudentDoc(input: StudentDocInput): Promise<Uint8Arra
   );
   out.push(line(`Course: ${input.course ?? rec.examId}`));
   out.push(line(`Unit: ${input.unit ?? "not recorded"}`));
-  out.push(line(`Date: ${rec.createdAt.slice(0, 10)}`));
+  out.push(line(`Date: ${rec.source?.sessionDate ?? rec.createdAt.slice(0, 10)}`));
   out.push(line(`Pair: ${rec.id}`));
+  if (rec.source) {
+    out.push(
+      line(
+        `Recording: imported from session file ${rec.source.sessionLabel}, pair ${rec.source.order}`,
+      ),
+    );
+  }
   out.push(line(`Student: ${student} (participant ${rec.participantIds[student]})`));
 
   // Transcript: consecutive attributed words on one channel form a paragraph.

@@ -16,7 +16,12 @@ export interface ArchiveProgress {
   label: string;
 }
 
-export type Uploader = (pathname: string, body: Blob, contentType: string) => Promise<void>;
+export type Uploader = (
+  pathname: string,
+  body: Blob,
+  contentType: string,
+  onProgress?: (loaded: number, total: number) => void,
+) => Promise<void>;
 
 /** Picks Blob client uploads or the in-memory PUT, as /api/upload reports. */
 export async function chooseUploader(): Promise<Uploader> {
@@ -24,21 +29,24 @@ export async function chooseUploader(): Promise<Uploader> {
   if (!res.ok) throw new Error(`upload route returned HTTP ${res.status}`);
   const { mode } = (await res.json()) as { mode: "blob" | "memory" };
   if (mode === "memory") {
-    return async (pathname, body, contentType) => {
+    return async (pathname, body, contentType, onProgress) => {
+      onProgress?.(0, body.size);
       const r = await fetch(`/api/upload?pathname=${encodeURIComponent(pathname)}`, {
         method: "PUT",
         headers: { "Content-Type": contentType },
         body,
       });
       if (!r.ok) throw new Error(`upload of ${pathname} returned HTTP ${r.status}`);
+      onProgress?.(body.size, body.size);
     };
   }
-  return async (pathname, body, contentType) => {
+  return async (pathname, body, contentType, onProgress) => {
     await upload(pathname, body, {
       access: "private",
       handleUploadUrl: "/api/upload",
       contentType,
       multipart: body.size > 20_000_000,
+      onUploadProgress: onProgress ? (p) => onProgress(p.loaded, p.total) : undefined,
     });
   };
 }

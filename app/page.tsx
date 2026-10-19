@@ -10,6 +10,12 @@ export default function Home() {
         <Link className="text-primary underline" href="/setup">
           Go to setup
         </Link>
+        <Link className="text-primary underline" href="/import/session">
+          Import a session file
+        </Link>
+        <Link className="text-primary underline" href="/review">
+          Review sessions
+        </Link>
       </Card>
     </main>
   );

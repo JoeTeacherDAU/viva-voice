@@ -106,3 +106,21 @@ Mean word confidence averages confidence over the student's attributed final wor
 Pass agreement for speech rate is the absolute difference between the pass-one and pass-two speech rates, stored with pass two.
 
 A rate or ratio with a zero denominator gives null. A mean or maximum over an empty set gives null.
+
+## Session file import
+
+Work order 02 adds these rules for /import/session. lib/import/ implements them, and lib/import/import.test.ts checks them against a synthetic file.
+
+A frame is one sample on each channel. A frame is zero when both of its samples equal exactly zero after decoding: a 16-bit or 24-bit integer of 0, or a float of 0.0 or -0.0. The rule tests equality, not a level, so the quietest microphone noise never counts as zero.
+
+A zero run is a stretch of consecutive zero frames at least 500 ms long, which is 24,000 frames at 48 kHz. A shorter stretch of zero frames stays inside whatever surrounds it.
+
+A segment is the stretch of frames between two zero runs. The stretch before the first zero run forms a segment only when the file does not start with a zero run, and the same holds at the end. Each segment starts on the first frame after a zero run and ends on the last frame before the next one, so a segment's first and last frames each hold a nonzero sample. Segment i matches manifest row i in recording order, and the page matches nothing while the counts differ.
+
+The session energy track divides the sample data into 20 ms frames (960 frames at 48 kHz) from the file's first sample and stores each frame's RMS level in dBFS, rounded to 0.01 dB, with -100 dB as the floor. A partial last frame is dropped, as on the live path. Each pair's energy file repeats the computation over the pair's slice, starting at the slice's first frame, so it shares the session clock of that pair's record.
+
+A slice is the pair's sample bytes copied unchanged from the session file, behind a new RIFF header that repeats the session file's fmt chunk byte for byte. No step resamples, re-encodes, or changes the bit depth. The session file itself goes to the archive untouched, and its SHA-256 and each slice's SHA-256 go into the records.
+
+A pair's measurement window runs from 0 to the slice's length in milliseconds unless the reviewer sets a window on the page. Channel 0 (left) is student A and channel 1 (right) is student B in every imported record; the manifest's left and right IDs fill participantIds.A and participantIds.B.
+
+A pair is excluded for consent when either participant's roster status is anything other than "granted". A participant missing from the roster, or a missing roster, counts as "unknown". The archive keeps an excluded pair's slice, energy, and record, and pass two, the documents, and the CSVs skip it.

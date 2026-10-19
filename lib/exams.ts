@@ -4,6 +4,8 @@ import demoRoster from "@/fixtures/exams/demo-roster.json";
 /** exams/{examId}.json in the Blob store (PLAN.md section 10). */
 export interface ExamRecord {
   id: string;
+  /** Set when the exam was created on /import/session with only an id, a title, and a duration. */
+  title?: string;
   course: string;
   unit: string;
   prompt: string;

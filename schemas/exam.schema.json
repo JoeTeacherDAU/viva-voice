@@ -7,6 +7,7 @@
   "additionalProperties": false,
   "properties": {
     "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$" },
+    "title": { "type": "string" },
     "course": { "type": "string" },
     "unit": { "type": "string" },
     "prompt": { "type": "string" },

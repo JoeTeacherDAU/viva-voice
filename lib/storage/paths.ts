@@ -29,7 +29,21 @@ export const paths = {
   wide: (examId: string) => `exports/${assertId(examId, "exam id")}/wide.csv`,
   long: (examId: string) => `exports/${assertId(examId, "exam id")}/long.csv`,
   retentionLog: () => "retention/log.json",
+  /** The untouched session file from /import/session (work order 02). */
+  sessionRaw: (label: string) => `sessions-raw/${assertId(label, "session label")}.wav`,
+  /** What the import did: header, hash, thresholds, proposed and final segments, manifest. */
+  sessionImport: (label: string) => `sessions-raw/${assertId(label, "session label")}.json`,
+  /** 20 ms frames for both channels over the whole session file. */
+  sessionEnergy: (label: string) => `sessions-raw/${assertId(label, "session label")}-energy.json`,
+  /** The "Download all" zip for one session label. */
+  sessionDownload: (label: string) =>
+    `bundles/${assertId(label, "session label")}/download-all.zip`,
 };
+
+/** The session id of one imported pair: the session label plus the manifest order. */
+export function pairSessionId(label: string, order: number): string {
+  return `${assertId(label, "session label")}-P${String(order).padStart(2, "0")}`;
+}
 
 export const UPLOAD_CONTENT_TYPES = ["audio/wav", "application/json", "application/x-ndjson"];
 /**
@@ -53,6 +67,7 @@ export function uploadPathAllowed(pathname: string): boolean {
     new RegExp(`^transcripts/${id}/pass1-raw\\.jsonl$`),
     new RegExp(`^measurements/${id}/pass1\\.json$`),
     new RegExp(`^sessions/${id}\\.json$`),
+    new RegExp(`^sessions-raw/${id}(\\.wav|\\.json|-energy\\.json)$`),
   ].some((re) => re.test(pathname));
 }
 

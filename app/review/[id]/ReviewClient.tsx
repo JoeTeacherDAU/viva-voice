@@ -26,6 +26,8 @@ interface Measurements {
 interface Comparison {
   label: string;
   diffs: FeatureDiff[];
+  /** Set when the exam's target patterns or keyterms changed since the session's pass two. */
+  configChange?: string;
 }
 
 /** Pass one and pass two disagree when they differ by more than this share. */
@@ -94,8 +96,21 @@ export function ReviewClient({ id }: { id: string }) {
       setStatus("No stored pass-two transcript.");
       return;
     }
+    // Target counts follow the exam's current patterns, so patterns added after
+    // pass two show up here and can be saved (work order 02, item 9).
+    const exam = await fetchJson<{ targetPatterns?: string[]; keyterms?: string[] }>(
+      `exams/${rec.examId}.json`,
+    );
+    const config = {
+      ...rec.config,
+      targetPatterns: exam?.targetPatterns ?? rec.config.targetPatterns,
+      keyterms: exam?.keyterms ?? rec.config.keyterms,
+    };
+    const changed =
+      JSON.stringify([config.targetPatterns, config.keyterms]) !==
+      JSON.stringify([rec.config.targetPatterns, rec.config.keyterms]);
     const fresh = replicate({
-      record: rec,
+      record: { ...rec, config },
       words: t.words,
       energy,
       baseline: m2.baseline ?? null,
@@ -104,8 +119,31 @@ export function ReviewClient({ id }: { id: string }) {
     setComparison({
       label: `Replication run (pipeline ${PIPELINE_VERSION})`,
       diffs: diffFeatures(m2.features, fresh),
+      configChange: changed
+        ? `The exam's target patterns now read ${config.targetPatterns.join(", ") || "(none)"}; this session used ${rec.config.targetPatterns.join(", ") || "(none)"}.`
+        : undefined,
     });
     setStatus(null);
+  }
+
+  /** Saves the recomputed values as the record of account; the previous measurements stay in the archive. */
+  async function saveRecompute() {
+    setBusy(true);
+    setStatus("Saving the recomputed values");
+    const res = await fetch("/api/recompute", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sessionId: id }),
+    });
+    const out = (await res.json()) as { error?: string };
+    setBusy(false);
+    if (!res.ok) {
+      setStatus(`Saving failed: ${out.error ?? res.status}`);
+      return;
+    }
+    setComparison(null);
+    setStatus("Saved. The documents and CSV rows now carry the recomputed values.");
+    await load();
   }
 
   /** Robustness check: a fresh pass two into separate files, compared with the record of account. */
@@ -158,12 +196,25 @@ export function ReviewClient({ id }: { id: string }) {
       {rec ? (
         <>
           <Card className="flex flex-wrap gap-4 items-center">
-            <p data-testid="review-state">State: {rec.state}</p>
-            <p className="text-on-surface-variant text-sm">
-              Exam {rec.examId}. Pipeline {rec.pipelineVersion}. Model {rec.deepgramModel}.
+            <p data-testid="review-state">State: {rec.state ?? "awaiting pass two"}</p>
+            <p className="text-on-surface-variant text-sm" data-testid="review-capture">
+              {rec.captureMode === "file-import" && rec.source
+                ? `File import from ${rec.source.sessionLabel}, pair ${rec.source.order}, ${rec.source.sessionDate}. `
+                : "Live session. "}
+              Exam {rec.examId}. Pipeline {rec.pipelineVersion}. Model{" "}
+              {rec.deepgramModel || "none yet"}.
             </p>
+            {rec.excluded ? (
+              <p className="text-warn text-sm" data-testid="review-excluded">
+                excluded: {rec.excluded.reason} (
+                {Object.entries(rec.excluded.consent)
+                  .map(([pid, c]) => `${pid} ${c}`)
+                  .join(", ")}
+                ). The archive keeps the audio; pass two and the documents skip this pair.
+              </p>
+            ) : null}
             <div className="flex gap-3 ml-auto flex-wrap">
-              {!rec.passes["2"] ? (
+              {!rec.passes["2"] && !rec.excluded ? (
                 <Button variant="filled" onClick={runPass2} disabled={busy}>
                   Run pass two
                 </Button>
@@ -208,6 +259,18 @@ export function ReviewClient({ id }: { id: string }) {
                 {comparison.label}: {comparison.diffs.length} difference
                 {comparison.diffs.length === 1 ? "" : "s"} from the stored measurements.
               </p>
+              {comparison.configChange ? (
+                <p className="text-sm" data-testid="config-change">
+                  {comparison.configChange}
+                </p>
+              ) : null}
+              {comparison.configChange && comparison.diffs.length ? (
+                <div>
+                  <Button variant="filled" onClick={saveRecompute} disabled={busy}>
+                    Save recomputed values
+                  </Button>
+                </div>
+              ) : null}
               {comparison.diffs.slice(0, 20).map((d) => (
                 <p
                   key={`${d.featureId}-${d.participant}-${d.window}-${d.thresholdMs}`}

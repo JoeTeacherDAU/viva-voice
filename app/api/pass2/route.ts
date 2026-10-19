@@ -1,4 +1,4 @@
-import type { SessionRecord, Word } from "@/lib/analysis/types";
+import type { AudioSource, SessionRecord, Word } from "@/lib/analysis/types";
 import { requireAuth } from "@/lib/auth/requireAuth";
 import { DeepgramBatch, MockBatch, type BatchTranscriber } from "@/lib/asr/batch";
 import { Pass2Error, runPass2, wavOffsetMs, type TranscriptFile } from "@/lib/output/pass2";
@@ -19,10 +19,22 @@ function mockBatch(sessionId: string): BatchTranscriber {
   });
 }
 
+const MISSING_KEY_MESSAGE =
+  "DEEPGRAM_API_KEY is not set. Add it in the Vercel project's environment variables and redeploy, then run pass two again.";
+
+/** GET /api/pass2 says whether pass two can run, so a page can stop before its first request. */
+export async function GET(request: Request) {
+  const denied = await requireAuth(request);
+  if (denied) return denied;
+  if (process.env.VIVA_MOCK_ASR === "1") return Response.json({ ready: true, mode: "mock" });
+  if (process.env.DEEPGRAM_API_KEY) return Response.json({ ready: true, mode: "deepgram" });
+  return Response.json({ ready: false, error: MISSING_KEY_MESSAGE });
+}
+
 export async function POST(request: Request) {
   const denied = await requireAuth(request);
   if (denied) return denied;
-  let body: { sessionId?: string; source?: "usb" | "onboard"; robustness?: boolean };
+  let body: { sessionId?: string; source?: AudioSource; robustness?: boolean };
   try {
     body = await request.json();
     assertId(body.sessionId ?? "", "session id");
@@ -33,7 +45,7 @@ export async function POST(request: Request) {
   let batch: BatchTranscriber;
   if (process.env.VIVA_MOCK_ASR === "1") batch = mockBatch(sessionId);
   else if (process.env.DEEPGRAM_API_KEY) batch = new DeepgramBatch(process.env.DEEPGRAM_API_KEY);
-  else return Response.json({ error: "DEEPGRAM_API_KEY is not configured" }, { status: 500 });
+  else return Response.json({ error: MISSING_KEY_MESSAGE }, { status: 500 });
 
   try {
     const { record, measurementsPath } = await runPass2(getStore(), sessionId, batch, {

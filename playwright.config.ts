@@ -32,6 +32,10 @@ export default defineConfig({
     timeout: 240_000,
     reuseExistingServer: !process.env.CI,
     env: {
+      // next start reads .env.local, which holds the real Blob token after
+      // `vercel env pull`; the tests must never write to the real archive.
+      VIVA_STORE: "memory",
+      BLOB_READ_WRITE_TOKEN: "",
       VIVA_MOCK_ASR: "1",
       VIVA_PASSWORD: E2E_PASSWORD,
       VIVA_SESSION_SECRET: "e2e-session-secret-0123456789abcdef",
