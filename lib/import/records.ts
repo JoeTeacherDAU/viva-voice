@@ -84,6 +84,7 @@ export function buildPairRecords(
     const w = input.windows?.[seg.key];
     const excluded = exclusionFor(input.roster, row);
     const source = {
+      mode: "session-file" as const,
       sessionLabel: input.sessionLabel,
       sessionDate: input.sessionDate,
       order: row.order,
@@ -132,6 +133,7 @@ export function buildPairRecords(
 
 /** sessions-raw/{label}.json: what the import saw and did, for replication. */
 export interface ImportRecord {
+  mode: "session-file";
   sessionLabel: string;
   sessionDate: string;
   examId: string;
@@ -139,7 +141,7 @@ export interface ImportRecord {
   fileBytes: number;
   rawPath: string;
   rawSha256: string;
-  header: Omit<SessionWavInfo, "fmtChunk"> & { fmtChunkHex: string };
+  header: WavHeaderRecord;
   thresholds: { minZeroRunMs: number; energyFrameMs: number };
   zeroRuns: ZeroRun[];
   proposedSegments: { start: number; end: number }[];
@@ -160,6 +162,17 @@ export interface ImportRecord {
   createdAt: string;
 }
 
+/** A WAV header as the import records store it, with the fmt chunk in hex. */
+export type WavHeaderRecord = Omit<SessionWavInfo, "fmtChunk"> & { fmtChunkHex: string };
+
+export function headerRecord(info: SessionWavInfo): WavHeaderRecord {
+  const { fmtChunk, ...header } = info;
+  return {
+    ...header,
+    fmtChunkHex: [...fmtChunk].map((b) => b.toString(16).padStart(2, "0")).join(""),
+  };
+}
+
 export interface UploadItem {
   key: string;
   label: string;
@@ -169,7 +182,7 @@ export interface UploadItem {
   body: () => Promise<Blob>;
 }
 
-const json = (v: unknown) => new Blob([JSON.stringify(v)], { type: "application/json" });
+export const json = (v: unknown) => new Blob([JSON.stringify(v)], { type: "application/json" });
 
 /**
  * Everything the import uploads, in order: the untouched session file, its
@@ -200,8 +213,8 @@ export async function planUpload(
   onSlice(input.segments.length, input.segments.length);
   const records = buildPairRecords(input, sliceSha);
   const rows = sortedRows(input.rows);
-  const { fmtChunk, ...header } = info;
   const importRecord: ImportRecord = {
+    mode: "session-file",
     sessionLabel,
     sessionDate: input.sessionDate,
     examId: input.exam.id,
@@ -209,10 +222,7 @@ export async function planUpload(
     fileBytes: file.size,
     rawPath: paths.sessionRaw(sessionLabel),
     rawSha256: input.rawSha256,
-    header: {
-      ...header,
-      fmtChunkHex: [...fmtChunk].map((b) => b.toString(16).padStart(2, "0")).join(""),
-    },
+    header: headerRecord(info),
     thresholds: { minZeroRunMs: MIN_ZERO_RUN_MS, energyFrameMs: ENERGY_FRAME_MS },
     zeroRuns: scan.zeroRuns,
     proposedSegments: scan.proposed,

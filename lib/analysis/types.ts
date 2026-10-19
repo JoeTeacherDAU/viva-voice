@@ -80,9 +80,10 @@ export interface PassRef {
 /**
  * Where a file-import pair came from (work order 02): the session file in the
  * archive and the pair's frame offsets in it. One frame holds one sample per
- * channel; endFrame is exclusive.
+ * channel; endFrame is exclusive. Records from before work order 03 lack mode.
  */
-export interface FileImportSource {
+export interface SessionFileSource {
+  mode?: "session-file";
   sessionLabel: string;
   sessionDate: string;
   order: number;
@@ -95,6 +96,30 @@ export interface FileImportSource {
   bitsPerSample: number;
   encoding: "pcm16" | "pcm24" | "float32";
 }
+
+/**
+ * Where a pair-file pair came from (work order 03): one WAV per pair, stored
+ * byte for byte at the pair's audio path. session appears only when the
+ * session-wide WAV was attached and the pair durations summed to its length
+ * within 50 ms; its frames count from the session file's first frame.
+ */
+export interface PairFileSource {
+  mode: "pair-file";
+  sessionLabel: string;
+  sessionDate: string;
+  order: number;
+  fileName: string;
+  track: string;
+  fileSha256: string;
+  fileBytes: number;
+  frames: number;
+  sampleRate: number;
+  bitsPerSample: number;
+  encoding: "pcm16" | "pcm24";
+  session?: { rawPath: string; rawSha256: string; startFrame: number; endFrame: number };
+}
+
+export type FileImportSource = SessionFileSource | PairFileSource;
 
 /** A pair the archive keeps but the pipeline skips. */
 export interface Exclusion {

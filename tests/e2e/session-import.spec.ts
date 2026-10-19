@@ -29,6 +29,7 @@ test("session file import: segment, review, upload, exclude, pass two, download"
   );
 
   await page.goto("/import/session");
+  await page.getByRole("radio", { name: "Single session file" }).check();
   await page.getByLabel("Exam id").fill(examId);
   await page.getByRole("button", { name: "Check exam" }).click();
   await page.getByLabel("Exam title").fill("Synthetic midterm");
@@ -124,6 +125,7 @@ test("session file import: segment, review, upload, exclude, pass two, download"
 test("session file import rejects a mono file and names its format", async ({ page }) => {
   await login(page);
   await page.goto("/import/session");
+  await page.getByRole("radio", { name: "Single session file" }).check();
   await page.getByLabel("Session WAV").setInputFiles({
     name: "mono.wav",
     mimeType: "audio/wav",

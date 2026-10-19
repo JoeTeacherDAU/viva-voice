@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import type { SessionRecord } from "@/lib/analysis/types";
+import type { SessionFileSource, SessionRecord } from "@/lib/analysis/types";
 import type { RosterEntry } from "@/lib/exams";
 import { MockBatch } from "@/lib/asr/batch";
 import { unzipSync } from "fflate";
@@ -261,13 +261,17 @@ describe("pair records (work order 02, test 4)", () => {
         passes: {},
         markers: {
           startMs: 0,
-          stopMs: ((rec.source!.endFrame - rec.source!.startFrame) * 1000) / 48000,
+          stopMs:
+            (((rec.source as SessionFileSource).endFrame -
+              (rec.source as SessionFileSource).startFrame) *
+              1000) /
+            48000,
         },
         source: { sessionLabel: "C1_26_MIDS_S1", rawPath: "sessions-raw/C1_26_MIDS_S1.wav" },
       });
       // The stored slice's left channel carries participant A's tone, the right channel B's.
       const stored = (await getBytes(store, paths.stereo(rec.id)))!;
-      expect(sha(stored)).toBe(rec.source!.sliceSha256);
+      expect(sha(stored)).toBe((rec.source as SessionFileSource).sliceSha256);
       const info = await readSessionWavInfo(blobOf(stored));
       const read = sampleReader(info.encoding);
       const v = new DataView(stored.buffer, stored.byteOffset);
@@ -449,7 +453,7 @@ describe("archive of the raw session file (work order 02, test 7)", () => {
     );
     expect(plan.items.at(-1)!.pathname).toBe("sessions-raw/C1_26_MIDS_S1.json");
     for (const r of plan.records)
-      expect((r as SessionRecord).source!.rawSha256).toBe(sha(s.fx.bytes));
+      expect(((r as SessionRecord).source as SessionFileSource).rawSha256).toBe(sha(s.fx.bytes));
   });
 });
 

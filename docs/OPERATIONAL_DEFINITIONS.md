@@ -124,3 +124,19 @@ A slice is the pair's sample bytes copied unchanged from the session file, behin
 A pair's measurement window runs from 0 to the slice's length in milliseconds unless the reviewer sets a window on the page. Channel 0 (left) is student A and channel 1 (right) is student B in every imported record; the manifest's left and right IDs fill participantIds.A and participantIds.B.
 
 A pair is excluded for consent when either participant's roster status is anything other than "granted". A participant missing from the roster, or a missing roster, counts as "unknown". The archive keeps an excluded pair's slice, energy, and record, and pass two, the documents, and the CSVs skip it.
+
+## Pair file import
+
+Work order 03 adds these rules for the "Pair files" mode of /import/session. lib/import/pairfiles.ts implements them, and lib/import/pairfiles.test.ts checks them against synthetic files.
+
+A pair manifest is a CSV whose first line names the columns order, track, file, left_id, and right_id, in any order. The file cell may carry a folder; the page keeps only the name after the last slash. Order and the two IDs follow the session file rules. Each file name may appear in one row only.
+
+A chosen file matches a manifest row when the two names are equal after Unicode NFC normalisation and trimming. Nothing else counts: not the order of the files in the picker, not their lengths, not the track names. A row without a matching file is missing, and a chosen file without a matching row is extra. Either one blocks the upload.
+
+A pair file passes the header check when it holds two channels of 16-bit or 24-bit integer PCM, plain or WAVE_FORMAT_EXTENSIBLE. The session-wide WAV passes the same check.
+
+A pair's duration is its frame count divided by its sample rate. The offset of pair k in the session WAV is the sum of the frame counts of pairs 1 to k-1 in manifest order, and the pair ends at its offset plus its own frame count. The offset check passes when every pair shares the session WAV's sample rate and the sum of all pair durations differs from the session WAV's duration by at most 50 ms (2,400 frames at 48 kHz) in either direction. A record carries offsets only when the check passed.
+
+A pair file's energy track uses the session file rule over the pair file's sample data, from its first frame. A pair's measurement window runs from 0 to the file's length in milliseconds. The archive stores the pair file byte for byte, header included, and records its SHA-256.
+
+On the first real session, C1_26_02_S1, the six pair files sum to 69,399,509 frames and the session WAV holds 69,399,512, a difference of 3 frames, or 0.06 ms. A local read of the headers on 2026-10-19 gave those numbers; nothing was uploaded.

@@ -399,3 +399,41 @@ Joe then approved the merge. I ran git fetch origin and confirmed that origin/fe
 On main, after npm ci, the acceptance sequence passed: lint; vitest without VIVA_MOCK_ASR and with it (938 passed, 1 skipped, both ways); contrast (12 pairings); check-fixtures; build and feature-coverage (48 tier 1 features), through the Playwright run; Playwright (9 passed, 1 skipped on macOS); and pytest (14 passed). I pushed main only after every check passed.
 
 The push started production deployment viva-voice-21wd4obz4 through the Git integration. It built in 18 seconds and reached Ready, and GitHub records Vercel's "Deployment has completed" status on dc4b378. A headless Chromium check of https://viva-voice.vercel.app then passed. Before login, /import/session redirected to /login. Login returned 200, and /import/session returned 200 and rendered the heading "Import a session file" with sections 1 to 3, the exam id box, and the WAV picker. GET /api/sessions returned an empty list. GET /api/pass2 returned ready false with the missing-key message, because DEEPGRAM_API_KEY stays unset for Joe to add.
+
+## 2026-10-19, Work order 03: pair file import
+
+Branch: feat/pair-file-import, from main at 67be7c8.
+
+RESEARCH_PRINCIPLES.md and the work order agree. The pair files reach the archive byte for byte, header included, and so does the session-wide WAV when Joe attaches it, which Principle 1 asks for. The import record keeps the manifest exactly as loaded.
+
+What I built:
+
+- /import/session now opens in "Pair files" mode, with "Single session file" beside it. The exam, label, and date sit above the switch and survive it. The page locks the mode once an upload starts.
+- lib/import/pairfiles.ts. It parses the manifest by column name (order, track, file, left_id, right_id, in any order), matches each chosen file to the row with the same file name after Unicode normalisation, checks each header for two channels of 16-bit or 24-bit PCM, computes the session offsets, gates the upload, and builds the records and the upload plan.
+- The upload stays blocked when a row has no file, when a chosen file matches no row, when a file fails the header check, when the manifest has a problem, and until Joe ticks the box under the table. The table shows each pair's order and track, file, duration, left ID with name, right ID with name, consent, and, when the offset check passes, where the pair starts in the session WAV.
+- The optional session-wide WAV goes to sessions-raw/{label}.wav unchanged. The page sums the pair durations in manifest order, compares the sum with the session WAV's length, and shows the sum, the length, and the difference.
+- Each pair becomes one record with captureMode "file-import" and a source block with mode "pair-file", the file name, the track name, the file's SHA-256 and size, and its format. The upload order is the session WAV, then per pair the file, its energy, and its record, then the import record last.
+- To share code between the modes, I moved the session details card, the upload list with Retry, and the pass-two card out of SessionImportClient.tsx into SessionDetails.tsx and shared.tsx. SingleFileImport.tsx holds the work order 02 mode with its logic unchanged.
+
+Choices I made, each with its reason:
+
+- A record carries offsets into the session WAV only when the check passes. When the sum misses by more than 50 ms, or a pair's sample rate differs from the session file's, the session WAV still uploads, the import record keeps the failed check, and no record claims an offset. A wrong offset would point a later reader at the wrong audio.
+- The header check accepts 16-bit and 24-bit PCM and rejects 32-bit float, because the work order asks for PCM. The single-file mode still accepts float.
+- The page computes each pair file's 20 ms energy frames, as the single-file mode does for each slice, so pass two and the review page find energy/{id}.json for every imported pair.
+- The confirmation box under the table is my reading of "for me to confirm". Changing the manifest or the chosen files clears it.
+- When the session-wide WAV is chosen with the pair files and also attached in its own box, the block message says it belongs in its own box.
+- The schema's source block is now a choice between the session-file shape and the pair-file shape. Session-file records now carry mode "session-file", and records without mode still validate.
+- The student document and the review page name the pair file for a pair-file record.
+
+A local check against the real folder, with nothing uploaded or transcribed: I ran the new parser, matcher, header check, and offset check in Node over the files in My Drive/_Research/AI-Assisted Speaking Assessment/Audio Input Data/C1_26_MIDS on this Mac. They read the manifests and the WAV headers only and printed no participant IDs.
+
+- The manifest inside C1_26_02_S1 has the columns order,left_id,right_id, so the page refuses it and says that without a file column it cannot tell which WAV belongs to which pair. The five-column manifest sits one level up, in C1_26_MIDS, under the same name C1_26_02_S1_manifest.csv. It parses with no problems and 6 rows.
+- The six pair files all pass the header check (48 kHz, 24-bit PCM, plain fmt chunk), and each matches its row by name: row 1 is track Audio 2, row 2 is Audio 1, and rows 3 to 6 are Audio 3 to Audio 6.
+- "C1_26_02 - Session 1.wav" sits inside C1_26_02_S1, not in the parent folder as the work order says, so choosing every WAV in the folder blocks the upload until Joe leaves it out.
+- The pair files sum to 69,399,509 frames and the session WAV holds 69,399,512, a difference of 3 frames (0.0625 ms), so the offset check passes.
+
+Tests, all synthetic: lib/import/pairfiles.test.ts covers manifest parsing, matching by file name in any order, the missing-file block, the extra-file block, the header block, the confirmation, the offset sum at exactly 2,400 and 2,401 frames either way, offsets only on a passing check, byte-for-byte storage, valid records, and pass two with a consent exclusion. tests/e2e/pair-import.spec.ts runs the mode end to end with three 24-bit pair files cut from one synthetic session WAV. The work order 02 browser tests now pick "Single session file" first. lib/import/synthetic.ts builds every fixture in code, so no audio file enters the repository.
+
+TEST_GUIDE.md in Viva Voice Dev on iCloud gains Stage 8 for this mode, and Stage 7 now says to pick "Single session file" first.
+
+Acceptance on this Mac, all passing before the push: lint; vitest with coverage and with VIVA_MOCK_ASR=1 (949 passed, 1 skipped, both ways); build; check-fixtures; contrast (12 pairings); feature-coverage (48 tier 1 features); pytest (14 passed); Playwright (10 passed, 1 skipped on macOS). The Playwright server ran with VIVA_STORE=memory, so nothing reached the Blob store.

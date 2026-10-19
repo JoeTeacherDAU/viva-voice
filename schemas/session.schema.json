@@ -103,35 +103,85 @@
       "enum": ["live", "file-import"]
     },
     "source": {
-      "description": "File-import pairs only: the session file and this pair's frame offsets in it. endFrame is exclusive.",
-      "type": "object",
-      "required": [
-        "sessionLabel",
-        "sessionDate",
-        "order",
-        "rawPath",
-        "rawSha256",
-        "sliceSha256",
-        "startFrame",
-        "endFrame",
-        "sampleRate",
-        "bitsPerSample",
-        "encoding"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "sessionLabel": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$" },
-        "sessionDate": { "type": "string", "format": "date" },
-        "order": { "type": "integer", "minimum": 1 },
-        "rawPath": { "type": "string" },
-        "rawSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-        "sliceSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-        "startFrame": { "type": "integer", "minimum": 0 },
-        "endFrame": { "type": "integer", "minimum": 1 },
-        "sampleRate": { "type": "integer", "minimum": 1 },
-        "bitsPerSample": { "enum": [16, 24, 32] },
-        "encoding": { "enum": ["pcm16", "pcm24", "float32"] }
-      }
+      "description": "File-import pairs only: where the pair's audio came from.",
+      "oneOf": [
+        {
+          "description": "Session-file pairs (work order 02): the session file and this pair's frame offsets in it. endFrame is exclusive.",
+          "type": "object",
+          "required": [
+            "sessionLabel",
+            "sessionDate",
+            "order",
+            "rawPath",
+            "rawSha256",
+            "sliceSha256",
+            "startFrame",
+            "endFrame",
+            "sampleRate",
+            "bitsPerSample",
+            "encoding"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "mode": { "const": "session-file" },
+            "sessionLabel": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$" },
+            "sessionDate": { "type": "string", "format": "date" },
+            "order": { "type": "integer", "minimum": 1 },
+            "rawPath": { "type": "string" },
+            "rawSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "sliceSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "startFrame": { "type": "integer", "minimum": 0 },
+            "endFrame": { "type": "integer", "minimum": 1 },
+            "sampleRate": { "type": "integer", "minimum": 1 },
+            "bitsPerSample": { "enum": [16, 24, 32] },
+            "encoding": { "enum": ["pcm16", "pcm24", "float32"] }
+          }
+        },
+        {
+          "description": "Pair-file pairs (work order 03): the pair's own WAV, stored byte for byte. session holds the pair's frames in the session-wide WAV and appears only when the pair durations summed to its length within 50 ms.",
+          "type": "object",
+          "required": [
+            "mode",
+            "sessionLabel",
+            "sessionDate",
+            "order",
+            "fileName",
+            "track",
+            "fileSha256",
+            "fileBytes",
+            "frames",
+            "sampleRate",
+            "bitsPerSample",
+            "encoding"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "mode": { "const": "pair-file" },
+            "sessionLabel": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$" },
+            "sessionDate": { "type": "string", "format": "date" },
+            "order": { "type": "integer", "minimum": 1 },
+            "fileName": { "type": "string", "minLength": 1 },
+            "track": { "type": "string" },
+            "fileSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "fileBytes": { "type": "integer", "minimum": 1 },
+            "frames": { "type": "integer", "minimum": 1 },
+            "sampleRate": { "type": "integer", "minimum": 1 },
+            "bitsPerSample": { "enum": [16, 24] },
+            "encoding": { "enum": ["pcm16", "pcm24"] },
+            "session": {
+              "type": "object",
+              "required": ["rawPath", "rawSha256", "startFrame", "endFrame"],
+              "additionalProperties": false,
+              "properties": {
+                "rawPath": { "type": "string" },
+                "rawSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+                "startFrame": { "type": "integer", "minimum": 0 },
+                "endFrame": { "type": "integer", "minimum": 1 }
+              }
+            }
+          }
+        }
+      ]
     },
     "excluded": {
       "description": "The archive keeps this pair's audio, and pass two, documents, and CSV rows skip it.",
