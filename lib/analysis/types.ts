@@ -99,9 +99,7 @@ export interface SessionFileSource {
 
 /**
  * Where a pair-file pair came from (work order 03): one WAV per pair, stored
- * byte for byte at the pair's audio path. session appears only when the
- * session-wide WAV was attached and the pair durations summed to its length
- * within 50 ms; its frames count from the session file's first frame.
+ * byte for byte at the pair's audio path.
  */
 export interface PairFileSource {
   mode: "pair-file";
@@ -116,7 +114,6 @@ export interface PairFileSource {
   sampleRate: number;
   bitsPerSample: number;
   encoding: "pcm16" | "pcm24";
-  session?: { rawPath: string; rawSha256: string; startFrame: number; endFrame: number };
 }
 
 export type FileImportSource = SessionFileSource | PairFileSource;

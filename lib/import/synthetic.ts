@@ -193,15 +193,12 @@ function plainHeader(fmt: Uint8Array, dataBytes: number): Uint8Array {
 export interface PairFixture {
   /** One WAV per pair, in manifest order. */
   files: { name: string; bytes: Uint8Array; frames: number }[];
-  /** The session-wide WAV: the pairs back to back, with no lead and no gap. */
-  session: Uint8Array;
   manifest: string;
 }
 
 /**
- * Pair files the way Audacity 4 exports them for work order 03: each pair's
- * file holds exactly the frames that the session-wide WAV holds for that pair,
- * so the pair durations sum to the session length.
+ * Pair files the way Audacity 4 exports them for work order 03: one stereo
+ * WAV per pair, cut from a synthetic session with no lead and no gap.
  */
 export function makePairFixture(
   prefix = "SYN_S1",
@@ -223,5 +220,5 @@ export function makePairFixture(
       frames: seg.end - seg.start,
     };
   });
-  return { files, session: fx.bytes, manifest: pairManifest(prefix) };
+  return { files, manifest: pairManifest(prefix) };
 }

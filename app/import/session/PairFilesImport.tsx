@@ -10,17 +10,15 @@ import type { SessionRecord } from "@/lib/analysis/types";
 import {
   checkPairWav,
   matchPairFiles,
-  OFFSET_TOLERANCE_MS,
   pairUploadGate,
   parsePairManifestCsv,
   planPairUpload,
-  sessionOffsets,
   type ChosenFile,
   type PairManifestRow,
   type ReadPair,
 } from "@/lib/import/pairfiles";
 import { exclusionFor } from "@/lib/import/records";
-import { scanSessionFile, sha256OfBlob } from "@/lib/import/scan";
+import { scanSessionFile } from "@/lib/import/scan";
 import { chooseUploader } from "@/lib/storage/archive";
 import { paths } from "@/lib/storage/paths";
 import { Button, Card, Icon } from "@/lib/ui";
@@ -30,7 +28,6 @@ import { clock, exists, mb, Pass2Card, UploadList, useUploads } from "./shared";
 type Picked = ChosenFile & { file: File };
 
 const fileButton = "rounded-control border border-outline-variant px-4 py-2.5 cursor-pointer";
-const ms = (x: number) => `${Math.abs(x) < 10 ? x.toFixed(1) : Math.round(x)} ms`;
 
 async function pick(file: File): Promise<Picked> {
   return { file, name: file.name, ...(await checkPairWav(file)) };
@@ -43,7 +40,6 @@ export function PairFilesImport({ d, onLock }: { d: SessionDetails; onLock: () =
   const [rows, setRows] = useState<PairManifestRow[]>([]);
   const [manifestProblems, setManifestProblems] = useState<string[]>([]);
   const [files, setFiles] = useState<Picked[]>([]);
-  const [session, setSession] = useState<Picked | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -63,25 +59,12 @@ export function PairFilesImport({ d, onLock }: { d: SessionDetails; onLock: () =
     rows,
     manifestProblems,
     files,
-    session,
     confirmed,
   });
   const fileFor = (row: PairManifestRow) => {
     const m = match.matched.find((x) => x.row.order === row.order);
     return m ? files[m.index] : undefined;
   };
-  // The offset check runs once the session WAV and every matched pair have a header.
-  const offsets =
-    session?.info && match.matched.length && match.matched.every(({ index }) => files[index].info)
-      ? sessionOffsets(
-          match.matched.map(({ row, index }) => ({
-            order: row.order,
-            frames: files[index].info!.frames,
-            sampleRate: files[index].info!.sampleRate,
-          })),
-          session.info,
-        )
-      : null;
   const nameOf = (id: string) =>
     roster?.find((r) => r.participantId === id)?.name ?? "not in the roster";
 
@@ -100,11 +83,6 @@ export function PairFilesImport({ d, onLock }: { d: SessionDetails; onLock: () =
     const chosen = [...(list ?? [])];
     setFiles(chosen.map((file) => ({ file, name: file.name })));
     setFiles(await Promise.all(chosen.map(pick)));
-  }
-
-  async function chooseSession(f: File | undefined) {
-    setConfirmed(false);
-    setSession(f ? await pick(f) : null);
   }
 
   async function startUpload() {
@@ -137,23 +115,12 @@ export function PairFilesImport({ d, onLock }: { d: SessionDetails; onLock: () =
           energy: scan.energy,
         });
       }
-      let sessionInput;
-      if (session?.info) {
-        setPreparing("Reading the session file");
-        sessionInput = {
-          file: session.file,
-          fileName: session.name,
-          info: session.info,
-          sha256: await sha256OfBlob(session.file),
-        };
-      }
       built = planPairUpload({
         exam,
         sessionLabel,
         sessionDate,
         roster,
         pairs,
-        session: sessionInput,
         manifest,
       });
       setRecords(built.records);
@@ -223,64 +190,7 @@ export function PairFilesImport({ d, onLock }: { d: SessionDetails; onLock: () =
       </Card>
 
       <Card className="flex flex-col gap-4">
-        <h2 className="text-xl font-medium">3. Session-wide WAV (optional)</h2>
-        <p className="text-on-surface-variant text-sm">
-          The full mix of the same session, for example &quot;C1_26_02 - Session 1.wav&quot;. The
-          archive keeps it unchanged at sessions-raw/{sessionLabel || "{label}"}.wav. The page
-          places each pair in it by adding up the pair durations in manifest order, and checks that
-          the sum comes within {OFFSET_TOLERANCE_MS} ms of the session file&apos;s length.
-        </p>
-        <div className="flex gap-3 items-center flex-wrap text-sm">
-          <label className={fileButton}>
-            Choose session WAV
-            <input
-              aria-label="Session-wide WAV"
-              type="file"
-              accept="audio/wav,.wav"
-              className="sr-only"
-              disabled={locked}
-              onChange={(e) => void chooseSession(e.target.files?.[0])}
-            />
-          </label>
-          {session ? (
-            <>
-              <span className="text-on-surface-variant" data-testid="session-file">
-                {session.name}: {mb(session.file.size)}
-                {session.info
-                  ? `, ${clock(session.info.frames, session.info.sampleRate)} long`
-                  : ""}
-              </span>
-              <Button onClick={() => void chooseSession(undefined)} disabled={locked}>
-                Remove
-              </Button>
-            </>
-          ) : null}
-        </div>
-        {session?.problem ? (
-          <p className="text-fault text-sm flex items-center gap-2">
-            <Icon name="block" />
-            {session.problem}
-          </p>
-        ) : null}
-        {offsets ? (
-          <p
-            data-testid="offset-check"
-            className={`text-sm flex items-center gap-2 ${offsets.ok ? "" : "text-warn"}`}
-          >
-            <Icon name={offsets.ok ? "check_circle" : "warning"} />
-            {offsets.rateProblem
-              ? `${offsets.rateProblem} The records will not carry offsets into the session file.`
-              : `The pair durations sum to ${clock(offsets.sumMs, 1000)} and the session file runs ${clock(offsets.sessionMs, 1000)}: a difference of ${ms(offsets.differenceMs)}, ${
-                  offsets.ok
-                    ? `within ${OFFSET_TOLERANCE_MS} ms. Each record carries its pair's place in the session file.`
-                    : `more than ${OFFSET_TOLERANCE_MS} ms. The session file still uploads, and the records will not carry offsets into it.`
-                }`}
-          </p>
-        ) : null}
-      </Card>
-
-      <Card className="flex flex-col gap-4">
-        <h2 className="text-xl font-medium">4. Check the pairs</h2>
+        <h2 className="text-xl font-medium">3. Check the pairs</h2>
         {rows.length === 0 ? (
           <p className="text-on-surface-variant text-sm">
             The table appears once a manifest loads.
@@ -295,7 +205,6 @@ export function PairFilesImport({ d, onLock }: { d: SessionDetails; onLock: () =
                   <th className="py-1 pr-3">Duration</th>
                   <th className="py-1 pr-3 text-student-a">Left (student A)</th>
                   <th className="py-1 pr-3 text-student-b">Right (student B)</th>
-                  {offsets?.ok ? <th className="py-1 pr-3">Starts in session</th> : null}
                   <th className="py-1">Consent</th>
                 </tr>
               </thead>
@@ -305,9 +214,6 @@ export function PairFilesImport({ d, onLock }: { d: SessionDetails; onLock: () =
                   .map((row) => {
                     const f = fileFor(row);
                     const ex = exclusionFor(roster, row);
-                    const place = offsets?.ok
-                      ? offsets.pairs.find((p) => p.order === row.order)
-                      : undefined;
                     return (
                       <tr
                         key={row.order}
@@ -337,11 +243,6 @@ export function PairFilesImport({ d, onLock }: { d: SessionDetails; onLock: () =
                           {row.rightId}
                           <span className="block">{nameOf(row.rightId)}</span>
                         </td>
-                        {offsets?.ok ? (
-                          <td className="py-1 pr-3">
-                            {place ? clock(place.startFrame, session!.info!.sampleRate) : ""}
-                          </td>
-                        ) : null}
                         <td className="py-1">
                           {ex ? (
                             <span className="text-warn" data-testid="consent-excluded">
@@ -382,11 +283,11 @@ export function PairFilesImport({ d, onLock }: { d: SessionDetails; onLock: () =
       </Card>
 
       <Card className="flex flex-col gap-4">
-        <h2 className="text-xl font-medium">5. Upload</h2>
+        <h2 className="text-xl font-medium">4. Upload</h2>
         {gate.ok ? (
           <p className="text-sm text-on-surface-variant">
-            The upload sends {session ? "the session file, then " : ""}each pair file unchanged, its
-            energy frames, and its session record, and last the import record.
+            The upload sends each pair file unchanged, its energy frames, and its session record,
+            and last the import record.
             {excludedCount
               ? ` ${excludedCount} pair(s) go in marked excluded: consent; the archive keeps their audio and pass two skips them.`
               : ""}
@@ -426,7 +327,7 @@ export function PairFilesImport({ d, onLock }: { d: SessionDetails; onLock: () =
         ) : null}
       </Card>
 
-      {uploads.done ? <Pass2Card step={6} records={records} sessionLabel={sessionLabel} /> : null}
+      {uploads.done ? <Pass2Card step={5} records={records} sessionLabel={sessionLabel} /> : null}
     </>
   );
 }

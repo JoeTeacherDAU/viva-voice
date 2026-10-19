@@ -27,9 +27,6 @@ export interface PairManifestRow {
 
 export const PAIR_MANIFEST_COLUMNS = ["order", "track", "file", "left_id", "right_id"] as const;
 
-/** How far the pair durations may sum from the session WAV's length. */
-export const OFFSET_TOLERANCE_MS = 50;
-
 /** File names compare after Unicode normalisation, so macOS and Drive spellings agree. */
 export const fileKey = (name: string) => name.normalize("NFC").trim();
 
@@ -127,8 +124,8 @@ export function matchPairFiles(rows: PairManifestRow[], names: string[]): PairMa
 }
 
 /**
- * The header check for a pair file or the session WAV: 2 channels of 16-bit
- * or 24-bit PCM. Returns the header, or a message that names what the file holds.
+ * The header check for a pair file: 2 channels of 16-bit or 24-bit PCM.
+ * Returns the header, or a message that names what the file holds.
  */
 export async function checkPairWav(
   file: Blob,
@@ -149,60 +146,6 @@ export async function checkPairWav(
 
 export const durationMs = (frames: number, sampleRate: number) => (frames * 1000) / sampleRate;
 
-export interface OffsetCheck {
-  /** Each pair's place in the session WAV, in recording order, in session frames. */
-  pairs: { order: number; startFrame: number; endFrame: number; startMs: number }[];
-  sumMs: number;
-  sessionMs: number;
-  /** sumMs minus sessionMs. */
-  differenceMs: number;
-  toleranceMs: number;
-  ok: boolean;
-  /** Set when a pair's sample rate differs from the session WAV's. */
-  rateProblem?: string;
-}
-
-/**
- * Places each pair in the session WAV by summing the pair durations in
- * manifest order: pair k starts where pair k-1 ends. The check passes when the
- * sum lands within OFFSET_TOLERANCE_MS of the session WAV's length.
- */
-export function sessionOffsets(
-  pairs: { order: number; frames: number; sampleRate: number }[],
-  session: { frames: number; sampleRate: number },
-): OffsetCheck {
-  const ordered = [...pairs].sort((a, b) => a.order - b.order);
-  const odd = ordered.find((p) => p.sampleRate !== session.sampleRate);
-  let cursor = 0;
-  const placed = ordered.map((p) => {
-    const startFrame = cursor;
-    cursor += p.frames;
-    return {
-      order: p.order,
-      startFrame,
-      endFrame: cursor,
-      startMs: durationMs(startFrame, session.sampleRate),
-    };
-  });
-  // With one rate throughout, whole frames give an exact difference.
-  const sumMs = odd
-    ? ordered.reduce((s, p) => s + durationMs(p.frames, p.sampleRate), 0)
-    : durationMs(cursor, session.sampleRate);
-  const sessionMs = durationMs(session.frames, session.sampleRate);
-  const differenceMs = sumMs - sessionMs;
-  return {
-    pairs: placed,
-    sumMs,
-    sessionMs,
-    differenceMs,
-    toleranceMs: OFFSET_TOLERANCE_MS,
-    ok: !odd && Math.abs(differenceMs) <= OFFSET_TOLERANCE_MS,
-    rateProblem: odd
-      ? `Pair ${odd.order} runs at ${odd.sampleRate} Hz and the session file at ${session.sampleRate} Hz.`
-      : undefined,
-  };
-}
-
 /** What a chosen pair file looks like once its header has been read. */
 export interface ChosenFile {
   name: string;
@@ -218,7 +161,6 @@ export function pairUploadGate(input: {
   rows: PairManifestRow[];
   manifestProblems: string[];
   files: ChosenFile[];
-  session: ChosenFile | null;
   confirmed: boolean;
 }): { ok: boolean; reasons: string[] } {
   const reasons = sessionReasons(input);
@@ -236,17 +178,13 @@ export function pairUploadGate(input: {
   }
   for (const name of m.extra) {
     reasons.push(
-      input.session && fileKey(input.session.name) === fileKey(name)
-        ? `The chosen file ${name} is the session-wide WAV, which belongs in its own box below. Choose the pair files again without it.`
-        : `The chosen file ${name} matches no manifest row. Choose the pair files again without it, or add its row to the manifest.`,
+      `The chosen file ${name} matches no manifest row. Choose the pair files again without it, or add its row to the manifest.`,
     );
   }
   for (const f of input.files) {
     if (f.problem) reasons.push(`${f.name}: ${f.problem}`);
     else if (!f.info) reasons.push(`${f.name}: the page is still reading its header.`);
   }
-  if (input.session?.problem)
-    reasons.push(`Session file ${input.session.name}: ${input.session.problem}`);
   if (reasons.length === 0 && !input.confirmed)
     reasons.push("Check the table, then tick the box that confirms it.");
   return { ok: reasons.length === 0, reasons };
@@ -268,22 +206,15 @@ export interface PairImportInput {
   sessionDate: string;
   roster: RosterEntry[] | null;
   pairs: ReadPair[];
-  /** The session-wide WAV, when attached. */
-  session?: { file: Blob; fileName: string; info: SessionWavInfo; sha256: string };
   manifest: { fileName: string; text: string };
   now?: Date;
 }
 
 /**
  * One session record per pair file. Channel 0 (left) is student A and channel
- * 1 (right) is student B, as in work order 02. The record carries the pair's
- * place in the session WAV only when the offset check passed, so a record
- * never holds an offset that the lengths do not support.
+ * 1 (right) is student B, as in work order 02.
  */
-export function buildPairFileRecords(
-  input: PairImportInput,
-  check: OffsetCheck | null,
-): SessionRecord[] {
+export function buildPairFileRecords(input: PairImportInput): SessionRecord[] {
   const now = (input.now ?? new Date()).toISOString();
   return [...input.pairs]
     .sort((a, b) => a.row.order - b.row.order)
@@ -291,7 +222,6 @@ export function buildPairFileRecords(
       const id = pairSessionId(input.sessionLabel, p.row.order);
       const whole = durationMs(p.info.frames, p.info.sampleRate);
       const excluded = exclusionFor(input.roster, p.row);
-      const place = check?.ok ? check.pairs.find((x) => x.order === p.row.order) : undefined;
       const source: PairFileSource = {
         mode: "pair-file",
         sessionLabel: input.sessionLabel,
@@ -306,14 +236,6 @@ export function buildPairFileRecords(
         bitsPerSample: p.info.bitsPerSample,
         encoding: p.info.encoding as PairFileSource["encoding"],
       };
-      if (place && input.session) {
-        source.session = {
-          rawPath: paths.sessionRaw(input.sessionLabel),
-          rawSha256: input.session.sha256,
-          startFrame: place.startFrame,
-          endFrame: place.endFrame,
-        };
-      }
       const rec: SessionRecord = {
         id,
         examId: input.exam.id,
@@ -366,42 +288,22 @@ export interface PairImportRecord {
     header: WavHeaderRecord;
     excluded: boolean;
   }[];
-  sessionFile: {
-    fileName: string;
-    fileBytes: number;
-    rawPath: string;
-    sha256: string;
-    header: WavHeaderRecord;
-    offsetCheck: OffsetCheck;
-  } | null;
   derivedCopies: never[];
   createdAt: string;
 }
 
 /**
- * Everything a pair-file import uploads, in order: the session WAV when
- * attached, then per pair the file unchanged, its energy, and its record, and
- * last the import record, so an existing import record means a complete import.
+ * Everything a pair-file import uploads, in order: per pair the file
+ * unchanged, its energy, and its record, and last the import record, so an existing import record means a complete import.
  */
 export function planPairUpload(input: PairImportInput): {
   items: UploadItem[];
   records: SessionRecord[];
   importRecord: PairImportRecord;
-  check: OffsetCheck | null;
 } {
   const { sessionLabel } = input;
   const pairs = [...input.pairs].sort((a, b) => a.row.order - b.row.order);
-  const check = input.session
-    ? sessionOffsets(
-        pairs.map((p) => ({
-          order: p.row.order,
-          frames: p.info.frames,
-          sampleRate: p.info.sampleRate,
-        })),
-        input.session.info,
-      )
-    : null;
-  const records = buildPairFileRecords(input, check);
+  const records = buildPairFileRecords(input);
   const importRecord: PairImportRecord = {
     mode: "pair-file",
     sessionLabel,
@@ -422,31 +324,11 @@ export function planPairUpload(input: PairImportInput): {
       header: headerRecord(p.info),
       excluded: !!records[i].excluded,
     })),
-    sessionFile: input.session
-      ? {
-          fileName: input.session.fileName,
-          fileBytes: input.session.file.size,
-          rawPath: paths.sessionRaw(sessionLabel),
-          sha256: input.session.sha256,
-          header: headerRecord(input.session.info),
-          offsetCheck: check!,
-        }
-      : null,
     derivedCopies: [],
     createdAt: (input.now ?? new Date()).toISOString(),
   };
 
   const items: UploadItem[] = [];
-  if (input.session) {
-    const s = input.session;
-    items.push({
-      key: "raw",
-      label: `Session file ${s.fileName}`,
-      pathname: paths.sessionRaw(sessionLabel),
-      contentType: "audio/wav",
-      body: async () => s.file,
-    });
-  }
   pairs.forEach((p, i) => {
     const rec = records[i];
     const tag = `Pair ${p.row.order}`;
@@ -481,5 +363,5 @@ export function planPairUpload(input: PairImportInput): {
     contentType: "application/json",
     body: async () => json(importRecord),
   });
-  return { items, records, importRecord, check };
+  return { items, records, importRecord };
 }
