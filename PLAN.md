@@ -117,8 +117,8 @@ audio/{sessionId}/stereo.wav             48 kHz 16-bit stereo, USB capture
 audio/{sessionId}/onboard-A.wav          optional import
 audio/{sessionId}/onboard-B.wav          optional import
 energy/{sessionId}.json                  20 ms dBFS frames, both channels
-sessions-raw/{sessionLabel}.wav          untouched session file from /import/session (sections 18 and 19)
-sessions-raw/{sessionLabel}.json         import record: headers, SHA-256s, manifest, and segments or offsets
+sessions-raw/{sessionLabel}.wav          untouched session file from single-file mode (section 18)
+sessions-raw/{sessionLabel}.json         import record: headers, SHA-256s, manifest, and segments (single-file mode)
 sessions-raw/{sessionLabel}-energy.json  20 ms dBFS frames over the whole session file (single-file mode)
 transcripts/{sessionId}/pass1.json       final words, rebased, with channel
 transcripts/{sessionId}/pass2.json       batch words with confidence, utterances, paragraphs
@@ -227,7 +227,7 @@ docs/replay-mode.md sketches a later "replay" input that feeds a stored pair WAV
 
 ## 19. Pair file import
 
-Work order 03 changes the input. Audacity 4.0.1 now exports each pair as its own stereo WAV ("Tracks as separate audio files", 48 kHz, signed 24-bit PCM, leading blank space trimmed), so the page no longer has to find the pairs. Each session gets its own folder with one WAV per pair, named like "C1_26_02_S1.01.Audio 2.wav", and a manifest with the columns order,track,file,left_id,right_id. A session-wide WAV, the full mix of the same audio, may sit beside them.
+Work order 03 changes the input. Audacity 4.0.1 now exports each pair as its own stereo WAV ("Tracks as separate audio files", 48 kHz, signed 24-bit PCM, leading blank space trimmed), so the page no longer has to find the pairs. Each session gets its own folder with one WAV per pair, named like "C1_26_02_S1.01.Audio 1.wav", and one manifest with the columns order,track,file,left_id,right_id. The folder holds nothing else, and pair files mode takes only the manifest and the pair WAVs.
 
 ### 19.1 The page
 
@@ -239,12 +239,8 @@ In pair files mode, Joe loads the manifest CSV and chooses every pair WAV at onc
 
 Each file matches the manifest row whose file cell holds the same name, after Unicode normalisation. The page never matches by position, length, or track name. The upload stays blocked while any row has no file, while any chosen file matches no row, while any file fails the header check, or while the manifest has a problem. A table then shows each pair's order and track, file, duration, left ID with the roster name, right ID with the roster name, and consent. Joe ticks a box to confirm the table, and only then does the upload unlock.
 
-### 19.3 The session-wide WAV
+### 19.3 Archive and records
 
-Joe may attach the session-wide WAV as well. The page places pair k in it by adding up the durations of pairs 1 to k-1 in manifest order, and checks that the sum of all pair durations comes within 50 ms of the session WAV's length. It shows the sum, the session length, and the difference. When the check passes, each record carries its pair's start and end frames in the session WAV. When it fails, or a pair's sample rate differs from the session file's, the session WAV still uploads unchanged, the import record keeps the check's result, and no record claims an offset.
+The upload sends, in order: for each pair the file unchanged at audio/{id}/stereo.wav, its 20 ms energy frames, and its session record, and last the import record at sessions-raw/{sessionLabel}.json. The import record holds the manifest text as loaded, and each file's name, size, SHA-256, header, and duration. The session id follows section 18: the label plus the order, for example C1_26_02_S1-P01.
 
-### 19.4 Archive and records
-
-The upload sends, in order: the session WAV to sessions-raw/{sessionLabel}.wav when attached, then for each pair the file unchanged at audio/{id}/stereo.wav, its 20 ms energy frames, and its session record, and last the import record at sessions-raw/{sessionLabel}.json. The import record holds the manifest text as loaded, each file's name, size, SHA-256, header, and duration, and the session file's header, SHA-256, and offset check. The session id follows section 18: the label plus the order, for example C1_26_02_S1-P01.
-
-Each record has captureMode "file-import" and a source block with mode "pair-file", the original file name, the track name, the file's SHA-256 and size, its frames, sample rate, bit depth, and encoding, and the session offsets when the check passed. Channel 0 is student A and channel 1 is student B, consent exclusion works as in section 18, and pass two, the documents, the review list, and "Download all" treat a pair-file pair like any imported pair.
+Each record has captureMode "file-import" and a source block with mode "pair-file", the original file name, the track name, the file's SHA-256 and size, its frames, sample rate, bit depth, and encoding. Channel 0 is student A and channel 1 is student B, consent exclusion works as in section 18, and pass two, the documents, the review list, and "Download all" treat a pair-file pair like any imported pair.

@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import type { PairFileSource } from "@/lib/analysis/types";
 import type { RosterEntry } from "@/lib/exams";
 import { MockBatch } from "@/lib/asr/batch";
 import { runPass2 } from "@/lib/output/pass2";
@@ -13,12 +12,11 @@ import {
   pairUploadGate,
   parsePairManifestCsv,
   planPairUpload,
-  sessionOffsets,
   type ChosenFile,
   type PairImportInput,
 } from "./pairfiles";
-import { scanSessionFile, sha256OfBlob } from "./scan";
-import { FIXTURE_PAIR_ROWS, FIXTURE_RATE, makePairFixture, makeSessionFixture } from "./synthetic";
+import { scanSessionFile } from "./scan";
+import { makePairFixture, makeSessionFixture } from "./synthetic";
 
 const sha = (b: Uint8Array) => createHash("sha256").update(b).digest("hex");
 const blobOf = (b: Uint8Array) => new Blob([b as BlobPart]);
@@ -36,7 +34,6 @@ const READY = {
   sessionDate: "2026-10-19",
   labelTaken: false,
   manifestProblems: [] as string[],
-  session: null,
   confirmed: true,
 };
 
@@ -48,7 +45,6 @@ async function chosen(files: { name: string; bytes: Uint8Array }[]): Promise<Cho
 
 async function importInput(
   fx: ReturnType<typeof makePairFixture>,
-  withSession: boolean,
   roster: RosterEntry[] | null = ROSTER,
 ): Promise<PairImportInput> {
   const { rows } = parsePairManifestCsv(fx.manifest);
@@ -65,24 +61,12 @@ async function importInput(
       return { row, file, fileName: f.name, info: info!, sha256: scan.sha256, energy: scan.energy };
     }),
   );
-  let session: PairImportInput["session"];
-  if (withSession) {
-    const file = blobOf(fx.session);
-    const { info } = await checkPairWav(file);
-    session = {
-      file,
-      fileName: "SYN - Session 1.wav",
-      info: info!,
-      sha256: await sha256OfBlob(file),
-    };
-  }
   return {
     exam: EXAM,
     sessionLabel: "SYN_S1",
     sessionDate: "2026-10-19",
     roster,
     pairs,
-    session,
     manifest: { fileName: "SYN_S1_manifest.csv", text: fx.manifest },
     now: new Date("2026-10-19T10:00:00Z"),
   };
@@ -171,22 +155,11 @@ describe("matching pair files to manifest rows (work order 03, tests 1 to 3)", (
   it("blocks the upload when the folder holds a file that no row names", async () => {
     const fx = makePairFixture();
     const { rows } = parsePairManifestCsv(fx.manifest);
-    const stray = { name: "SYN - Session 1.wav", bytes: fx.session };
+    const stray = { name: "SYN_S1.04.Audio 4.wav", bytes: fx.files[0].bytes };
     const gate = pairUploadGate({ ...READY, rows, files: await chosen([...fx.files, stray]) });
     expect(gate.ok).toBe(false);
     expect(gate.reasons).toEqual([
-      "The chosen file SYN - Session 1.wav matches no manifest row. Choose the pair files again without it, or add its row to the manifest.",
-    ]);
-    // Picked with the pair files and also attached as the session WAV, it still blocks,
-    // and the message points to the right box.
-    const both = pairUploadGate({
-      ...READY,
-      rows,
-      files: await chosen([...fx.files, stray]),
-      session: (await chosen([stray]))[0],
-    });
-    expect(both.reasons).toEqual([
-      "The chosen file SYN - Session 1.wav is the session-wide WAV, which belongs in its own box below. Choose the pair files again without it.",
+      "The chosen file SYN_S1.04.Audio 4.wav matches no manifest row. Choose the pair files again without it, or add its row to the manifest.",
     ]);
   });
 
@@ -220,91 +193,13 @@ describe("matching pair files to manifest rows (work order 03, tests 1 to 3)", (
   });
 });
 
-describe("session WAV offsets (work order 03, test 4)", () => {
-  it("places each pair by summing durations in manifest order and checks the total", () => {
-    const pairs = [
-      { order: 2, frames: 11_727_824, sampleRate: 48000 },
-      { order: 1, frames: 11_709_991, sampleRate: 48000 },
-      { order: 3, frames: 12_142_440, sampleRate: 48000 },
-    ];
-    const total = 11_709_991 + 11_727_824 + 12_142_440;
-    const exact = sessionOffsets(pairs, { frames: total + 3, sampleRate: 48000 });
-    expect(exact.ok).toBe(true);
-    expect(exact.pairs).toEqual([
-      { order: 1, startFrame: 0, endFrame: 11_709_991, startMs: 0 },
-      {
-        order: 2,
-        startFrame: 11_709_991,
-        endFrame: 23_437_815,
-        startMs: (11_709_991 * 1000) / 48000,
-      },
-      { order: 3, startFrame: 23_437_815, endFrame: total, startMs: (23_437_815 * 1000) / 48000 },
-    ]);
-    expect(exact.differenceMs).toBeCloseTo(-3 / 48, 9);
-
-    // 50 ms is 2400 frames at 48 kHz: 2400 passes, 2401 does not, either way round.
-    expect(sessionOffsets(pairs, { frames: total + 2400, sampleRate: 48000 }).ok).toBe(true);
-    expect(sessionOffsets(pairs, { frames: total - 2400, sampleRate: 48000 }).ok).toBe(true);
-    const long = sessionOffsets(pairs, { frames: total + 2401, sampleRate: 48000 });
-    expect(long.ok).toBe(false);
-    expect(long.differenceMs).toBeCloseTo(-2401 / 48, 9);
-
-    const odd = sessionOffsets([{ order: 1, frames: 44100, sampleRate: 44100 }], {
-      frames: 48000,
-      sampleRate: 48000,
-    });
-    expect(odd.ok).toBe(false);
-    expect(odd.rateProblem).toBe("Pair 1 runs at 44100 Hz and the session file at 48000 Hz.");
-  });
-
-  it("puts offsets in the records only when the check passes", async () => {
-    const fx = makePairFixture();
-    const inp = await importInput(fx, true);
-    const plan = planPairUpload(inp);
-    expect(plan.check?.ok).toBe(true);
-    expect(plan.check?.differenceMs).toBe(0);
-    let at = 0;
-    plan.records.forEach((r, i) => {
-      const src = r.source as PairFileSource;
-      expect(src.session).toEqual({
-        rawPath: "sessions-raw/SYN_S1.wav",
-        rawSha256: sha(fx.session),
-        startFrame: at,
-        endFrame: at + fx.files[i].frames,
-      });
-      at += fx.files[i].frames;
-    });
-
-    // A session WAV 100 ms longer than the pairs: the check fails, the import
-    // record keeps the result, and no record claims an offset.
-    const longer = makeSessionFixture({
-      leadMs: 0,
-      gapMs: 0,
-      pairFrames: [...fx.files.map((f) => f.frames), FIXTURE_RATE / 10],
-      pairs: [...FIXTURE_PAIR_ROWS, ["S01", "S02"]],
-    });
-    const file = blobOf(longer.bytes);
-    const { info } = await checkPairWav(file);
-    const bad = planPairUpload({
-      ...inp,
-      session: { file, fileName: "long.wav", info: info!, sha256: sha(longer.bytes) },
-    });
-    expect(bad.check?.ok).toBe(false);
-    expect(bad.check?.differenceMs).toBeCloseTo(-100, 9);
-    expect(bad.importRecord.sessionFile?.offsetCheck.ok).toBe(false);
-    expect(bad.records.every((r) => (r.source as PairFileSource).session === undefined)).toBe(true);
-    expect(bad.items[0].pathname).toBe("sessions-raw/SYN_S1.wav");
-  });
-});
-
 describe("pair-file records and upload", () => {
   it("stores each pair file byte for byte and writes one valid record per pair", async () => {
     const fx = makePairFixture();
     const roster = ROSTER.map((r) =>
       r.participantId === "S03" ? { ...r, consentStatus: "declined" as const } : r,
     );
-    const plan = planPairUpload(await importInput(fx, false, roster));
-    expect(plan.check).toBeNull();
+    const plan = planPairUpload(await importInput(fx, roster));
     expect(plan.items.map((i) => i.pathname)).toEqual([
       "audio/SYN_S1-P01/stereo.wav",
       "energy/SYN_S1-P01.json",

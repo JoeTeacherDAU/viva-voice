@@ -439,3 +439,28 @@ TEST_GUIDE.md in Viva Voice Dev on iCloud gains Stage 8 for this mode, and Stage
 Acceptance on this Mac, all passing before the push: lint; vitest with coverage and with VIVA_MOCK_ASR=1 (949 passed, 1 skipped, both ways); build; check-fixtures; contrast (12 pairings); feature-coverage (48 tier 1 features); pytest (14 passed); Playwright (10 passed, 1 skipped on macOS). The Playwright server ran with VIVA_STORE=memory, so nothing reached the Blob store.
 
 GitHub Actions passed on 474efb5: 949 unit tests, 14 Python tests, and 11 browser tests. The work order asks for the merge, so I merged feat/pair-file-import into main with --no-ff. Main stood at 67be7c8, so the merge met no conflicts. This paragraph rides in the merge commit, so main gets one push and one production deploy.
+
+## 2026-10-19, Work order 03 correction: pair files only
+
+Branch: feat/pair-files-only, from main at f22fb31.
+
+Joe confirmed that the latest copy of work order 03 changes the input. Each session folder now holds only the pair WAVs and one five-column manifest, and the session-wide WAV no longer comes in. Merge f22fb31 had built an optional box for it, so this run removes that box.
+
+What I removed:
+
+- The "Session-wide WAV" card, its file picker, the offset line, and the "Starts in session" column on /import/session. Pair files mode now has two file inputs: the manifest CSV and the pair WAVs. The sections renumber to 1 Session, 2 Manifest and pair files, 3 Check the pairs, 4 Upload, and 5 Pass two.
+- From lib/import/pairfiles.ts: OFFSET_TOLERANCE_MS, OffsetCheck, sessionOffsets, the session input to the gate, the import input, and the upload plan, the session-WAV block message, the sessionFile block of the import record, and the upload of sessions-raw/{label}.wav in this mode.
+- The optional session block from PairFileSource in lib/analysis/types.ts and from the pair-file shape in schemas/session.schema.json. No record in the archive carries it, because the real files never went up.
+- The session bytes from makePairFixture in lib/import/synthetic.ts, the two offset tests and the session-WAV block case from lib/import/pairfiles.test.ts, and the session-WAV steps from tests/e2e/pair-import.spec.ts. The extra-file test now uses a stray pair file, and the browser test checks that the mode shows exactly two file inputs.
+
+The single-file mode keeps sessions-raw/{label}.wav, its energy file, and its zero-run segmentation. Both modes still write the import record at sessions-raw/{label}.json.
+
+A local read of both real folders, with nothing uploaded or transcribed. I ran the page's own parser, matcher, header check, and upload gate in Node over My Drive/_Research/AI-Assisted Speaking Assessment/Audio Input Data/C1_26_MIDS on this Mac and printed no participant IDs.
+
+- C1_26_02_S1 holds C1_26_02_S1_manifest.csv and six WAVs, and nothing else. The manifest names the five columns, parses into 6 rows with no problems, and lists 12 distinct IDs. Every row matched one file by name, and no file was left over. All six files hold two channels of 48 kHz 24-bit PCM and run from 229.3 to 253.0 seconds, 24.1 minutes in all. The files now carry their track number in the name, so row 1 (track Audio 2) is C1_26_02_S1.02.Audio 2.wav and row 2 (track Audio 1) is C1_26_02_S1.01.Audio 1.wav.
+- C1_26_03_S1 holds C1_26_03_S1_manifest.csv and nine WAVs, and nothing else. The manifest parses into 9 rows with no problems and lists 18 distinct IDs. Every row matched one file by name, and no file was left over. All nine files hold two channels of 48 kHz 24-bit PCM and run from 235.8 to 254.1 seconds, 36.6 minutes in all. Row 1 is track Audio 9, file C1_26_03_S1.09.Audio 9.wav, and rows 2 to 9 are Audio 1 to Audio 8.
+- With an exam, a label, and the box ticked, the upload gate cleared for both sessions.
+
+PLAN.md section 19, docs/OPERATIONAL_DEFINITIONS.md, and Stage 8 of TEST_GUIDE.md in Viva Voice Dev on iCloud now describe the mode without the session-wide WAV. Stage 8b now covers both sessions.
+
+Acceptance on this Mac before the push: lint, vitest plain and with VIVA_MOCK_ASR=1 (947 passed, 1 skipped, both ways), build, check-fixtures, feature-coverage (48 tier 1 features), and Playwright (10 passed, 1 skipped on macOS) with VIVA_STORE=memory. GitHub Actions passed on 16df874: 947 unit tests, 14 Python tests, and 11 browser tests. I merged feat/pair-files-only into main with --no-ff. Main stood at f22fb31, so the merge met no conflicts. This paragraph rides in the merge commit, so main gets one push and one production deploy.

@@ -133,10 +133,10 @@ A pair manifest is a CSV whose first line names the columns order, track, file, 
 
 A chosen file matches a manifest row when the two names are equal after Unicode NFC normalisation and trimming. Nothing else counts: not the order of the files in the picker, not their lengths, not the track names. A row without a matching file is missing, and a chosen file without a matching row is extra. Either one blocks the upload.
 
-A pair file passes the header check when it holds two channels of 16-bit or 24-bit integer PCM, plain or WAVE_FORMAT_EXTENSIBLE. The session-wide WAV passes the same check.
+A pair file passes the header check when it holds two channels of 16-bit or 24-bit integer PCM, plain or WAVE_FORMAT_EXTENSIBLE.
 
-A pair's duration is its frame count divided by its sample rate. The offset of pair k in the session WAV is the sum of the frame counts of pairs 1 to k-1 in manifest order, and the pair ends at its offset plus its own frame count. The offset check passes when every pair shares the session WAV's sample rate and the sum of all pair durations differs from the session WAV's duration by at most 50 ms (2,400 frames at 48 kHz) in either direction. A record carries offsets only when the check passed.
+A pair's duration is its frame count divided by its sample rate.
 
 A pair file's energy track uses the session file rule over the pair file's sample data, from its first frame. A pair's measurement window runs from 0 to the file's length in milliseconds. The archive stores the pair file byte for byte, header included, and records its SHA-256.
 
-On the first real session, C1_26_02_S1, the six pair files sum to 69,399,509 frames and the session WAV holds 69,399,512, a difference of 3 frames, or 0.06 ms. A local read of the headers on 2026-10-19 gave those numbers; nothing was uploaded.
+A local read on 2026-10-19 ran these rules over the first two real sessions without uploading anything. C1_26_02_S1 holds six pair files and C1_26_03_S1 holds nine, each beside one five-column manifest. Every row matched one file by name, no file was left over, and every file held two channels of 48 kHz 24-bit PCM.

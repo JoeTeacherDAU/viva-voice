@@ -11,10 +11,8 @@ const wav = (f: { name: string; bytes: Uint8Array }) => ({
 });
 
 // Work order 03, test 5: pair files mode, end to end, on three synthetic
-// 24-bit pair files, their manifest, and the session-wide WAV they came from.
-test("pair file import: match by name, block, check offsets, upload unchanged, pass two", async ({
-  page,
-}) => {
+// 24-bit pair files and their manifest.
+test("pair file import: match by name, block, upload unchanged, pass two", async ({ page }) => {
   test.setTimeout(180_000);
   await login(page);
   const run = Date.now().toString(36);
@@ -32,6 +30,8 @@ test("pair file import: match by name, block, check offsets, upload unchanged, p
   );
 
   await page.goto("/import/session");
+  // Pair files mode takes the manifest and the pair WAVs, and nothing else.
+  await expect(page.locator('main input[type="file"]')).toHaveCount(2);
   await expect(page.getByRole("radio", { name: "Pair files" })).toBeChecked();
   await page.getByLabel("Exam id").fill(examId);
   await page.getByRole("button", { name: "Check exam" }).click();
@@ -77,15 +77,6 @@ test("pair file import: match by name, block, check offsets, upload unchanged, p
     "excluded: consent (S03 declined)",
   );
 
-  await page.getByLabel("Session-wide WAV").setInputFiles({
-    name: `${label} - Session 1.wav`,
-    mimeType: "audio/wav",
-    buffer: Buffer.from(fx.session),
-  });
-  await expect(page.getByTestId("offset-check")).toContainText(
-    "a difference of 0.0 ms, within 50 ms.",
-  );
-
   await expect(blocked).toHaveText(/Check the table, then tick the box that confirms it\./);
   await expect(page.getByRole("button", { name: "Upload pairs" })).toBeDisabled();
   await page.getByLabel("The table is correct").check();
@@ -95,12 +86,11 @@ test("pair file import: match by name, block, check offsets, upload unchanged, p
   await page.getByRole("button", { name: "Upload pairs" }).click();
   await expect(page.getByTestId("upload-done")).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId("upload-files").getByTestId("upload-state")).toHaveText(
-    Array(11).fill(/^done/),
+    Array(10).fill(/^done/),
   );
   await expect(page.getByRole("radio", { name: "Single session file" })).toBeDisabled();
 
   const get = (p: string) => page.request.get(`/api/file?pathname=${encodeURIComponent(p)}`);
-  expect(sha(await (await get(`sessions-raw/${label}.wav`)).body())).toBe(sha(fx.session));
   for (const [i, f] of fx.files.entries()) {
     const stored = await (await get(`audio/${label}-P0${i + 1}/stereo.wav`)).body();
     expect(sha(stored)).toBe(sha(f.bytes));
@@ -114,16 +104,10 @@ test("pair file import: match by name, block, check offsets, upload unchanged, p
     fileName: `${label}.02.Audio 1.wav`,
     track: "Audio 1",
     fileSha256: sha(fx.files[1].bytes),
-    session: {
-      rawPath: `sessions-raw/${label}.wav`,
-      startFrame: fx.files[0].frames,
-      endFrame: fx.files[0].frames + fx.files[1].frames,
-    },
   });
   const imp = await (await get(`sessions-raw/${label}.json`)).json();
   expect(imp.mode).toBe("pair-file");
   expect(imp.manifestCsv).toBe(fx.manifest);
-  expect(imp.sessionFile.offsetCheck.ok).toBe(true);
 
   await page.getByRole("button", { name: "Run pass two for all pairs" }).click();
   await expect(page.getByTestId(`pass2-${label}-P03`)).toContainText(": done", { timeout: 60_000 });

@@ -138,7 +138,7 @@
           }
         },
         {
-          "description": "Pair-file pairs (work order 03): the pair's own WAV, stored byte for byte. session holds the pair's frames in the session-wide WAV and appears only when the pair durations summed to its length within 50 ms.",
+          "description": "Pair-file pairs (work order 03): the pair's own WAV, stored byte for byte.",
           "type": "object",
           "required": [
             "mode",
@@ -167,18 +167,7 @@
             "frames": { "type": "integer", "minimum": 1 },
             "sampleRate": { "type": "integer", "minimum": 1 },
             "bitsPerSample": { "enum": [16, 24] },
-            "encoding": { "enum": ["pcm16", "pcm24"] },
-            "session": {
-              "type": "object",
-              "required": ["rawPath", "rawSha256", "startFrame", "endFrame"],
-              "additionalProperties": false,
-              "properties": {
-                "rawPath": { "type": "string" },
-                "rawSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-                "startFrame": { "type": "integer", "minimum": 0 },
-                "endFrame": { "type": "integer", "minimum": 1 }
-              }
-            }
+            "encoding": { "enum": ["pcm16", "pcm24"] }
           }
         }
       ]
