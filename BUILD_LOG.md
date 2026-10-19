@@ -389,3 +389,13 @@ Acceptance on this Mac, all passing before the push: lint; vitest without VIVA_M
 The work order's eight tests live in lib/import/import.test.ts (tests 1 to 7, plus segment edits, manifest parsing, the recompute, and the download zip) and tests/e2e/session-import.spec.ts (test 8, and a second test for the mono rejection). The fixture is generated in code by lib/import/synthetic.ts: 3 s of zeros, then three tone "pairs" separated by 2 s of zeros, each with a 200 ms stretch of zeros inside it that must not split it, and a different tone for each participant so the tests can check which participant each channel carries. No audio file enters the repository.
 
 GitHub Actions passed on a858ab2: 938 unit tests, 14 Python tests, and 10 browser tests.
+
+## 2026-10-19, Test files deleted; merge of feat/session-file-import into main
+
+Joe gave permission to delete the 28 test files from the Blob store, for that deletion only. Before deleting, a fresh listing showed exactly 28 files in viva-voice-archive, all of them the synthetic files the work order 02 entry names. The deletion script matched those names and was set to stop without deleting if either count differed from 28. It deleted the 28, and a second listing showed the store empty.
+
+Joe then approved the merge. I ran git fetch origin and confirmed that origin/feat/session-file-import pointed to 00ebaa5 and that its CI runs on a858ab2 and 00ebaa5 had both passed. I checked out main, pulled origin main (main stood at 8eada3d), and ran git merge --no-ff feat/session-file-import. The merge produced commit dc4b378 with no conflicts.
+
+On main, after npm ci, the acceptance sequence passed: lint; vitest without VIVA_MOCK_ASR and with it (938 passed, 1 skipped, both ways); contrast (12 pairings); check-fixtures; build and feature-coverage (48 tier 1 features), through the Playwright run; Playwright (9 passed, 1 skipped on macOS); and pytest (14 passed). I pushed main only after every check passed.
+
+The push started production deployment viva-voice-21wd4obz4 through the Git integration. It built in 18 seconds and reached Ready, and GitHub records Vercel's "Deployment has completed" status on dc4b378. A headless Chromium check of https://viva-voice.vercel.app then passed. Before login, /import/session redirected to /login. Login returned 200, and /import/session returned 200 and rendered the heading "Import a session file" with sections 1 to 3, the exam id box, and the WAV picker. GET /api/sessions returned an empty list. GET /api/pass2 returned ready false with the missing-key message, because DEEPGRAM_API_KEY stays unset for Joe to add.
