@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import type { SessionRecord } from "@/lib/analysis/types";
 import { pass2Queue, type UploadItem } from "@/lib/import/records";
+import { pass2Fatal, pass2Ready, runPass2For } from "@/lib/import/remote";
 import type { Uploader } from "@/lib/storage/archive";
 import { Button, Card, Icon } from "@/lib/ui";
 
@@ -164,10 +165,7 @@ export function Pass2Card({
     setRunning(true);
     setPass2Msg(null);
     try {
-      const ready = (await (await fetch("/api/pass2", { cache: "no-store" })).json()) as {
-        ready: boolean;
-        error?: string;
-      };
+      const ready = await pass2Ready(fetch);
       if (!ready.ready) {
         setPass2Msg(ready.error ?? "Pass two cannot run.");
         return;
@@ -180,20 +178,15 @@ export function Pass2Card({
       for (const id of q.run) {
         if (status[id] === "done") continue;
         setPass2((p) => ({ ...p, [id]: "running" }));
-        const res = await fetch("/api/pass2", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ sessionId: id }),
-        });
-        const out = (await res.json()) as { error?: string };
-        if (res.ok) {
+        const out = await runPass2For(fetch, id);
+        if (out.ok) {
           status[id] = "done";
           setPass2((p) => ({ ...p, [id]: "done" }));
           continue;
         }
-        setPass2((p) => ({ ...p, [id]: `failed: ${out.error ?? res.status}` }));
-        if ((out.error ?? "").includes("DEEPGRAM_API_KEY")) {
-          setPass2Msg(out.error!);
+        setPass2((p) => ({ ...p, [id]: `failed: ${out.error}` }));
+        if (pass2Fatal(out.error)) {
+          setPass2Msg(out.error);
           return;
         }
       }

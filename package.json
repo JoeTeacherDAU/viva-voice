@@ -17,7 +17,9 @@
     "feature-coverage": "node scripts/feature-coverage.mjs",
     "predev": "node scripts/build-worklets.mjs",
     "test:e2e": "playwright test",
-    "contrast": "node scripts/contrast-check.mjs"
+    "contrast": "node scripts/contrast-check.mjs",
+    "import:session": "node scripts/run-ts.mjs scripts/cli/import-session.ts",
+    "import:roster": "node scripts/run-ts.mjs scripts/cli/import-roster.ts"
   },
   "dependencies": {
     "@noble/hashes": "^2.4.0",
