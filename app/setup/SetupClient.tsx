@@ -31,6 +31,7 @@ import {
   type ExamRecord,
   type RosterEntry,
 } from "@/lib/exams";
+import { postExam, postRoster } from "@/lib/import/remote";
 import { putSession } from "@/lib/storage/local";
 import { Button, Card, Icon, Meter } from "@/lib/ui";
 
@@ -188,21 +189,18 @@ export function SetupClient() {
       setConfigMsg(`${file.name} is not valid JSON.`);
       return;
     }
-    const url = kind === "exam" ? "/api/exam" : `/api/roster?examId=${encodeURIComponent(examId)}`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const out = (await res.json()) as { error?: string; examId?: string };
-    if (!res.ok) {
-      setConfigMsg(`Import failed: ${out.error ?? res.status}`);
-      return;
+    try {
+      if (kind === "exam") {
+        const id = await postExam(fetch, body);
+        if (id) setExamId(id);
+        setConfigMsg(`Imported exam ${id}. Load it to use it.`);
+      } else {
+        await postRoster(fetch, examId, body);
+        setConfigMsg("Imported the roster.");
+      }
+    } catch (e) {
+      setConfigMsg(`Import failed: ${(e as Error).message}`);
     }
-    if (kind === "exam" && out.examId) setExamId(out.examId);
-    setConfigMsg(
-      kind === "exam" ? `Imported exam ${out.examId}. Load it to use it.` : "Imported the roster.",
-    );
   }
 
   function exportExam() {

@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import { loadExam, loadRoster, type ExamRecord, type RosterEntry } from "@/lib/exams";
+import { newExamRecord, postExam } from "@/lib/import/remote";
 import { paths } from "@/lib/storage/paths";
 import { Button, Card, Icon } from "@/lib/ui";
 import { exists, field, today } from "./shared";
@@ -49,24 +50,11 @@ export function useSessionDetails() {
   }
 
   async function createExam() {
-    const record: ExamRecord = {
-      id: examId.trim(),
-      title: newTitle.trim(),
-      course: "",
-      unit: "",
-      prompt: "",
-      targetPatterns: [],
-      keyterms: [],
-      durationMs: Math.round(newMinutes * 60_000),
-    };
-    const res = await fetch("/api/exam", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(record),
-    });
-    const out = (await res.json()) as { error?: string };
-    if (!res.ok) {
-      setExamMsg(`The exam was not created: ${out.error ?? res.status}`);
+    const record = newExamRecord(examId, newTitle, newMinutes);
+    try {
+      await postExam(fetch, record);
+    } catch (e) {
+      setExamMsg(`The exam was not created: ${(e as Error).message}`);
       return;
     }
     setExam(record);

@@ -120,6 +120,8 @@ export class VercelBlobStore implements ArchiveStore {
       contentType: contentType ?? contentTypeFor(pathname),
       addRandomSuffix: false,
       allowOverwrite: true,
+      // Pair WAVs run to 70 MB; above 20 MB the upload goes in parts, as in the browser.
+      multipart: data instanceof Blob && data.size > 20_000_000,
     });
   }
 

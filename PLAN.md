@@ -244,3 +244,18 @@ Each file matches the manifest row whose file cell holds the same name, after Un
 The upload sends, in order: for each pair the file unchanged at audio/{id}/stereo.wav, its 20 ms energy frames, and its session record, and last the import record at sessions-raw/{sessionLabel}.json. The import record holds the manifest text as loaded, and each file's name, size, SHA-256, header, and duration. The session id follows section 18: the label plus the order, for example C1_26_02_S1-P01.
 
 Each record has captureMode "file-import" and a source block with mode "pair-file", the original file name, the track name, the file's SHA-256 and size, its frames, sample rate, bit depth, and encoding. Channel 0 is student A and channel 1 is student B, consent exclusion works as in section 18, and pass two, the documents, the review list, and "Download all" treat a pair-file pair like any imported pair.
+
+## 20. Command-line import
+
+Work order 04 adds two commands that import without a browser. Both read VIVA_PASSWORD and BLOB_READ_WRITE_TOKEN from .env.local, log in to https://viva-voice.vercel.app, and never print the password, the token, or a student name. scripts/run-ts.mjs bundles each command with esbuild so it can use the app's own modules.
+
+`npm run import:roster -- --file "<roster.json>" --exam <id>` sends the roster to POST /api/roster, as the setup page's Import roster JSON button does. The archive keeps one roster per exam, so the command needs the exam id.
+
+`npm run import:session -- --folder "<path>" --exam <id> --date <YYYY-MM-DD> [--title "<title>" --duration-min <n>]` imports one session folder. The folder name is the session label, and the folder must hold exactly one manifest CSV beside the pair WAVs. lib/import/folderImport.ts runs the Pair files page's own parser, matcher, header check, gate, consent rule, and planPairUpload, so the command writes the same files and records as the page. It differs from the page in four ways:
+
+- When the exam does not exist, the command creates it from --title and --duration-min, with the page's newExamRecord, and stops without them.
+- The uploads go from this machine straight to the private Blob store with the token in .env.local. Before the first upload, the command checks that the token's store holds the exam record the app reads, so it cannot write to a different store.
+- A re-run reads each pair's session record first. A pair whose record names the same file SHA-256 is skipped and reported as skipped; a different SHA-256 stops the run before anything uploads. The import record goes last, only when every pair arrived, and an existing one stays as it was.
+- After the uploads, the command runs pass two for each pair through POST /api/pass2 on the deployment, so the Deepgram key stays in Vercel. It skips excluded pairs and pairs whose record already holds pass two.
+
+The command prints one line per pair with the file, the left and right participant IDs, the upload status, and the pass-two status.

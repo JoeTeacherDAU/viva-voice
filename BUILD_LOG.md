@@ -464,3 +464,27 @@ A local read of both real folders, with nothing uploaded or transcribed. I ran t
 PLAN.md section 19, docs/OPERATIONAL_DEFINITIONS.md, and Stage 8 of TEST_GUIDE.md in Viva Voice Dev on iCloud now describe the mode without the session-wide WAV. Stage 8b now covers both sessions.
 
 Acceptance on this Mac before the push: lint, vitest plain and with VIVA_MOCK_ASR=1 (947 passed, 1 skipped, both ways), build, check-fixtures, feature-coverage (48 tier 1 features), and Playwright (10 passed, 1 skipped on macOS) with VIVA_STORE=memory. GitHub Actions passed on 16df874: 947 unit tests, 14 Python tests, and 11 browser tests. I merged feat/pair-files-only into main with --no-ff. Main stood at f22fb31, so the merge met no conflicts. This paragraph rides in the merge commit, so main gets one push and one production deploy.
+
+## 2026-10-19, Work order 04: command-line session import
+
+Branch: feat/cli-import, from main at 8a39b08.
+
+What I built:
+
+- lib/import/remote.ts holds the calls to the app's routes that the pages and the commands share: reading an archive object through /api/file, newExamRecord, postExam, postRoster, pass2Ready, and runPass2For. The import page's exam creation and pass-two loop and the setup page's Import exam JSON and Import roster JSON buttons now call it, so no route call has a second copy.
+- lib/import/folderImport.ts runs a folder through the Pair files page's own parser, matcher, header check, upload gate, consent rule, and planPairUpload. It adds the exam check and creation, the store check, the per-pair hash check for re-runs, the uploads with three retries, and pass two through the route.
+- scripts/cli/import-session.ts, scripts/cli/import-roster.ts, and scripts/cli/app.ts read the folder or the roster file, load .env.local, log in with VIVA_PASSWORD, and pick the uploader the app reports: the private Blob store with the token from .env.local, or the app's in-memory upload route in local dev and the tests. scripts/run-ts.mjs bundles a command with esbuild, which the project already had, so no package was added.
+- npm run import:session and npm run import:roster in package.json.
+- VercelBlobStore.put now uploads in parts above 20 MB, as the browser already does.
+
+Choices I made, each with its reason:
+
+- import:roster also takes --exam. The setup page stores a roster under the exam id typed on the page, and roster_F26.json holds only a list of students with no exam id, so the command cannot know where the roster goes without it.
+- The command checks that the Blob token's store holds the exam record the app holds before the first upload. The reads go through the deployment and the writes go straight to Blob, so a token from another store would otherwise split one session across two stores.
+- The command passes the page's gate with the confirmation box ticked, because it has no table to tick. The printed lines carry the file and both IDs for each pair, so Joe checks them there.
+- A pair counts as already uploaded only when its session record exists and names the same file SHA-256. The record goes up after the audio and the energy, so an existing record means all three arrived. A different SHA-256 stops the whole run before any upload, because the archive must not mix two versions of one pair.
+- An existing import record stays as it was on a re-run, and a run with a failed pair writes no import record, as on the page.
+
+Tests, all synthetic: lib/import/folderImport.test.ts runs the core against the app's real route handlers on an in-memory store. It covers exam creation, byte-for-byte storage, the page's records, pass two with a consent exclusion, the skip on a re-run, finishing an interrupted import, the stop on a different file, the page's missing-file and extra-file blocks before any exam is created, the missing title and duration, a store mismatch, a missing roster, and the absence of names in the output. tests/e2e/cli-import.spec.ts runs both commands as child processes against the e2e server with a synthetic folder, then checks the archive, the review page, and a re-run. The test skips .env.local and blanks the Blob token, so it can reach only the server's in-memory store.
+
+PLAN.md gains section 20.
